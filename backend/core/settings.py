@@ -1,20 +1,24 @@
-from pathlib import Path
 import os
+from pathlib import Path
 from decouple import config
 from datetime import timedelta
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Secret key
+# -----------------------------
+# SECRET KEY y DEBUG
+# -----------------------------
 SECRET_KEY = config("SECRET_KEY", default="dev-secret")
-
-# Debug mode
 DEBUG = config("DEBUG", default=True, cast=bool)
 
-# Allowed hosts
-ALLOWED_HOSTS = config("ALLOWED_HOSTS", default="*").split(",")
+# -----------------------------
+# ALLOWED HOSTS
+# -----------------------------
+ALLOWED_HOSTS = config("ALLOWED_HOSTS", default="127.0.0.1,localhost").split(",")
 
-# Installed apps
+# -----------------------------
+# INSTALLED APPS
+# -----------------------------
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -27,6 +31,9 @@ INSTALLED_APPS = [
     'accounts',
 ]
 
+# -----------------------------
+# MIDDLEWARE
+# -----------------------------
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -40,6 +47,9 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = 'core.urls'
 
+# -----------------------------
+# TEMPLATES
+# -----------------------------
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
@@ -57,31 +67,33 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'core.wsgi.application'
 
-from pathlib import Path
-from decouple import config
-from datetime import timedelta
-
-BASE_DIR = Path(__file__).resolve().parent.parent
-
-# Secret Key y Debug
-SECRET_KEY = config("SECRET_KEY")
-DEBUG = config("DEBUG", default=False, cast=bool)
-ALLOWED_HOSTS = config("ALLOWED_HOSTS", default="127.0.0.1,localhost").split(",")
-
-# Database
+# -----------------------------
+# DATABASES
+# -----------------------------
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.mysql",
+        # Local MySQL
         "NAME": config("DB_NAME", default="capstone_db"),
         "USER": config("DB_USER", default="root"),
         "PASSWORD": config("DB_PASSWORD", default=""),
         "HOST": config("DB_HOST", default="127.0.0.1"),
         "PORT": config("DB_PORT", default=3306, cast=int),
+
+        # Railway MySQL (sobrescribe si están definidas variables de entorno)
+        "NAME": config("MYSQL_DATABASE", default=config("DB_NAME", "capstone_db")),
+        "USER": config("MYSQLUSER", default=config("DB_USER", "root")),
+        "PASSWORD": config("MYSQLPASSWORD", default=config("DB_PASSWORD", "")),
+        "HOST": config("MYSQLHOST", default=config("DB_HOST", "127.0.0.1")),
+        "PORT": config("MYSQLPORT", default=config("DB_PORT", 3306), cast=int),
+
         "OPTIONS": {"init_command": "SET sql_mode='STRICT_TRANS_TABLES'"},
     }
 }
 
-# Password validation
+# -----------------------------
+# PASSWORD VALIDATION
+# -----------------------------
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
     {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
@@ -89,43 +101,56 @@ AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
 
-# Internacionalización
+# -----------------------------
+# INTERNACIONALIZACIÓN
+# -----------------------------
 LANGUAGE_CODE = 'es-es'
 TIME_ZONE = 'America/Santiago'
 USE_I18N = True
 USE_TZ = True
 
-# Archivos estáticos
+# -----------------------------
+# ARCHIVOS ESTÁTICOS
+# -----------------------------
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# REST Framework
+# -----------------------------
+# REST FRAMEWORK
+# -----------------------------
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
 }
 
-# Modelo de usuario custom
+# -----------------------------
+# USUARIO CUSTOM
+# -----------------------------
 AUTH_USER_MODEL = "accounts.Usuario"
 
-# Email (en local usa consola, en producción cambiar a SMTP)
+# -----------------------------
+# EMAIL
+# -----------------------------
 EMAIL_BACKEND = config("EMAIL_BACKEND", default="django.core.mail.backends.console.EmailBackend")
 
+# -----------------------------
 # CORS
+# -----------------------------
 CORS_ALLOW_ALL_ORIGINS = config("CORS_ALLOW_ALL_ORIGINS", default=True, cast=bool)
 
-# JWT Config
+# -----------------------------
+# JWT CONFIG
+# -----------------------------
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(days=30),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=365),
     'ROTATE_REFRESH_TOKENS': True,
     'BLACKLIST_AFTER_ROTATION': True,
     'ALGORITHM': 'HS256',
-    'SIGNING_KEY': config("SECRET_KEY"),
+    'SIGNING_KEY': SECRET_KEY,
     'AUTH_HEADER_TYPES': ('Bearer',),
     'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.AccessToken',),
 }
-
