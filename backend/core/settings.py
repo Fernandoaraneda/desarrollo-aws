@@ -2,6 +2,7 @@ import os
 from pathlib import Path
 from decouple import config
 from datetime import timedelta
+import dj_database_url
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -70,25 +71,14 @@ WSGI_APPLICATION = 'core.wsgi.application'
 # -----------------------------
 # DATABASES
 # -----------------------------
+# Railway/Render → si existe DATABASE_URL, la usa
+# Local → usa variables DB_NAME, DB_USER, etc.
 DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.mysql",
-        # Local MySQL
-        "NAME": config("DB_NAME", default="capstone_db"),
-        "USER": config("DB_USER", default="root"),
-        "PASSWORD": config("DB_PASSWORD", default=""),
-        "HOST": config("DB_HOST", default="127.0.0.1"),
-        "PORT": config("DB_PORT", default=3306, cast=int),
-
-        # Railway MySQL (sobrescribe si están definidas variables de entorno)
-        "NAME": config("MYSQL_DATABASE", default=config("DB_NAME", "capstone_db")),
-        "USER": config("MYSQLUSER", default=config("DB_USER", "root")),
-        "PASSWORD": config("MYSQLPASSWORD", default=config("DB_PASSWORD", "")),
-        "HOST": config("MYSQLHOST", default=config("DB_HOST", "127.0.0.1")),
-        "PORT": config("MYSQLPORT", default=config("DB_PORT", 3306), cast=int),
-
-        "OPTIONS": {"init_command": "SET sql_mode='STRICT_TRANS_TABLES'"},
-    }
+    "default": dj_database_url.config(
+        default=f"mysql://{config('DB_USER', 'root')}:{config('DB_PASSWORD', '')}@{config('DB_HOST', '127.0.0.1')}:{config('DB_PORT', 3306)}/{config('DB_NAME', 'capstone_db')}",
+        conn_max_age=600,
+        engine="django.db.backends.mysql",
+    )
 }
 
 # -----------------------------
