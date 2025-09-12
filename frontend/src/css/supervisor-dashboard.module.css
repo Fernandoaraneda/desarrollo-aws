@@ -116,3 +116,55 @@
     grid-column: span 1;
   }
 }
+
+
+/* =================== REGLAS RESPONSIVAS =================== */
+
+/* Para tablets (hasta 1024px) */
+@media (max-width: 1024px) {
+  .dashboardGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .largeCard, .fullWidthCard {
+    grid-column: span 2;
+  }
+}
+
+/* Para móviles (hasta 640px) */
+@media (max-width: 640px) {
+  .dashboardGrid {
+    grid-template-columns: 1fr;
+  }
+  .largeCard, .fullWidthCard {
+    grid-column: span 1;
+  }
+  .card {
+    padding: 0.75rem;
+    flex-direction: column; /* apila iconos y contenido */
+    align-items: flex-start;
+  }
+  .cardIcon {
+    width: 40px;
+    height: 40px;
+    margin-bottom: 0.5rem;
+  }
+  .cardValue {
+    font-size: 1.25rem;
+  }
+  .chartContainer {
+    width: 100%;
+    overflow-x: auto; /* permite scroll horizontal si el gráfico es ancho */
+    padding-bottom: 10px;
+  }
+  .tableContainer {
+    overflow-x: auto;
+  }
+  .table th, .table td {
+    font-size: 0.65rem;
+    padding: 0.5rem;
+  }
+  .chartTitle {
+    font-size: 1rem;
+    margin-bottom: 1rem;
+  }
+}

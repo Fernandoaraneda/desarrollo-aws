@@ -47,18 +47,6 @@ export default function Dashboard() {
             Hola, {user?.first_name || user?.username} (Rol: {user?.rol})
           </p>
         </div>
-        <nav className="flex items-center space-x-4">
-          {/* ✅ 4. Se usan clases de Tailwind para los botones */}
-          <Link to="/profile" className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded font-semibold text-sm">
-            Mi Perfil
-          </Link>
-          <button
-            onClick={handleLogout}
-            className="bg-red-600 hover:bg-red-700 px-4 py-2 rounded font-semibold text-sm"
-          >
-            Cerrar Sesión
-          </button>
-        </nav>
       </header>
 
       {/* Contenido Dinámico del Dashboard */}

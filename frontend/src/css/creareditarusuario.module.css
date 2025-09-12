@@ -112,3 +112,48 @@
 .cancelButton:hover {
   background-color: #d1d5db;
 }
+/* Tablets (hasta 1024px) */
+@media (max-width: 1024px) {
+  .formGrid {
+    grid-template-columns: 1fr; /* Una sola columna */
+    gap: 1rem;
+  }
+}
+
+/* Móviles (hasta 640px) */
+@media (max-width: 640px) {
+  .pageWrapper {
+    padding: 1rem;
+  }
+
+  .formHeader h1 {
+    font-size: 1.5rem;
+  }
+
+  .formHeader p {
+    font-size: 0.875rem;
+  }
+
+  .formField input,
+  .formField select {
+    font-size: 0.875rem;
+    padding: 0.5rem;
+  }
+
+  .checkboxField {
+    gap: 0.5rem;
+  }
+
+  .submitButton,
+  .cancelButton {
+    width: 100%;
+    justify-content: center;
+    padding: 0.75rem;
+    font-size: 0.875rem;
+  }
+
+  .formActions {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+}

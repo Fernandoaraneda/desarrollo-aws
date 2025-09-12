@@ -65,7 +65,7 @@ export default function SupervisorWidgets() {
       {/* Gráfico de Órdenes por Estado */}
       <div className={`${styles.card} ${styles.largeCard}`}>
         <h3 className={styles.chartTitle}>Carga de Trabajo Actual</h3>
-        <ResponsiveContainer width="100%" height={300}>
+        <ResponsiveContainer width="100%" height={250}>
           <BarChart data={ordenesPorEstado} margin={{ top: 20, right: 20, left: -10, bottom: 5 }}>
             <CartesianGrid strokeDasharray="3 3" vertical={false} />
             <XAxis dataKey="estado" />
@@ -80,7 +80,7 @@ export default function SupervisorWidgets() {
       {/* Gráfico de Flujo de Ingresos */}
        <div className={`${styles.card} ${styles.largeCard}`}>
         <h3 className={styles.chartTitle}>Ingresos en la Última Semana</h3>
-        <ResponsiveContainer width="100%" height={300}>
+        <ResponsiveContainer width="100%" height={250}>
             <LineChart data={ordenesUltimaSemana} margin={{ top: 20, right: 20, left: -10, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} />
                 <XAxis dataKey="dia" />

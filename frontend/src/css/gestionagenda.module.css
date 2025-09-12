@@ -1,5 +1,8 @@
 .pageWrapper {
   animation: fadeIn 0.5s ease-in-out;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1rem;
 }
 
 @keyframes fadeIn {
@@ -105,15 +108,58 @@
   background-color: white;
   border-radius: 12px;
   padding: 1.5rem;
+  overflow-x: auto; /* Permite scroll horizontal en móviles */
 }
-/* Estilos de la tabla tomados de gestionvehiculos.module.css para consistencia */
-.table { width: 100%; border-collapse: collapse; }
-.table th, .table td { padding: 1rem 1.5rem; text-align: left; border-bottom: 1px solid #f3f4f6; }
-.table th { background-color: #f9fafb; color: #6b7280; font-size: 0.75rem; text-transform: uppercase; }
+
+.table { 
+  width: 100%; 
+  min-width: 600px; /* Mantiene columnas legibles */
+  border-collapse: collapse; 
+}
+
+.table th, .table td { 
+  padding: 1rem 1.5rem; 
+  text-align: left; 
+  border-bottom: 1px solid #f3f4f6; 
+}
+
+.table th { 
+  background-color: #f9fafb; 
+  color: #6b7280; 
+  font-size: 0.75rem; 
+  text-transform: uppercase; 
+}
+
+/* --- Responsividad --- */
+@media (max-width: 1024px) {
+  .contentGrid {
+    grid-template-columns: 1.5fr 1fr;
+    gap: 1.5rem;
+  }
+}
 
 @media (max-width: 768px) {
-    .contentGrid {
-        grid-template-columns: 1fr;
-    }
+  .contentGrid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .formCard,
+  .infoCard {
+    width: 100%;
+    padding: 1rem;
+  }
+
+  .submitButton {
+    width: 100%;
+  }
 }
 
+@media (max-width: 480px) {
+  .formField input,
+  .formField select,
+  .formField textarea {
+    padding: 0.5rem;
+    font-size: 0.9rem;
+  }
+}

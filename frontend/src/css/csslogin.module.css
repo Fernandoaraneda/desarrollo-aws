@@ -261,3 +261,68 @@ body {
     text-decoration: underline;
     cursor: pointer;
 }
+
+/* Ajustes para pantallas pequeñas */
+@media (max-width: 768px) {
+    .containerForm {
+        width: 90%;           /* Ocupa casi todo el ancho */
+        padding: 2rem;        /* Reduce padding */
+        border-radius: 2rem;  /* Menos redondeo para móviles */
+    }
+
+    .welcomeCard {
+        width: 90%;           /* Ocupa casi todo el ancho */
+        padding: 1.5rem;      /* Padding reducido */
+    }
+
+    .welcomeTitle {
+        font-size: 2rem;      /* Reduce tamaño de título */
+    }
+
+    .welcomeSubtitle {
+        font-size: 1.2rem;    /* Reduce tamaño de subtítulo */
+    }
+
+    .formularioInput {
+        width: 95%;           /* Inputs más anchos en móviles */
+        font-size: 0.85rem;   /* Ajuste de tamaño de fuente */
+    }
+
+    .formulario input[type="button"] {
+        width: 80%;           /* Botón más ancho y visible */
+        padding: 0.6rem;
+        font-size: 0.9rem;
+    }
+
+    .iconos {
+        flex-wrap: wrap;      /* Los iconos se acomodan en varias filas si hace falta */
+        gap: 0.5rem;          /* Reduce el espacio entre iconos */
+    }
+
+    .gradientBorderButton, .slideButton {
+        padding: 0.9rem 1.8rem;  /* Botones un poco más pequeños */
+        font-size: 1rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .containerForm {
+        padding: 1.5rem;       /* Padding aún más pequeño */
+    }
+
+    .welcomeTitle {
+        font-size: 1.5rem;
+    }
+
+    .welcomeSubtitle {
+        font-size: 1rem;
+    }
+
+    .formularioInput {
+        font-size: 0.8rem;
+    }
+
+    .formulario input[type="button"] {
+        font-size: 0.85rem;
+    }
+}

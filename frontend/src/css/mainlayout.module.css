@@ -1,53 +1,59 @@
-/* --- Variables de Color para fácil personalización --- */
+/* --- Variables de Color y Estructura --- */
 :root {
-  --bg-sidebar: #111827; /* Azul oscuro casi negro */
-  --bg-content: #f4f7fa; /* Gris muy claro */
+  --bg-sidebar: #111827;
+  --bg-content: #f4f7fa;
   --bg-header: #ffffff;
   --text-primary: #1f2937;
   --text-light: #e5e7eb;
-  --accent-color: #38bdf8; /* Azul cielo vibrante */
+  --accent-color: #38bdf8;
   --accent-color-hover: #0ea5e9;
-  --border-color: #374151; /* Gris oscuro para bordes */
+  --border-color: #374151;
+  --sidebar-width: 260px; /* Ancho de la sidebar en escritorio */
+  --header-height: 64px;  /* Altura del header */
 }
 
-/* --- Contenedor Principal (Sidebar + Contenido) --- */
+/* --- Estructura Principal (Layout) --- */
 .layoutWrapper {
   display: flex;
-  height: 100vh;
-  width: 100vw;
-  overflow: hidden;
   background-color: var(--bg-content);
+  min-height: 100vh;
 }
 
 /* --- Barra Lateral (Sidebar) --- */
 .sidebar {
-  width: 260px;
+  width: var(--sidebar-width);
   background-color: var(--bg-sidebar);
+  height: 100vh;
+  position: fixed; /* 👈 La fijamos a la pantalla */
+  top: 0;
+  left: 0;
   display: flex;
   flex-direction: column;
-  transition: width 0.3s ease;
+  z-index: 1000; /* 👈 Se asegura que esté por encima de todo */
+  transition: transform 0.3s ease; /* 👈 Animación para móvil */
 }
 
 .sidebarBrand {
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 64px; /* Altura estándar para cabeceras */
+  height: var(--header-height);
   color: white;
   font-size: 1.5rem;
   font-weight: 700;
   text-decoration: none;
   border-bottom: 1px solid var(--border-color);
+  flex-shrink: 0; /* Evita que se encoja */
 }
 
 .sidebarBrand i {
   margin-right: 12px;
-  transform: rotate(-15deg);
 }
 
 .sidebarNav {
-  flex-grow: 1; /* Ocupa todo el espacio disponible */
+  flex-grow: 1;
   padding: 1rem 0;
+  overflow-y: auto; /* Scroll si hay muchos enlaces */
 }
 
 .navLink {
@@ -59,19 +65,15 @@
   font-weight: 500;
   transition: background-color 0.2s ease, color 0.2s ease;
 }
-
 .navLink:hover {
   background-color: rgba(255, 255, 255, 0.05);
   color: white;
 }
-
 .navLink i {
   width: 20px;
   margin-right: 16px;
   text-align: center;
 }
-
-/* Estilo para el enlace ACTIVO */
 .activeLink {
   background-color: var(--accent-color);
   color: white;
@@ -82,7 +84,6 @@
   padding: 1rem;
   border-top: 1px solid var(--border-color);
 }
-
 .logoutButton {
   display: flex;
   align-items: center;
@@ -96,9 +97,8 @@
   cursor: pointer;
   transition: background-color 0.2s ease, border-color 0.2s ease;
 }
-
 .logoutButton:hover {
-  background-color: #ef4444; /* Rojo para la acción de salir */
+  background-color: #ef4444;
   border-color: #ef4444;
   color: white;
 }
@@ -108,18 +108,24 @@
   flex-grow: 1;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow-y: auto;
+  /* 👈 Dejamos espacio para la sidebar en escritorio */
+  margin-left: var(--sidebar-width);
+  transition: margin-left 0.3s ease;
 }
 
 .header {
-  height: 64px;
+  height: var(--header-height);
   background-color: var(--bg-header);
   display: flex;
   align-items: center;
-  justify-content: flex-end;
-  padding: 0 2rem;
+  /* 👈 Espacio entre el botón y la info de usuario */
+  justify-content: space-between;
+  padding: 0 1.5rem;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-  z-index: 10;
+  position: sticky; /* 👈 Se pega arriba al hacer scroll */
+  top: 0;
+  z-index: 500;
 }
 
 .userInfo {
@@ -129,6 +135,69 @@
 
 .mainContent {
   flex-grow: 1;
-  padding: 2rem;
-  overflow-y: auto; /* Permite scroll solo en el área de contenido */
+  padding: 1.5rem;
+}
+
+/*
+ ============================================
+  ESTILOS PARA EL COMPORTAMIENTO RESPONSIVE
+ ============================================
+*/
+
+/* Botón de Hamburguesa (Oculto en escritorio) */
+.hamburgerButton {
+  display: none;
+  background: none;
+  border: none;
+  color: var(--text-primary);
+  font-size: 1.5rem;
+  cursor: pointer;
+  z-index: 1;
+}
+
+/* Fondo oscuro (Oculto en escritorio) */
+.overlay {
+  display: none;
+  position: fixed;
+  inset: 0; /* Abarca toda la pantalla (top, left, right, bottom: 0) */
+  background-color: rgba(0, 0, 0, 0.6);
+  z-index: 999;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+.overlay.isOpen {
+  display: block;
+  opacity: 1;
+}
+
+/* Media Query para pantallas de 768px o menos (móviles y tablets) */
+@media (max-width: 768px) {
+  .sidebar {
+    /* Ocultamos la sidebar fuera de la pantalla */
+    transform: translateX(-100%);
+  }
+  .sidebar.isOpen {
+    /* La mostramos cuando tenga la clase 'isOpen' */
+    transform: translateX(0);
+    box-shadow: 5px 0 15px rgba(0,0,0,0.2);
+  }
+
+  .contentWrapper {
+    /* El contenido ocupa todo el ancho, ya no hay margen */
+    margin-left: 0;
+  }
+
+  .hamburgerButton {
+    /* Mostramos el botón de hamburguesa */
+    display: block;
+  }
+
+  .header {
+    justify-content: space-between;
+  }
+
+  .userInfo {
+    /* Ocultamos el texto y dejamos solo el nombre para ahorrar espacio */
+    font-size: 0.9rem;
+  }
 }
