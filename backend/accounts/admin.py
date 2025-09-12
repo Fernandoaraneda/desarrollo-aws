@@ -15,7 +15,7 @@ class UsuarioAdmin(UserAdmin):
     add_form = UsuarioCreationForm  # <- formulario de creación personalizado
     model = Usuario
 
-    # Campos que verá al crear un usuario
+    # Campos que verá al crear un usuario rut obligatorio
     add_fieldsets = (
         (None, {
             'classes': ('wide',),

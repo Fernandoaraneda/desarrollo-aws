@@ -1,0 +1,89 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Body */
+body {
+  font-family: 'Inter', sans-serif;
+  margin: 0;
+  min-height: 100vh;
+  background-color: #1153d6; /* gris claro agradable */
+  color: #001025; /* gris oscuro para el texto */
+}
+
+/* Links */
+a {
+  font-weight: 500;
+  color: #3b82f6; /* azul Tailwind */
+  text-decoration: none;
+}
+a:hover {
+  color: #2563eb; /* azul más oscuro */
+}
+
+/* Buttons */
+button {
+  border-radius: 0.5rem;
+  border: none;
+  padding: 0.5rem 1rem;
+  font-size: 1rem;
+  font-weight: 500;
+  font-family: inherit;
+  background-color: #3b82f6;
+  color: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+button:hover {
+  background-color: #2563eb;
+}
+
+/* Headings */
+h1, h2, h3, h4 {
+  line-height: 1.2;
+}
+
+/* Cards */
+.card {
+  background-color: white;
+  border-radius: 1rem;
+  box-shadow: 0 10px 15px rgba(0,0,0,0.1);
+  overflow: hidden;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.card:hover {
+  transform: scale(1.05);
+  box-shadow: 0 15px 25px rgba(0,0,0,0.2);
+}
+
+/* Card images */
+/* Solo imágenes de productos */
+.card img, 
+div[class*="bg-white"] img {
+  width: 100%;
+  height: 200px; /* altura fija para las tarjetas */
+  object-fit: cover; /* mantiene proporción y recorta lo que sobre */
+  display: block;
+}
+
+
+/* Hero text */
+.hero-text {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+/* Footer */
+footer {
+  margin-top: 2rem;
+  padding: 1rem 0;
+  text-align: center;
+  color: #6b7280; /* gris Tailwind */
+}
+
+/* Responsive container */
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}

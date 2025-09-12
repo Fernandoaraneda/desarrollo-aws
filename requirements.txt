@@ -1,0 +1,79 @@
+Backend (Django)
+
+Entrar a la carpeta del backend:
+cd backend
+
+Crear un entorno virtual (recomendado):
+python -m venv venv
+
+Activar el entorno virtual:
+
+Windows: venv\Scripts\activate
+
+macOS/Linux: source venv/bin/activate
+
+Actualizar pip:
+pip install --upgrade pip
+
+Instalar dependencias:
+
+
+pip install Django>=5.2.5
+pip install djangorestframework>=3.15
+pip install djangorestframework-simplejwt>=6.1
+pip install python-decouple>=3.8
+pip install django-cors-headers>=4.1
+pip install mysqlclient>=2.1
+
+
+Aplicar migraciones:
+python manage.py migrate
+
+Ejecutar servidor de desarrollo:
+
+python manage.py runserver
+ 
+
+
+Frontend (React con Vite)
+
+Entrar a la carpeta del frontend:
+cd frontend
+
+Instalar dependencias básicas:
+npm install
+
+Instalar React Router:
+npm install react-router-dom
+
+Instalar Material UI (opcional):
+npm install @mui/material @mui/icons-material
+
+Instalar TailwindCSS y herramientas de PostCSS:
+npm install tailwindcss postcss autoprefixer
+npx tailwindcss init -p
+npm install axios
+npm install swr
+npm install react-router-dom
+npm install lucide-react
+Ejecutar servidor de desarrollo de React:
+npm run dev
+
+Opcional, exponer host a la red local:
+npm run dev -- --host 0.0.0.0
+
+
+
+
+
+
+
+
+
+npm install zustand           
+npm install formik yup      
+npm install react-icons        
+npm install react-toastify      
+npm install clsx            
+npm install swr                 
+npm install recoil              

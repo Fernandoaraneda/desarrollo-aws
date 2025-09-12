@@ -1,0 +1,263 @@
+/* Este es el archivo de módulo CSS que contiene los estilos locales para tu componente LoginPage.
+  Los estilos aquí solo se aplicarán a los elementos que los importen.
+*/
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Roboto', sans-serif;
+}
+
+body {
+    /* No definimos el fondo aquí para que no afecte a todas las páginas */
+    font-family: 'Roboto', sans-serif;
+}
+
+.containerFormWrapper {
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    /* El fondo ahora es parte de este contenedor específico */
+    background-image: url(src/assets/img2.jpg);
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: cover;
+    color: #fff;
+}
+
+.containerForm {
+    width: 400px; 
+    padding: 3rem;
+    background-color: rgba(51, 51, 51, 0.8);
+    text-align: center;
+    border-radius: 6rem;
+    box-shadow: 0 0 20px rgba(0,0,0,0.5);
+}
+
+.message h2 {
+    font-size: 1.7rem;
+    margin-bottom: 1rem;
+}
+
+.message p {
+    font-size: 1rem;
+    margin-bottom: 2rem;
+}
+
+.message button {
+    padding: 0.8rem 1.5rem;
+    font-weight: 400;
+    background-color: #4a4aee;
+    border-radius: 2rem;
+    border: none;
+    outline: none;
+    cursor: pointer;
+    font-size: 0.9rem;
+    color: #fff;
+    transition: all 0.3s ease-in;
+}
+
+.message button:hover {
+    background-color: #6464f8;
+}
+
+.formulario {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.formularioInput {
+    width: 80%;
+    margin-bottom: 1.5rem;
+    padding: 0.5rem;
+    border: none;
+    border-bottom: 1px solid white;
+    background: transparent;
+    color: white;
+    font-size: 0.9rem;
+    text-align: center;
+}
+
+.formulario input[type="button"] {
+    width: 60%;
+    background-color: white;
+    color: #222;
+    font-weight: 600;
+    border-radius: 2rem;
+    cursor: pointer;
+    padding: 0.7rem;
+    border: none;
+    transition: all 0.3s ease-in;
+}
+
+.formulario input[type="button"]:hover {
+    background-color: #f0f0f0;
+}
+
+.iconos {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.border-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    border: 1px solid white;
+    border-radius: 50%;
+    font-size: 1.5rem;
+    cursor: pointer;
+    transition: all 0.3s ease-in;
+}
+
+.border-icon:hover {
+    background-color: #4a4aee;
+}
+
+.cuentaGratis {
+    margin-bottom: 1.5rem;
+}
+
+.sign-in,
+.sign-up {
+    opacity: 1;
+    visibility: visible;
+}
+
+.container-form-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    position: relative;
+}
+
+.container-form.sign-in {
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.5s ease-in-out;
+    position: absolute;
+}
+
+.container-form.sign-in.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.welcomeCard {
+    width: 350px; 
+    padding: 2rem;
+    background-color: rgba(51, 51, 51, 0.7); 
+    border-radius: 1rem;
+    box-shadow: 0 0 20px rgba(0,0,0,0.5);
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.welcomeTitle {
+    font-size: 3rem; 
+    color: #fffffe; 
+    font-weight: bold;
+    margin-bottom: 2rem;
+}
+
+.welcomeSubtitle {
+    font-size: 1.7rem;
+    color: #ddd;
+    margin-bottom: 2rem;
+}
+
+.gradientBorderButton {
+    position: relative;
+    padding: 1.2rem 2.4rem;
+    font-size: 1.1rem;
+    color: white;
+    background: #1e293b;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.gradientBorderButton::before {
+    content: '';
+    position: absolute;
+    inset: -3px;
+    background: linear-gradient(45deg, #60a5fa, #a78bfa, #60a5fa);
+    border-radius: 10px;
+    z-index: -1;
+    transition: opacity 0.3s ease;
+    animation: borderRotate 4s linear infinite;
+}
+
+@keyframes borderRotate {
+    0% { filter: hue-rotate(0deg); }
+    100% { filter: hue-rotate(360deg); }
+}
+
+.gradientBorderButton:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(96, 165, 250, 0.4);
+}
+
+.slideButton {
+    position: relative;
+    padding: 1.01rem 1.4rem;
+    font-size: 1.1rem;
+    color: white;
+    background: none;
+    border: 2px solid #60a5fa;
+    border-radius: 8px;
+    cursor: pointer;
+    overflow: hidden;
+}
+
+.slideContent {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    position: relative;
+    z-index: 1;
+}
+
+.slideButton::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: #60a5fa;
+    transition: transform 0.5s ease;
+    transform: skewX(-20deg);
+}
+
+.slideButton:hover::before {
+    transform: skewX(-20deg) translateX(100%);
+}
+
+.slideButton:hover .icon {
+    transform: translateX(5px);
+}
+
+.icon {
+    transition: transform 0.3s ease;
+}
+
+.resetPasswordBtn {
+    margin-top: 1rem;
+    background: transparent;
+    color: #fff;
+    border: none;
+    text-decoration: underline;
+    cursor: pointer;
+}
