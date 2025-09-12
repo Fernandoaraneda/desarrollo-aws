@@ -57,6 +57,17 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'core.wsgi.application'
 
+from pathlib import Path
+from decouple import config
+from datetime import timedelta
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Secret Key y Debug
+SECRET_KEY = config("SECRET_KEY")
+DEBUG = config("DEBUG", default=False, cast=bool)
+ALLOWED_HOSTS = config("ALLOWED_HOSTS", default="127.0.0.1,localhost").split(",")
+
 # Database
 DATABASES = {
     "default": {
@@ -65,7 +76,7 @@ DATABASES = {
         "USER": config("DB_USER", default="root"),
         "PASSWORD": config("DB_PASSWORD", default=""),
         "HOST": config("DB_HOST", default="127.0.0.1"),
-        "PORT": config("DB_PORT", default="3306"),
+        "PORT": config("DB_PORT", default=3306, cast=int),
         "OPTIONS": {"init_command": "SET sql_mode='STRICT_TRANS_TABLES'"},
     }
 }
@@ -97,6 +108,7 @@ REST_FRAMEWORK = {
     ),
 }
 
+# Modelo de usuario custom
 AUTH_USER_MODEL = "accounts.Usuario"
 
 # Email (en local usa consola, en producción cambiar a SMTP)
@@ -112,7 +124,8 @@ SIMPLE_JWT = {
     'ROTATE_REFRESH_TOKENS': True,
     'BLACKLIST_AFTER_ROTATION': True,
     'ALGORITHM': 'HS256',
-    'SIGNING_KEY': SECRET_KEY,
+    'SIGNING_KEY': config("SECRET_KEY"),
     'AUTH_HEADER_TYPES': ('Bearer',),
     'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.AccessToken',),
 }
+
