@@ -75,11 +75,12 @@ WSGI_APPLICATION = 'core.wsgi.application'
 # Local → usa variables DB_NAME, DB_USER, etc.
 DATABASES = {
     "default": dj_database_url.config(
-        default=f"mysql://{config('DB_USER', 'root')}:{config('DB_PASSWORD', '')}@{config('DB_HOST', '127.0.0.1')}:{config('DB_PORT', 3306)}/{config('DB_NAME', 'capstone_db')}",
+        default=config("DATABASE_URL"),  # La URL completa de la DB
         conn_max_age=600,
         engine="django.db.backends.mysql",
     )
 }
+
 
 # -----------------------------
 # PASSWORD VALIDATION
