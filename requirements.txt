@@ -47,28 +47,3 @@ npm run dev
 
 ##  Opcional, exponer host a la red local: ## 
 npm run dev -- --host 0.0.0.0
-
-
-
-Instalar Material UI (opcional):
-npm install @mui/material @mui/icons-material
-
-Instalar TailwindCSS y herramientas de PostCSS:
-npm install tailwindcss postcss autoprefixer
-npx tailwindcss init -p
-npm install axios
-npm install swr
-npm install react-router-dom
-npm install lucide-react
-
-
-
-
-
-npm install zustand           
-npm install formik yup      
-npm install react-icons        
-npm install react-toastify      
-npm install clsx            
-npm install swr                 
-npm install recoil              
