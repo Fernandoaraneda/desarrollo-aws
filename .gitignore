@@ -73,7 +73,9 @@ venv/
 ENV/
 env.bak/
 venv.bak/
-
+# Backend environment
+backend/.env
+backend/.env.production
 # PyCharm / VSCode / Spyder
 .idea/
 .vscode/
