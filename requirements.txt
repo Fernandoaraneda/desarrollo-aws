@@ -9,7 +9,7 @@ cd backend
 ## Crear un entorno virtual (recomendado):##
 python -m venv venv
 
-## Activar el entorno virtual: :##
+## Activar el entorno virtual##
 
 Windows: venv\Scripts\activate
 
