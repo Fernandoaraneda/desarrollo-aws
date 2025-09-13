@@ -1,19 +1,23 @@
+
+
 Backend (Django)
 
-Entrar a la carpeta del backend:
+## Entrar a la carpeta del backend:: ##
+
 cd backend
 
-Crear un entorno virtual (recomendado):
+## Crear un entorno virtual (recomendado):##
 python -m venv venv
 
-Activar el entorno virtual:
+## Activar el entorno virtual: :##
 
 Windows: venv\Scripts\activate
 
-Aplicar migraciones:
+## Aplicar migraciones:##
+
 python manage.py migrate
 
-Ejecutar servidor de desarrollo:
+## Ejecutar servidor de desarrollo: ##
 
 python manage.py runserver
  
@@ -21,14 +25,27 @@ python manage.py runserver
 
 Frontend (React con Vite)
 
-Entrar a la carpeta del frontend:
+## Entrar a la carpeta del frontend:## 
+
 cd frontend
 
-Instalar dependencias básicas:
+## Instalar dependencias básicas: ## 
 npm install
 
-Instalar React Router:
+npm list --depth=0 > frontend-deps.txt 
+
+## Instalar React Router (para manejo de rutas en React): ##
+
 npm install react-router-dom
+
+
+##  Ejecutar servidor de desarrollo de React: ## 
+npm run dev
+
+##  Opcional, exponer host a la red local: ## 
+npm run dev -- --host 0.0.0.0
+
+
 
 Instalar Material UI (opcional):
 npm install @mui/material @mui/icons-material
@@ -40,15 +57,6 @@ npm install axios
 npm install swr
 npm install react-router-dom
 npm install lucide-react
-Ejecutar servidor de desarrollo de React:
-npm run dev
-
-Opcional, exponer host a la red local:
-npm run dev -- --host 0.0.0.0
-
-
-
-
 
 
 

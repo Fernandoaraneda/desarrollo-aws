@@ -19,8 +19,7 @@ const navLinksByRole = {
   'Mecanico': [
     { to: '/dashboard', label: 'Tareas Asignadas', icon: 'fas fa-tasks' },
     // 👇 ESTA LÍNEA ES LA IMPORTANTE PARA EL MECÁNICO 👇
-    { to: '/ordenes', label: 'Órdenes de Servicio', icon: 'fas fa-clipboard-list' },
-    { to: '/agenda', label: 'Ver Agenda', icon: 'fas fa-calendar-alt' },
+    { to: '/ordenes', label: 'Órdenes de Servicio', icon: 'fas fa-clipboard-list' }
   ],
   'Administrativo': [
     { to: '/dashboard', label: 'Administracion', icon: 'fas fa-file-invoice' },
