@@ -8,7 +8,7 @@ import './css/index.css';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    {/* 👇 2. Envuelve tu componente <App /> aquí */}
+    {/*2. Envuelve tu componente <App /> aquí */}
     <BrowserRouter>
       <App />
     </BrowserRouter>

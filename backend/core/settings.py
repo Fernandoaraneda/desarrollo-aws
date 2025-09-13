@@ -4,6 +4,9 @@ from decouple import config
 from datetime import timedelta
 import dj_database_url
 
+# -----------------------------
+# BASE DIR
+# -----------------------------
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # -----------------------------
@@ -15,7 +18,10 @@ DEBUG = config("DEBUG", default=True, cast=bool)
 # -----------------------------
 # ALLOWED HOSTS
 # -----------------------------
-ALLOWED_HOSTS = config("ALLOWED_HOSTS", default="127.0.0.1,localhost").split(",")
+ALLOWED_HOSTS = config(
+    "ALLOWED_HOSTS",
+    default="127.0.0.1,localhost"
+).split(",")
 
 # -----------------------------
 # INSTALLED APPS
@@ -27,8 +33,12 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+
+    # Terceros
     'rest_framework',
     'corsheaders',
+
+    # Apps propias
     'accounts',
 ]
 
@@ -46,7 +56,11 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
+# -----------------------------
+# ROOT URLS / WSGI
+# -----------------------------
 ROOT_URLCONF = 'core.urls'
+WSGI_APPLICATION = 'core.wsgi.application'
 
 # -----------------------------
 # TEMPLATES
@@ -54,10 +68,11 @@ ROOT_URLCONF = 'core.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / "templates"],  # opcional: carpeta de templates
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
+                'django.template.context_processors.debug',
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
@@ -66,21 +81,18 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'core.wsgi.application'
-
 # -----------------------------
 # DATABASES
 # -----------------------------
-# Railway/Render → si existe DATABASE_URL, la usa
-# Local → usa variables DB_NAME, DB_USER, etc.
+# Usa DATABASE_URL en ambos entornos
+# .env.local -> mysql://root:pass@127.0.0.1:3306/mi_db_local
+# .env.production -> mysql://root:pass@host:puerto/railway
 DATABASES = {
     "default": dj_database_url.config(
-        default=config("DATABASE_URL"),  # La URL completa de la DB
+        default=config("DATABASE_URL"),
         conn_max_age=600,
-        engine="django.db.backends.mysql",
     )
 }
-
 
 # -----------------------------
 # PASSWORD VALIDATION
@@ -106,6 +118,9 @@ USE_TZ = True
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
+# -----------------------------
+# AUTO FIELD
+# -----------------------------
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # -----------------------------
@@ -125,7 +140,10 @@ AUTH_USER_MODEL = "accounts.Usuario"
 # -----------------------------
 # EMAIL
 # -----------------------------
-EMAIL_BACKEND = config("EMAIL_BACKEND", default="django.core.mail.backends.console.EmailBackend")
+EMAIL_BACKEND = config(
+    "EMAIL_BACKEND",
+    default="django.core.mail.backends.console.EmailBackend"
+)
 
 # -----------------------------
 # CORS
