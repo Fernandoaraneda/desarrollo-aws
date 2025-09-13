@@ -63,7 +63,7 @@ npm install lucide-react
 
 
 
-
+##Esto No sirve
 
 npm install zustand           
 npm install formik yup      
@@ -71,4 +71,5 @@ npm install react-icons
 npm install react-toastify      
 npm install clsx            
 npm install swr                 
-npm install recoil              
+npm install recoil     
+
