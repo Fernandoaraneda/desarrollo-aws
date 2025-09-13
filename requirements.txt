@@ -47,3 +47,6 @@ npm run dev
 
 ##  Opcional, exponer host a la red local: ## 
 npm run dev -- --host 0.0.0.0
+
+
+wena machucao revisa
