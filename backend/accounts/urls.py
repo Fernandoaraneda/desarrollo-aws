@@ -1,9 +1,10 @@
 # backend/accounts/urls.py
 
-from django.urls import path, include # 👈 Asegúrate de importar 'include'
-from rest_framework.routers import DefaultRouter # 👈 Importa el Router
+from django.urls import path, include
+from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt.views import TokenRefreshView
 
+# CAMBIO: Se importa el nuevo OrdenViewSet
 from .views import (
     LoginView, 
     PasswordResetRequestView, 
@@ -16,22 +17,18 @@ from .views import (
     supervisor_dashboard_stats,
     VehiculoViewSet,
     AgendamientoViewSet,
+    OrdenViewSet, # <--- IMPORTADO
     ChoferListView
 )
 
-# --- Se crea un router para las vistas basadas en ViewSet ---
-# El router crea automáticamente las URLs para:
-# - GET /api/v1/vehiculos/ (listar todos)
-# - POST /api/v1/vehiculos/ (crear uno nuevo)
-# - GET /api/v1/vehiculos/{patente}/ (ver uno)
-# - PUT/PATCH /api/v1/vehiculos/{patente}/ (actualizar uno)
-# - DELETE /api/v1/vehiculos/{patente}/ (eliminar uno)
 router = DefaultRouter()
 router.register(r'vehiculos', VehiculoViewSet, basename='vehiculo')
 router.register(r'agendamientos', AgendamientoViewSet, basename='agendamiento')
-# --- Lista de URLs de la aplicación ---
+# CAMBIO: Se registra el nuevo ViewSet para las órdenes
+router.register(r'ordenes', OrdenViewSet, basename='orden') # <--- AÑADIDO
+
 urlpatterns = [
-    # Rutas que ya tenías (autenticación, usuarios, dashboard)
+    # Rutas existentes de autenticación y usuarios
     path("login/", LoginView.as_view(), name="login"),
     path("token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
     path("users/me/", UserDetailView.as_view(), name="user-detail"),
@@ -42,8 +39,8 @@ urlpatterns = [
     path("dashboard/supervisor/", supervisor_dashboard_stats, name="dashboard-supervisor"),
     path("password-reset/", PasswordResetRequestView.as_view(), name="password-reset"),
     path("password-reset-confirm/", PasswordResetConfirmView.as_view(), name="password-reset-confirm"),
-
-    # 👇 Se añade esta línea para incluir todas las URLs del router
-    path('', include(router.urls)),
     path('choferes/', ChoferListView.as_view(), name='chofer-list'),
+
+    # Se incluyen todas las URLs del router (vehiculos, agendamientos y ahora ordenes)
+    path('', include(router.urls)),
 ]

@@ -11,8 +11,12 @@ import GestionUsuarios from './pages/GestionUsuarios.jsx';
 import CrearEditarUsuario from './pages/CrearEditarUsuario.jsx'; 
 import GestionVehiculos from './pages/GestionVehiculos.jsx';
 import CrearEditarVehiculo from './pages/CrearEditarVehiculo.jsx';
-// 👇 1. Se importa la nueva página de la agenda
 import GestionAgenda from './pages/GestionAgenda.jsx';
+
+// 👇 1. Importa los nuevos componentes que faltaban
+import GestionOrdenes from "./pages/GestionOrdenes.jsx";
+import DetalleOrden from "./pages/DetalleOrden.jsx";
+
 
 // --- Importación de Componentes de Lógica ---
 import PrivateRoute from "./components/PrivateRoute.jsx";
@@ -45,8 +49,13 @@ function App() {
         <Route path="/vehiculos/crear" element={<CrearEditarVehiculo />} />
         <Route path="/vehiculos/editar/:patente" element={<CrearEditarVehiculo />} />
 
-        {/* 👇 2. Se añade la nueva ruta para la Agenda */}
+        {/* Ruta para la Agenda */}
         <Route path="/agenda" element={<GestionAgenda />} />
+
+        {/* 👇 2. Añade las nuevas rutas para las Órdenes de Servicio */}
+        <Route path="/ordenes" element={<GestionOrdenes />} />
+        <Route path="/ordenes/:id" element={<DetalleOrden />} />
+
       </Route>
       
       <Route path="*" element={<Navigate to={user ? "/dashboard" : "/"} replace />} />
@@ -55,4 +64,3 @@ function App() {
 }
 
 export default App;
-

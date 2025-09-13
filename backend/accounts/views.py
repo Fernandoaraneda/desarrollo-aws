@@ -341,3 +341,84 @@ class ChoferListView(generics.ListAPIView):
 
     def get_queryset(self):
         return User.objects.filter(groups__name='Chofer').order_by('first_name')
+
+
+
+
+
+
+
+
+from rest_framework import viewsets, permissions
+from rest_framework.decorators import action
+from rest_framework.response import Response
+from .models import Orden, OrdenHistorialEstado, Usuario, Vehiculo, Agendamiento
+from .serializers import (
+    OrdenSerializer, 
+    UserSerializer, 
+    VehiculoSerializer, 
+    AgendamientoSerializer
+)
+
+# --- PERMISOS PERSONALIZADOS ---
+class IsSupervisorOrMecanico(permissions.BasePermission):
+    """
+    Permiso personalizado para permitir acceso solo a Supervisores o Mecánicos.
+    """
+    def has_permission(self, request, view):
+        if not request.user.is_authenticated:
+            return False
+        return (
+            request.user.groups.filter(name='Supervisor').exists() or
+            request.user.groups.filter(name='Mecanico').exists()
+        )
+
+# --- VIEWSETS ---
+# Aquí irían tus otros ViewSets (User, Vehiculo, Agendamiento) para mantener todo ordenado.
+
+class OrdenViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet para ver y gestionar las Órdenes de Servicio.
+    """
+    queryset = Orden.objects.all().order_by('-fecha_ingreso')
+    serializer_class = OrdenSerializer
+    permission_classes = [permissions.IsAuthenticated] # Permiso base para todas las acciones
+
+    def get_permissions(self):
+        """
+        Asigna permisos más restrictivos para acciones específicas.
+        Solo Supervisores y Mecánicos pueden cambiar el estado.
+        """
+        if self.action in ['cambiar_estado']:
+            self.permission_classes = [IsSupervisorOrMecanico]
+        return super().get_permissions()
+
+    @action(detail=True, methods=['post'], url_path='cambiar-estado')
+    def cambiar_estado(self, request, pk=None):
+        """
+        Endpoint para cambiar el estado de una orden y registrarlo en el historial.
+        Espera un POST con: {"estado": "Nuevo Estado", "motivo": "Opcional"}
+        """
+        orden = self.get_object()
+        nuevo_estado = request.data.get('estado')
+        motivo = request.data.get('motivo', '')
+
+        # Validación simple para asegurar que el estado enviado es válido
+        if not nuevo_estado or nuevo_estado not in [choice[0] for choice in Orden.ESTADOS_ORDEN]:
+            return Response({'error': 'Debe proporcionar un estado válido.'}, status=400)
+
+        estado_anterior = orden.estado
+        orden.estado = nuevo_estado
+        orden.save()
+
+        # Registrar el cambio en el historial
+        OrdenHistorialEstado.objects.create(
+            orden=orden,
+            estado=nuevo_estado, # Guardamos solo el estado nuevo
+            usuario=request.user,
+            motivo=motivo
+        )
+        
+        # Devolvemos la orden completamente actualizada con su nuevo historial
+        serializer = self.get_serializer(orden)
+        return Response(serializer.data)

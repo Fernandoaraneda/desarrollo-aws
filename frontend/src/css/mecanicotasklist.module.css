@@ -1,0 +1,90 @@
+.mainTitle {
+    font-size: 1.5rem;
+    font-weight: bold;
+    margin-bottom: 1.5rem;
+    color: #f9fafb; /* Texto blanco para que contraste con el fondo oscuro del dashboard */
+}
+
+.tasksGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+
+.taskCard {
+    background-color: #374151; /* Un gris un poco más claro que el fondo del dashboard */
+    border-radius: 12px;
+    padding: 1.25rem;
+    border: 1px solid #4b5563;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.taskCard:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+}
+
+.cardHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.patente {
+    font-family: monospace;
+    font-size: 1.1rem;
+    font-weight: bold;
+    background-color: #111827;
+    padding: 0.25rem 0.75rem;
+    border-radius: 6px;
+    color: #e5e7eb;
+}
+
+.statusBadge {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-transform: capitalize;
+}
+
+.statusBadge.enproceso { background-color: #dbeafe; color: #1e40af; }
+.statusBadge.diagnostico { background-color: #fef3c7; color: #92400e; }
+.statusBadge.pausado { background-color: #fee2e2; color: #991b1b; }
+
+.cardBody .vehiculoNombre {
+    font-weight: 600;
+    font-size: 1.1rem;
+    color: #f9fafb;
+}
+
+.cardBody .descripcionFalla {
+    color: #d1d5db;
+    font-size: 0.9rem;
+    margin-top: 0.5rem;
+    line-height: 1.4;
+}
+
+.cardFooter {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.8rem;
+    color: #9ca3af;
+    margin-top: 1.5rem;
+    border-top: 1px solid #4b5563;
+    padding-top: 0.75rem;
+}
+
+.noTasksMessage {
+    background-color: #374151;
+    color: #d1d5db;
+    padding: 2rem;
+    border-radius: 12px;
+    text-align: center;
+    font-style: italic;
+}

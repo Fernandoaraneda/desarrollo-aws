@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser, Group, Permission
 from django.core.exceptions import ValidationError
 from django.utils import timezone
+from datetime import timedelta # <-- CAMBIO 1: Se importa timedelta para cálculos de tiempo
 
 # -----------------------------------------------------------------------------
 # MODELOS DE USUARIOS Y ROLES (Sin cambios)
@@ -66,10 +67,18 @@ class Agendamiento(models.Model):
     chofer_asociado = models.ForeignKey(Usuario, on_delete=models.SET_NULL, null=True, blank=True, related_name="agendamientos_chofer", limit_choices_to={'groups__name': 'Chofer'})
     fecha_hora_programada = models.DateTimeField()
     duracion_estimada_minutos = models.PositiveIntegerField(default=60, help_text="Duración estimada en minutos para evitar solapamientos.")
+    fecha_hora_fin = models.DateTimeField(editable=False, null=True, blank=True) # <-- CAMBIO 2: Se añade el nuevo campo.
     motivo_ingreso = models.TextField(help_text="Breve descripción del motivo de la visita.")
     estado = models.CharField(max_length=50, choices=ESTADOS_AGENDA, default='Programado')
     creado_por = models.ForeignKey(Usuario, on_delete=models.PROTECT, related_name="agendamientos_creados")
     fecha_creacion = models.DateTimeField(auto_now_add=True)
+
+    # <-- CAMBIO 3: Se añade el método save para calcular la fecha de fin.
+    def save(self, *args, **kwargs):
+        # Calcula automáticamente la hora de fin basado en la hora de inicio y la duración
+        if self.fecha_hora_programada and self.duracion_estimada_minutos:
+            self.fecha_hora_fin = self.fecha_hora_programada + timedelta(minutes=self.duracion_estimada_minutos)
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"Cita para {self.vehiculo.patente} el {self.fecha_hora_programada.strftime('%d-%m-%Y %H:%M')}"
@@ -78,7 +87,6 @@ class Agendamiento(models.Model):
         verbose_name = "Agendamiento"
         verbose_name_plural = "Agendamientos"
         ordering = ['fecha_hora_programada']
-        # 👇 MEJORA 1: Evita que el mismo vehículo sea agendado a la misma hora exacta.
         unique_together = ('vehiculo', 'fecha_hora_programada')
 
 class Orden(models.Model):
@@ -169,7 +177,6 @@ class OrdenItem(models.Model):
         if (self.producto and self.servicio) or (not self.producto and not self.servicio):
             raise ValidationError("Debe especificar un producto o un servicio, pero no ambos.")
     
-    # 👇 MEJORA 2: Autocompleta el precio_unitario al guardar si está vacío.
     def save(self, *args, **kwargs):
         if self._state.adding and not self.precio_unitario:
             if self.producto:
