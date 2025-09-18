@@ -191,45 +191,60 @@ class UserRetrieveUpdateAPIView(generics.RetrieveUpdateAPIView):
 # --- DASHBOARD SUPERVISOR ---
 dias_semana = {0: "Lun", 1: "Mar", 2: "Mié", 3: "Jue", 4: "Vie", 5: "Sáb", 6: "Dom"}
 
+# REEMPLAZA la función supervisor_dashboard_stats en tu views.py por esta versión corregida:
+
 @api_view(["GET"])
 @permission_classes([IsSupervisor])
 def supervisor_dashboard_stats(request):
+    """
+    Vista corregida del dashboard del supervisor con cálculos precisos
+    """
     today = now().date()
     start_of_month = today.replace(day=1)
     start_of_week = today - timedelta(days=today.weekday())
 
+    # 🔧 1. VEHÍCULOS EN TALLER - Contar vehículos únicos con órdenes activas
     vehiculos_en_taller = Orden.objects.filter(
         estado__in=["Ingresado", "En Diagnostico", "En Proceso", "Pausado"]
-    ).count()
+    ).values('vehiculo').distinct().count()
 
+    # 🔧 2. AGENDAMIENTOS HOY - Solo programados para hoy
     agendamientos_hoy = Agendamiento.objects.filter(
-        fecha_hora_programada__date=today, estado="Programado"
+        fecha_hora_programada__date=today, 
+        estado="Programado"
     ).count()
 
+    # 🔧 3. ÓRDENES FINALIZADAS ESTE MES
     ordenes_finalizadas_mes = Orden.objects.filter(
-        estado="Finalizado", fecha_entrega_real__gte=start_of_month
+        estado="Finalizado", 
+        fecha_entrega_real__gte=start_of_month
     ).count()
 
+    # 🔧 4. TIEMPO PROMEDIO DE REPARACIÓN
     ordenes_completadas = Orden.objects.filter(
-        estado="Finalizado", fecha_entrega_real__isnull=False
+        estado="Finalizado", 
+        fecha_entrega_real__isnull=False,
+        fecha_ingreso__isnull=False
     )
-    tiempo_promedio_dias = ordenes_completadas.aggregate(
-        avg_duration=Avg(F("fecha_entrega_real") - F("fecha_ingreso"))
-    )["avg_duration"]
-
+    
     tiempo_promedio_str = "N/A"
-    if tiempo_promedio_dias:
-        total_dias = tiempo_promedio_dias.total_seconds() / (60 * 60 * 24)
-        tiempo_promedio_str = f"{total_dias:.1f} Días"
+    if ordenes_completadas.exists():
+        tiempo_promedio_dias = ordenes_completadas.aggregate(
+            avg_duration=Avg(F("fecha_entrega_real") - F("fecha_ingreso"))
+        )["avg_duration"]
+        
+        if tiempo_promedio_dias:
+            total_dias = tiempo_promedio_dias.total_seconds() / (60 * 60 * 24)
+            tiempo_promedio_str = f"{total_dias:.1f} días"
 
+    # 🔧 5. ÓRDENES POR ESTADO (TODAS LAS ÓRDENES, NO SOLO ACTIVAS)
     ordenes_por_estado = list(
-        Orden.objects.filter(
-            estado__in=["Ingresado", "En Diagnostico", "En Proceso", "Pausado"]
-        )
-        .values("estado")
+        Orden.objects.values("estado")
         .annotate(cantidad=Count("id"))
+        .order_by("estado")
     )
 
+    # 🔧 6. ÓRDENES DE LA ÚLTIMA SEMANA
     ordenes_semana_raw = (
         Orden.objects.filter(fecha_ingreso__date__gte=start_of_week)
         .annotate(dia_semana=TruncDay("fecha_ingreso"))
@@ -238,46 +253,77 @@ def supervisor_dashboard_stats(request):
         .order_by("dia_semana")
     )
 
-    ordenes_ultima_semana = [
-        {"dia": dias_semana.get(item["dia_semana"].weekday(), ""), "creadas": item["creadas"]}
-        for item in ordenes_semana_raw
-    ]
+    # Crear lista completa de los 7 días con datos
+    ordenes_ultima_semana = []
+    for i in range(7):
+        fecha_dia = start_of_week + timedelta(days=i)
+        dia_nombre = dias_semana.get(fecha_dia.weekday(), "")
+        
+        # Buscar si hay datos para este día
+        ordenes_del_dia = 0
+        for item in ordenes_semana_raw:
+            if item["dia_semana"].date() == fecha_dia:
+                ordenes_del_dia = item["creadas"]
+                break
+        
+        ordenes_ultima_semana.append({
+            "dia": dia_nombre,
+            "creadas": ordenes_del_dia
+        })
 
+    # 🔧 7. ÓRDENES RECIENTES (con mejor manejo de datos nulos)
     ordenes_recientes = list(
         Orden.objects.select_related("vehiculo", "usuario_asignado")
-        .order_by("-fecha_ingreso")[:5]
+        .order_by("-fecha_ingreso")[:10]  # Incrementé a 10 para mostrar más
         .values(
             "id",
             "vehiculo__patente",
             "estado",
             "usuario_asignado__first_name",
             "usuario_asignado__last_name",
+            "usuario_asignado__username",
         )
     )
 
-    ordenes_recientes_data = [
-        {
+    ordenes_recientes_data = []
+    for o in ordenes_recientes:
+        # Mejor manejo de nombres de mecánicos
+        first_name = o.get('usuario_asignado__first_name', '') or ''
+        last_name = o.get('usuario_asignado__last_name', '') or ''
+        username = o.get('usuario_asignado__username', '') or ''
+        
+        mecanico_nombre = f"{first_name} {last_name}".strip()
+        if not mecanico_nombre and username:
+            mecanico_nombre = username
+        if not mecanico_nombre:
+            mecanico_nombre = "No asignado"
+        
+        ordenes_recientes_data.append({
             "id": o["id"],
-            "patente": o["vehiculo__patente"],
+            "patente": o["vehiculo__patente"] or "Sin patente",
             "estado": o["estado"],
-            "mecanico": f"{o['usuario_asignado__first_name'] or ''} {o['usuario_asignado__last_name'] or ''}".strip(),
-        }
-        for o in ordenes_recientes
-    ]
+            "mecanico": mecanico_nombre,
+        })
 
-    return Response(
-        {
-            "kpis": {
-                "vehiculosEnTaller": vehiculos_en_taller,
-                "agendamientosHoy": agendamientos_hoy,
-                "ordenesFinalizadasMes": ordenes_finalizadas_mes,
-                "tiempoPromedioRep": tiempo_promedio_str,
-            },
-            "ordenesPorEstado": ordenes_por_estado,
-            "ordenesUltimaSemana": ordenes_ultima_semana,
-            "ordenesRecientes": ordenes_recientes_data,
-        }
-    )
+    # 🔧 8. RESPUESTA CON LOGGING PARA DEBUG
+    response_data = {
+        "kpis": {
+            "vehiculosEnTaller": vehiculos_en_taller,
+            "agendamientosHoy": agendamientos_hoy,
+            "ordenesFinalizadasMes": ordenes_finalizadas_mes,
+            "tiempoPromedioRep": tiempo_promedio_str,
+        },
+        "ordenesPorEstado": ordenes_por_estado,
+        "ordenesUltimaSemana": ordenes_ultima_semana,
+        "ordenesRecientes": ordenes_recientes_data,
+    }
+    
+    # Debug logging (puedes remover esto después de confirmar que funciona)
+    print(f"🔍 Debug Dashboard - Vehículos en taller: {vehiculos_en_taller}")
+    print(f"🔍 Debug Dashboard - Órdenes finalizadas mes: {ordenes_finalizadas_mes}")
+    print(f"🔍 Debug Dashboard - Estados: {ordenes_por_estado}")
+    
+    return Response(response_data)
 
 
 # --- VIEWSETS ---
