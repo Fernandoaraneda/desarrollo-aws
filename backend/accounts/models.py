@@ -2,11 +2,11 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser, Group, Permission
 from django.core.exceptions import ValidationError
 from django.utils import timezone
-from datetime import timedelta # <-- CAMBIO 1: Se importa timedelta para cálculos de tiempo
+from datetime import timedelta
 
-# -----------------------------------------------------------------------------
-# MODELOS DE USUARIOS Y ROLES (Sin cambios)
-# -----------------------------------------------------------------------------
+# --------------------------------------------------------------------------
+# USUARIOS Y ROLES
+# --------------------------------------------------------------------------
 class Usuario(AbstractUser):
     rut = models.CharField(max_length=12, unique=True)
     telefono = models.CharField(max_length=50, blank=True, null=True)
@@ -30,9 +30,9 @@ class Usuario(AbstractUser):
         rol_nombre = group.name if group else "Sin Rol"
         return f"{self.first_name} {self.last_name} ({rol_nombre})"
 
-# -----------------------------------------------------------------------------
-# MODELOS DE LA FLOTA Y TALLER
-# -----------------------------------------------------------------------------
+# --------------------------------------------------------------------------
+# FLOTA Y TALLER
+# --------------------------------------------------------------------------
 class Vehiculo(models.Model):
     patente = models.CharField(max_length=10, primary_key=True)
     marca = models.CharField(max_length=50)
@@ -41,7 +41,6 @@ class Vehiculo(models.Model):
     color = models.CharField(max_length=30, blank=True, null=True)
     vin = models.CharField("VIN", max_length=50, unique=True, blank=True, null=True)
     kilometraje = models.IntegerField(blank=True, null=True)
-
     chofer = models.ForeignKey(
         'Usuario',
         on_delete=models.SET_NULL,
@@ -50,7 +49,6 @@ class Vehiculo(models.Model):
         related_name='vehiculos',
         limit_choices_to={'groups__name': 'Chofer'}
     )
-
     def __str__(self):
         if self.chofer:
             return f"{self.patente} - {self.marca} {self.modelo} ({self.chofer.first_name})"
@@ -66,16 +64,14 @@ class Agendamiento(models.Model):
     vehiculo = models.ForeignKey(Vehiculo, on_delete=models.PROTECT, related_name="agendamientos")
     chofer_asociado = models.ForeignKey(Usuario, on_delete=models.SET_NULL, null=True, blank=True, related_name="agendamientos_chofer", limit_choices_to={'groups__name': 'Chofer'})
     fecha_hora_programada = models.DateTimeField()
-    duracion_estimada_minutos = models.PositiveIntegerField(default=60, help_text="Duración estimada en minutos para evitar solapamientos.")
-    fecha_hora_fin = models.DateTimeField(editable=False, null=True, blank=True) # <-- CAMBIO 2: Se añade el nuevo campo.
-    motivo_ingreso = models.TextField(help_text="Breve descripción del motivo de la visita.")
+    duracion_estimada_minutos = models.PositiveIntegerField(default=60)
+    fecha_hora_fin = models.DateTimeField(editable=False, null=True, blank=True)
+    motivo_ingreso = models.TextField()
     estado = models.CharField(max_length=50, choices=ESTADOS_AGENDA, default='Programado')
     creado_por = models.ForeignKey(Usuario, on_delete=models.PROTECT, related_name="agendamientos_creados")
     fecha_creacion = models.DateTimeField(auto_now_add=True)
 
-    # <-- CAMBIO 3: Se añade el método save para calcular la fecha de fin.
     def save(self, *args, **kwargs):
-        # Calcula automáticamente la hora de fin basado en la hora de inicio y la duración
         if self.fecha_hora_programada and self.duracion_estimada_minutos:
             self.fecha_hora_fin = self.fecha_hora_programada + timedelta(minutes=self.duracion_estimada_minutos)
         super().save(*args, **kwargs)
@@ -89,6 +85,19 @@ class Agendamiento(models.Model):
         ordering = ['fecha_hora_programada']
         unique_together = ('vehiculo', 'fecha_hora_programada')
 
+# Historial de cambios de Agendamiento
+class AgendamientoHistorial(models.Model):
+    agendamiento = models.ForeignKey(Agendamiento, on_delete=models.CASCADE, related_name='historial')
+    estado = models.CharField(max_length=50)
+    fecha = models.DateTimeField(auto_now_add=True)
+    usuario = models.ForeignKey(Usuario, on_delete=models.PROTECT)
+    comentario = models.TextField(blank=True, null=True)
+    def __str__(self):
+        return f"Agendamiento {self.agendamiento.id}: {self.estado} el {self.fecha.strftime('%d-%m-%Y %H:%M')}"
+
+# --------------------------------------------------------------------------
+# ÓRDENES DE SERVICIO
+# --------------------------------------------------------------------------
 class Orden(models.Model):
     ESTADOS_ORDEN = [
         ('Ingresado', 'Ingresado'),
@@ -120,35 +129,41 @@ class Orden(models.Model):
         verbose_name = "Orden de Servicio"
         verbose_name_plural = "Órdenes de Servicio"
 
+# Historial de estados de Orden
 class OrdenHistorialEstado(models.Model):
     orden = models.ForeignKey(Orden, on_delete=models.CASCADE, related_name='historial_estados')
     estado = models.CharField(max_length=50)
     fecha = models.DateTimeField(auto_now_add=True)
     usuario = models.ForeignKey(Usuario, on_delete=models.PROTECT)
-    motivo = models.CharField(max_length=255, blank=True, null=True, help_text="Motivo del cambio de estado, especialmente para pausas.")
+    motivo = models.CharField(max_length=255, blank=True, null=True)
     def __str__(self):
         return f"Orden {self.orden.id}: {self.estado} el {self.fecha.strftime('%d-%m-%Y %H:%M')}"
-    class Meta:
-        verbose_name = "Historial de Estado de Orden"
-        verbose_name_plural = "Historiales de Estado de Órdenes"
 
+# Pausas de una Orden
+class OrdenPausa(models.Model):
+    orden = models.ForeignKey(Orden, on_delete=models.CASCADE, related_name='pausas')
+    inicio = models.DateTimeField(auto_now_add=True)
+    fin = models.DateTimeField(blank=True, null=True)
+    motivo = models.CharField(max_length=255, blank=True, null=True)
+    usuario = models.ForeignKey(Usuario, on_delete=models.PROTECT)
+    def __str__(self):
+        return f"Pausa Orden {self.orden.id} ({self.inicio} - {self.fin})"
+
+# Documentos de Orden
 class OrdenDocumento(models.Model):
     TIPOS = [('Foto', 'Foto'), ('Informe', 'Informe'), ('PDF', 'PDF'), ('Otro', 'Otro')]
     orden = models.ForeignKey(Orden, on_delete=models.CASCADE, related_name='documentos')
     tipo = models.CharField(max_length=50, choices=TIPOS)
     descripcion = models.CharField(max_length=255, blank=True)
-    archivo = models.FileField(upload_to='ordenes_documentos/%Y/%m/', help_text="Sube un archivo (foto, PDF, etc.)")
+    archivo = models.FileField(upload_to='ordenes_documentos/%Y/%m/')
     fecha = models.DateTimeField(auto_now_add=True)
     subido_por = models.ForeignKey(Usuario, on_delete=models.PROTECT)
     def __str__(self):
         return f"{self.get_tipo_display()} para Orden #{self.orden.id}"
-    class Meta:
-        verbose_name = "Documento de Orden"
-        verbose_name_plural = "Documentos de Órdenes"
 
-# -----------------------------------------------------------------------------
-# MODELOS DE CATÁLOGO (Repuestos y Servicios)
-# -----------------------------------------------------------------------------
+# --------------------------------------------------------------------------
+# CATÁLOGO (Productos y Servicios)
+# --------------------------------------------------------------------------
 class Producto(models.Model):
     sku = models.CharField(max_length=50, primary_key=True)
     nombre = models.CharField(max_length=150)
@@ -162,7 +177,7 @@ class Producto(models.Model):
 class Servicio(models.Model):
     nombre = models.CharField(max_length=150)
     descripcion = models.TextField(blank=True, null=True)
-    precio_base = models.DecimalField(max_digits=10, decimal_places=2, help_text="Precio base o por hora del servicio.")
+    precio_base = models.DecimalField(max_digits=10, decimal_places=2)
     def __str__(self):
         return self.nombre
 
@@ -171,7 +186,7 @@ class OrdenItem(models.Model):
     producto = models.ForeignKey(Producto, on_delete=models.SET_NULL, blank=True, null=True)
     servicio = models.ForeignKey(Servicio, on_delete=models.SET_NULL, blank=True, null=True)
     cantidad = models.DecimalField(max_digits=10, decimal_places=2, default=1.0)
-    precio_unitario = models.DecimalField(max_digits=10, decimal_places=2, help_text="Precio al momento de la venta/servicio. Se autocompleta si se deja en blanco.")
+    precio_unitario = models.DecimalField(max_digits=10, decimal_places=2)
     
     def clean(self):
         if (self.producto and self.servicio) or (not self.producto and not self.servicio):
@@ -191,6 +206,14 @@ class OrdenItem(models.Model):
         else:
             return f"{self.servicio.nombre} (x{self.cantidad})"
 
-    class Meta:
-        verbose_name = "Ítem de Orden"
-        verbose_name_plural = "Ítems de Órdenes"
+# --------------------------------------------------------------------------
+# NOTIFICACIONES
+# --------------------------------------------------------------------------
+class Notificacion(models.Model):
+    usuario = models.ForeignKey(Usuario, on_delete=models.CASCADE, related_name='notificaciones')
+    mensaje = models.CharField(max_length=255)
+    link = models.CharField(max_length=255, blank=True, null=True)
+    leida = models.BooleanField(default=False)
+    fecha = models.DateTimeField(auto_now_add=True)
+    def __str__(self):
+        return f"Notificación a {self.usuario.username}: {self.mensaje}"
