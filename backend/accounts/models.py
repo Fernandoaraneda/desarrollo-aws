@@ -25,6 +25,7 @@ class Usuario(AbstractUser):
         help_text="Permisos específicos para este usuario.",
         verbose_name="permisos de usuario"
     )
+
     def __str__(self):
         group = self.groups.first()
         rol_nombre = group.name if group else "Sin Rol"
@@ -49,6 +50,7 @@ class Vehiculo(models.Model):
         related_name='vehiculos',
         limit_choices_to={'groups__name': 'Chofer'}
     )
+
     def __str__(self):
         if self.chofer:
             return f"{self.patente} - {self.marca} {self.modelo} ({self.chofer.first_name})"
@@ -85,15 +87,23 @@ class Agendamiento(models.Model):
         ordering = ['fecha_hora_programada']
         unique_together = ('vehiculo', 'fecha_hora_programada')
 
-# Historial de cambios de Agendamiento
 class AgendamientoHistorial(models.Model):
     agendamiento = models.ForeignKey(Agendamiento, on_delete=models.CASCADE, related_name='historial')
     estado = models.CharField(max_length=50)
     fecha = models.DateTimeField(auto_now_add=True)
     usuario = models.ForeignKey(Usuario, on_delete=models.PROTECT)
     comentario = models.TextField(blank=True, null=True)
+
     def __str__(self):
         return f"Agendamiento {self.agendamiento.id}: {self.estado} el {self.fecha.strftime('%d-%m-%Y %H:%M')}"
+
+class AgendamientoDocumento(models.Model):
+    agendamiento = models.ForeignKey(Agendamiento, on_delete=models.CASCADE, related_name='documentos')
+    tipo = models.CharField(max_length=50, choices=[('Foto', 'Foto'), ('Informe', 'Informe'), ('Otro', 'Otro')])
+    descripcion = models.CharField(max_length=255, blank=True)
+    archivo = models.FileField(upload_to='agendamientos_documentos/%Y/%m/')
+    fecha = models.DateTimeField(auto_now_add=True)
+    subido_por = models.ForeignKey(Usuario, on_delete=models.PROTECT)
 
 # --------------------------------------------------------------------------
 # ÓRDENES DE SERVICIO
@@ -122,6 +132,7 @@ class Orden(models.Model):
         related_name='ordenes_asignadas',
         limit_choices_to={'groups__name__in': ['Mecanico', 'Supervisor']}
     )
+
     def __str__(self):
         return f"Orden #{self.id} - {self.vehiculo.patente} ({self.estado})"
 
@@ -129,27 +140,26 @@ class Orden(models.Model):
         verbose_name = "Orden de Servicio"
         verbose_name_plural = "Órdenes de Servicio"
 
-# Historial de estados de Orden
 class OrdenHistorialEstado(models.Model):
     orden = models.ForeignKey(Orden, on_delete=models.CASCADE, related_name='historial_estados')
     estado = models.CharField(max_length=50)
     fecha = models.DateTimeField(auto_now_add=True)
     usuario = models.ForeignKey(Usuario, on_delete=models.PROTECT)
     motivo = models.CharField(max_length=255, blank=True, null=True)
+
     def __str__(self):
         return f"Orden {self.orden.id}: {self.estado} el {self.fecha.strftime('%d-%m-%Y %H:%M')}"
 
-# Pausas de una Orden
 class OrdenPausa(models.Model):
     orden = models.ForeignKey(Orden, on_delete=models.CASCADE, related_name='pausas')
     inicio = models.DateTimeField(auto_now_add=True)
     fin = models.DateTimeField(blank=True, null=True)
     motivo = models.CharField(max_length=255, blank=True, null=True)
     usuario = models.ForeignKey(Usuario, on_delete=models.PROTECT)
+
     def __str__(self):
         return f"Pausa Orden {self.orden.id} ({self.inicio} - {self.fin})"
 
-# Documentos de Orden
 class OrdenDocumento(models.Model):
     TIPOS = [('Foto', 'Foto'), ('Informe', 'Informe'), ('PDF', 'PDF'), ('Otro', 'Otro')]
     orden = models.ForeignKey(Orden, on_delete=models.CASCADE, related_name='documentos')
@@ -158,6 +168,7 @@ class OrdenDocumento(models.Model):
     archivo = models.FileField(upload_to='ordenes_documentos/%Y/%m/')
     fecha = models.DateTimeField(auto_now_add=True)
     subido_por = models.ForeignKey(Usuario, on_delete=models.PROTECT)
+
     def __str__(self):
         return f"{self.get_tipo_display()} para Orden #{self.orden.id}"
 
@@ -171,6 +182,7 @@ class Producto(models.Model):
     marca = models.CharField(max_length=50, blank=True, null=True)
     precio_venta = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     stock = models.PositiveIntegerField(default=0)
+
     def __str__(self):
         return f"{self.nombre} ({self.sku})"
 
@@ -178,6 +190,7 @@ class Servicio(models.Model):
     nombre = models.CharField(max_length=150)
     descripcion = models.TextField(blank=True, null=True)
     precio_base = models.DecimalField(max_digits=10, decimal_places=2)
+
     def __str__(self):
         return self.nombre
 
@@ -187,11 +200,11 @@ class OrdenItem(models.Model):
     servicio = models.ForeignKey(Servicio, on_delete=models.SET_NULL, blank=True, null=True)
     cantidad = models.DecimalField(max_digits=10, decimal_places=2, default=1.0)
     precio_unitario = models.DecimalField(max_digits=10, decimal_places=2)
-    
+
     def clean(self):
         if (self.producto and self.servicio) or (not self.producto and not self.servicio):
             raise ValidationError("Debe especificar un producto o un servicio, pero no ambos.")
-    
+
     def save(self, *args, **kwargs):
         if self._state.adding and not self.precio_unitario:
             if self.producto:
@@ -213,7 +226,9 @@ class Notificacion(models.Model):
     usuario = models.ForeignKey(Usuario, on_delete=models.CASCADE, related_name='notificaciones')
     mensaje = models.CharField(max_length=255)
     link = models.CharField(max_length=255, blank=True, null=True)
+    archivo = models.FileField(upload_to='notificaciones/%Y/%m/', blank=True, null=True)
     leida = models.BooleanField(default=False)
     fecha = models.DateTimeField(auto_now_add=True)
+
     def __str__(self):
         return f"Notificación a {self.usuario.username}: {self.mensaje}"
