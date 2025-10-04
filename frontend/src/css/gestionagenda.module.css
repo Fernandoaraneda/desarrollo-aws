@@ -163,3 +163,16 @@
     font-size: 0.9rem;
   }
 }
+.modalImageContainer {
+  margin-top: 1rem;
+  border-top: 1px solid var(--color-border);
+  padding-top: 1rem;
+}
+
+.modalImageContainer img {
+  max-width: 100%; /* Asegura que la imagen no se salga del modal */
+  height: auto;
+  border-radius: 8px; /* Bordes redondeados */
+  margin-top: 0.5rem;
+  border: 1px solid var(--color-border);
+}

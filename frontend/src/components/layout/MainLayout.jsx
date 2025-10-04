@@ -7,10 +7,12 @@ import styles from '../../css/mainlayout.module.css';
 const navLinksByRole = {
   'Supervisor': [
     { to: '/dashboard', label: 'Inicio', icon: 'fas fa-home' },
+    { to: '/panel-supervisor', label: 'Panel de Citas', icon: 'fas fa-calendar-check' },
+    { to: '/agenda', label: 'Agendar Cita', icon: 'fas fa-calendar-plus' },
     { to: '/ordenes', label: 'Órdenes de Servicio', icon: 'fas fa-clipboard-list' },
     { to: '/vehiculos', label: 'Gestionar Vehículos', icon: 'fas fa-truck' },
     { to: '/usuarios', label: 'Gestionar Usuarios', icon: 'fas fa-users-cog' },
-    { to: '/agenda', label: 'Agenda Taller', icon: 'fas fa-calendar-alt' },
+    
   ],
   'Chofer': [
     { to: '/dashboard', label: 'Mi Estado', icon: 'fas fa-road' },

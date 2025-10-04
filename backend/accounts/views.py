@@ -1,25 +1,27 @@
-# --- IMPORTS ---
-from rest_framework_simplejwt.tokens import RefreshToken
-from rest_framework import status, generics, permissions, viewsets
-from rest_framework.response import Response
-from rest_framework.permissions import AllowAny, IsAuthenticated
-from rest_framework.decorators import api_view, permission_classes
+# accounts/views.py (versión limpia y corregida)
 
-from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from datetime import datetime, timedelta
+from django.conf import settings
 from django.utils.encoding import force_bytes
-from django.contrib.auth.tokens import default_token_generator
-from django.core.mail import send_mail
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from django.utils.timezone import now, make_aware
 from django.contrib.auth import get_user_model
+from django.contrib.auth.tokens import default_token_generator
 from django.core.exceptions import ValidationError
+from django.core.mail import send_mail
 from django.contrib.auth.password_validation import validate_password
-from django.utils.timezone import now, timedelta
+from django.db import transaction
+
+from rest_framework import status, generics, permissions, viewsets
+from rest_framework.decorators import api_view, permission_classes, action
+from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.response import Response
+from rest_framework_simplejwt.tokens import RefreshToken
+
 from django.db.models import Count, Avg, F
 from django.db.models.functions import TruncDay
 
-User = get_user_model()
-
-# --- MODELOS Y SERIALIZERS ---
-from .models import Orden, Agendamiento, Vehiculo
+from .models import Orden, Agendamiento, Vehiculo, OrdenHistorialEstado
 from .serializers import (
     LoginSerializer,
     UserSerializer,
@@ -27,22 +29,31 @@ from .serializers import (
     UserCreateUpdateSerializer,
     VehiculoSerializer,
     AgendamientoSerializer,
+    OrdenSerializer,
 )
 
-# --- PERMISOS PERSONALIZADOS ---
+User = get_user_model()
+
+
+# --------------------
+# Permisos personalizados
+# --------------------
 class IsSupervisor(permissions.BasePermission):
-    """
-    Permiso personalizado para permitir el acceso solo a usuarios 
-    que pertenezcan al grupo "Supervisor".
-    """
     def has_permission(self, request, view):
-        return (
-            request.user.is_authenticated
-            and request.user.groups.filter(name="Supervisor").exists()
-        )
+        return bool(request.user and request.user.is_authenticated and request.user.groups.filter(name='Supervisor').exists())
+
+class IsSupervisorOrMecanico(permissions.BasePermission):
+    def has_permission(self, request, view):
+        return bool(request.user and request.user.is_authenticated and request.user.groups.filter(name__in=['Supervisor', 'Mecanico']).exists())
+
+class IsSupervisorOrSeguridad(permissions.BasePermission):
+    def has_permission(self, request, view):
+        return bool(request.user and request.user.is_authenticated and request.user.groups.filter(name__in=['Supervisor', 'Seguridad']).exists())
 
 
-# --- VISTAS DE AUTENTICACIÓN Y PERFIL ---
+# --------------------
+# Autenticación y perfil
+# --------------------
 class LoginView(generics.GenericAPIView):
     serializer_class = LoginSerializer
     permission_classes = [AllowAny]
@@ -53,14 +64,11 @@ class LoginView(generics.GenericAPIView):
         user = serializer.validated_data["user"]
         refresh = RefreshToken.for_user(user)
         user_data = UserSerializer(user).data
-        return Response(
-            {
-                "refresh": str(refresh),
-                "access": str(refresh.access_token),
-                "user": user_data,
-            },
-            status=status.HTTP_200_OK,
-        )
+        return Response({
+            "refresh": str(refresh),
+            "access": str(refresh.access_token),
+            "user": user_data,
+        }, status=status.HTTP_200_OK)
 
 
 class PasswordResetRequestView(generics.GenericAPIView):
@@ -69,22 +77,20 @@ class PasswordResetRequestView(generics.GenericAPIView):
     def post(self, request):
         email = request.data.get("email")
         if not email:
-            return Response(
-                {"error": "Se requiere el correo"}, status=status.HTTP_400_BAD_REQUEST
-            )
+            return Response({"error": "Se requiere el correo"}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
             user = User.objects.get(email=email)
         except User.DoesNotExist:
-            return Response(
-                {"message": "Si el correo está registrado, se enviará un enlace de recuperación."},
-                status=status.HTTP_200_OK,
-            )
+            # No revelar si el correo existe o no
+            return Response({"message": "Si el correo está registrado, se enviará un enlace de recuperación."}, status=status.HTTP_200_OK)
 
         token = default_token_generator.make_token(user)
         uid = urlsafe_base64_encode(force_bytes(user.pk))
-        reset_link = f"http://localhost:5173/set-new-password?uid={uid}&token={token}"
+        frontend = getattr(settings, "FRONTEND_URL", "http://localhost:5173")
+        reset_link = f"{frontend.rstrip('/')}/set-new-password?uid={uid}&token={token}"
 
+        # En producción: mover esto a una task asíncrona (Celery, RQ...)
         send_mail(
             "Restablecer contraseña para Taller PepsiCo",
             f"Hola {user.first_name},\n\nUsa este enlace para restablecer tu contraseña: {reset_link}\n\nSi no solicitaste esto, ignora este mensaje.",
@@ -92,11 +98,7 @@ class PasswordResetRequestView(generics.GenericAPIView):
             [email],
             fail_silently=False,
         )
-
-        return Response(
-            {"message": "Si el correo está registrado, se enviará un enlace de recuperación."},
-            status=status.HTTP_200_OK,
-        )
+        return Response({"message": "Si el correo está registrado, se enviará un enlace de recuperación."}, status=status.HTTP_200_OK)
 
 
 class PasswordResetConfirmView(generics.GenericAPIView):
@@ -108,24 +110,17 @@ class PasswordResetConfirmView(generics.GenericAPIView):
         new_password = request.data.get("password")
 
         if not uidb64 or not token or not new_password:
-            return Response(
-                {"error": "Datos incompletos"}, status=status.HTTP_400_BAD_REQUEST
-            )
+            return Response({"error": "Datos incompletos"}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
-            uid = urlsafe_base64_decode(uidb64).decode()
+            uid_decoded = urlsafe_base64_decode(uidb64).decode()
+            uid = int(uid_decoded)
             user = User.objects.get(pk=uid)
         except (TypeError, ValueError, OverflowError, User.DoesNotExist):
-            return Response(
-                {"error": "El enlace de restablecimiento es inválido."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+            return Response({"error": "El enlace de restablecimiento es inválido."}, status=status.HTTP_400_BAD_REQUEST)
 
         if not default_token_generator.check_token(user, token):
-            return Response(
-                {"error": "El enlace de restablecimiento es inválido o ha expirado."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+            return Response({"error": "El enlace de restablecimiento es inválido o ha expirado."}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
             validate_password(new_password, user)
@@ -158,28 +153,30 @@ class ChangePasswordView(generics.GenericAPIView):
         new_password = serializer.validated_data["new_password"]
 
         if not user.check_password(old_password):
-            return Response(
-                {"error": "La contraseña actual es incorrecta."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+            return Response({"error": "La contraseña actual es incorrecta."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            validate_password(new_password, user)
+        except ValidationError as e:
+            return Response({"error": list(e.messages)}, status=status.HTTP_400_BAD_REQUEST)
 
         user.set_password(new_password)
         user.save()
         return Response({"message": "Contraseña cambiada con éxito."}, status=status.HTTP_200_OK)
 
 
-# --- VISTAS DE USUARIOS ---
+# --------------------
+# Gestión de usuarios (Supervisor)
+# --------------------
 class UserListView(generics.ListAPIView):
     queryset = User.objects.all().order_by("first_name")
     serializer_class = UserSerializer
     permission_classes = [IsSupervisor]
 
-
 class UserCreateAPIView(generics.CreateAPIView):
     queryset = User.objects.all()
     serializer_class = UserCreateUpdateSerializer
     permission_classes = [IsSupervisor]
-
 
 class UserRetrieveUpdateAPIView(generics.RetrieveUpdateAPIView):
     queryset = User.objects.all()
@@ -188,124 +185,104 @@ class UserRetrieveUpdateAPIView(generics.RetrieveUpdateAPIView):
     lookup_field = "id"
 
 
-# --- DASHBOARD SUPERVISOR ---
-dias_semana = {0: "Lun", 1: "Mar", 2: "Mié", 3: "Jue", 4: "Vie", 5: "Sáb", 6: "Dom"}
+class ChoferListView(generics.ListAPIView):
+    serializer_class = UserSerializer
+    permission_classes = [IsAuthenticated]
 
-# REEMPLAZA la función supervisor_dashboard_stats en tu views.py por esta versión corregida:
+    def get_queryset(self):
+        return User.activos.filter(groups__name='Chofer').order_by('first_name')
+
+
+# --------------------
+# Dashboard supervisor (versión segura)
+# --------------------
+dias_semana = {0: "Lun", 1: "Mar", 2: "Mié", 3: "Jue", 4: "Vie", 5: "Sáb", 6: "Dom"}
 
 @api_view(["GET"])
 @permission_classes([IsSupervisor])
 def supervisor_dashboard_stats(request):
-    """
-    Vista corregida del dashboard del supervisor con cálculos precisos
-    """
     today = now().date()
-    start_of_month = today.replace(day=1)
+    start_of_month_dt = make_aware(datetime.combine(today.replace(day=1), datetime.min.time()))
     start_of_week = today - timedelta(days=today.weekday())
+    start_of_week_dt = make_aware(datetime.combine(start_of_week, datetime.min.time()))
 
-    # 🔧 1. VEHÍCULOS EN TALLER - Contar vehículos únicos con órdenes activas
-    vehiculos_en_taller = Orden.objects.filter(
-        estado__in=["Ingresado", "En Diagnostico", "En Proceso", "Pausado"]
-    ).values('vehiculo').distinct().count()
+    # Vehículos en taller (fallback si no existe manager 'activas')
+    try:
+        vehiculos_en_taller = Orden.objects.activas().values('vehiculo').distinct().count()
+    except Exception:
+        vehiculos_en_taller = Orden.objects.values('vehiculo').distinct().count()
 
-    # 🔧 2. AGENDAMIENTOS HOY - Solo programados para hoy
+    # Agendamientos para HOY (usamos CONFIRMADO para alinearnos con SeguridadAgendaView)
+    start_today = make_aware(datetime.combine(today, datetime.min.time()))
+    end_today = start_today + timedelta(days=1)
     agendamientos_hoy = Agendamiento.objects.filter(
-        fecha_hora_programada__date=today, 
-        estado="Programado"
+        estado=Agendamiento.Estado.CONFIRMADO,
+        fecha_hora_programada__gte=start_today,
+        fecha_hora_programada__lt=end_today
     ).count()
 
-    # 🔧 3. ÓRDENES FINALIZADAS ESTE MES
+    # Órdenes finalizadas este mes
     ordenes_finalizadas_mes = Orden.objects.filter(
-        estado="Finalizado", 
-        fecha_entrega_real__gte=start_of_month
+        estado=Orden.Estado.FINALIZADO,
+        fecha_entrega_real__gte=start_of_month_dt
     ).count()
 
-    # 🔧 4. TIEMPO PROMEDIO DE REPARACIÓN
+    # Tiempo promedio de reparación (en días, con manejo de nulls)
     ordenes_completadas = Orden.objects.filter(
-        estado="Finalizado", 
+        estado=Orden.Estado.FINALIZADO,
         fecha_entrega_real__isnull=False,
         fecha_ingreso__isnull=False
     )
-    
     tiempo_promedio_str = "N/A"
     if ordenes_completadas.exists():
-        tiempo_promedio_dias = ordenes_completadas.aggregate(
-            avg_duration=Avg(F("fecha_entrega_real") - F("fecha_ingreso"))
-        )["avg_duration"]
-        
-        if tiempo_promedio_dias:
-            total_dias = tiempo_promedio_dias.total_seconds() / (60 * 60 * 24)
+        avg_delta = ordenes_completadas.aggregate(avg_duration=Avg(F("fecha_entrega_real") - F("fecha_ingreso")))["avg_duration"]
+        if avg_delta:
+            total_dias = avg_delta.total_seconds() / (60 * 60 * 24)
             tiempo_promedio_str = f"{total_dias:.1f} días"
 
-    # 🔧 5. ÓRDENES POR ESTADO (TODAS LAS ÓRDENES, NO SOLO ACTIVAS)
+    # Órdenes por estado
     ordenes_por_estado = list(
-        Orden.objects.values("estado")
-        .annotate(cantidad=Count("id"))
-        .order_by("estado")
+        Orden.objects.values("estado").annotate(cantidad=Count("id")).order_by("estado")
     )
 
-    # 🔧 6. ÓRDENES DE LA ÚLTIMA SEMANA
+    # Órdenes última semana (por día)
     ordenes_semana_raw = (
-        Orden.objects.filter(fecha_ingreso__date__gte=start_of_week)
+        Orden.objects.filter(fecha_ingreso__gte=start_of_week_dt)
         .annotate(dia_semana=TruncDay("fecha_ingreso"))
         .values("dia_semana")
         .annotate(creadas=Count("id"))
         .order_by("dia_semana")
     )
-
-    # Crear lista completa de los 7 días con datos
     ordenes_ultima_semana = []
     for i in range(7):
         fecha_dia = start_of_week + timedelta(days=i)
         dia_nombre = dias_semana.get(fecha_dia.weekday(), "")
-        
-        # Buscar si hay datos para este día
-        ordenes_del_dia = 0
+        cre = 0
         for item in ordenes_semana_raw:
             if item["dia_semana"].date() == fecha_dia:
-                ordenes_del_dia = item["creadas"]
+                cre = item["creadas"]
                 break
-        
-        ordenes_ultima_semana.append({
-            "dia": dia_nombre,
-            "creadas": ordenes_del_dia
-        })
+        ordenes_ultima_semana.append({"dia": dia_nombre, "creadas": cre})
 
-    # 🔧 7. ÓRDENES RECIENTES (con mejor manejo de datos nulos)
+    # Órdenes recientes
     ordenes_recientes = list(
         Orden.objects.select_related("vehiculo", "usuario_asignado")
-        .order_by("-fecha_ingreso")[:10]  # Incrementé a 10 para mostrar más
-        .values(
-            "id",
-            "vehiculo__patente",
-            "estado",
-            "usuario_asignado__first_name",
-            "usuario_asignado__last_name",
-            "usuario_asignado__username",
-        )
+            .order_by("-fecha_ingreso")[:10]
+            .values("id", "vehiculo__patente", "estado", "usuario_asignado__first_name", "usuario_asignado__last_name", "usuario_asignado__username")
     )
-
     ordenes_recientes_data = []
     for o in ordenes_recientes:
-        # Mejor manejo de nombres de mecánicos
-        first_name = o.get('usuario_asignado__first_name', '') or ''
-        last_name = o.get('usuario_asignado__last_name', '') or ''
-        username = o.get('usuario_asignado__username', '') or ''
-        
-        mecanico_nombre = f"{first_name} {last_name}".strip()
-        if not mecanico_nombre and username:
-            mecanico_nombre = username
-        if not mecanico_nombre:
-            mecanico_nombre = "No asignado"
-        
+        first_name = o.get('usuario_asignado__first_name') or ''
+        last_name = o.get('usuario_asignado__last_name') or ''
+        username = o.get('usuario_asignado__username') or ''
+        mecanico_nombre = f"{first_name} {last_name}".strip() or username or "No asignado"
         ordenes_recientes_data.append({
             "id": o["id"],
-            "patente": o["vehiculo__patente"] or "Sin patente",
+            "patente": o.get("vehiculo__patente") or "Sin patente",
             "estado": o["estado"],
             "mecanico": mecanico_nombre,
         })
 
-    # 🔧 8. RESPUESTA CON LOGGING PARA DEBUG
     response_data = {
         "kpis": {
             "vehiculosEnTaller": vehiculos_en_taller,
@@ -317,154 +294,167 @@ def supervisor_dashboard_stats(request):
         "ordenesUltimaSemana": ordenes_ultima_semana,
         "ordenesRecientes": ordenes_recientes_data,
     }
-    
-    # Debug logging (puedes remover esto después de confirmar que funciona)
-    print(f"🔍 Debug Dashboard - Vehículos en taller: {vehiculos_en_taller}")
-    print(f"🔍 Debug Dashboard - Órdenes finalizadas mes: {ordenes_finalizadas_mes}")
-    print(f"🔍 Debug Dashboard - Estados: {ordenes_por_estado}")
-    
-    return Response(response_data)
+    return Response(response_data, status=status.HTTP_200_OK)
 
 
-# --- VIEWSETS ---
-from rest_framework import viewsets, permissions
-from .models import Vehiculo, Agendamiento
-from .serializers import VehiculoSerializer, AgendamientoSerializer
-
-# --- VIEWSETS ---
+# --------------------
+# ViewSets
+# --------------------
 class VehiculoViewSet(viewsets.ModelViewSet):
     serializer_class = VehiculoSerializer
-    permission_classes = [permissions.IsAuthenticated]
-
-    def get_queryset(self):
-        user = self.request.user
-        if user.groups.filter(name='Chofer').exists():
-            # Solo sus vehículos asignados
-            return Vehiculo.objects.filter(chofer=user)
-        # Supervisores y mecánicos ven todos
-        return Vehiculo.objects.all()
-
-
-
-class AgendamientoViewSet(viewsets.ModelViewSet):
-    """
-    Agendamientos:
-    - Supervisores y mecánicos: ven todos
-    - Choferes: solo los agendamientos de sus vehículos
-    """
-    serializer_class = AgendamientoSerializer
-    permission_classes = [permissions.IsAuthenticated]
-
-    def get_queryset(self):
-        user = self.request.user
-
-        # Supervisores y mecánicos ven todos
-        if user.groups.filter(name__in=['Supervisor', 'Mecanico']).exists():
-            return Agendamiento.objects.all()
-
-        # Choferes ven solo los agendamientos de sus vehículos
-        elif user.groups.filter(name='Chofer').exists():
-            return Agendamiento.objects.filter(vehiculo__chofer=user)
-
-        # Otros roles no ven nada
-        return Agendamiento.objects.none()
-
-    def perform_create(self, serializer):
-        # Asigna automáticamente el usuario que crea el agendamiento
-        serializer.save(creado_por=self.request.user)
-
-# Vistas para usuarios
-from rest_framework import generics
-from rest_framework.permissions import IsAuthenticated
-from django.contrib.auth import get_user_model
-from .serializers import UserSerializer
-
-User = get_user_model()
-
-class ChoferListView(generics.ListAPIView):
-    serializer_class = UserSerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        return User.objects.filter(groups__name='Chofer').order_by('first_name')
+        if self.action in ['retrieve', 'update', 'partial_update', 'destroy', 'reactivar']:
+            return Vehiculo.objects.all()
+        user = self.request.user
+        if user.groups.filter(name='Chofer').exists():
+            return Vehiculo.activos.filter(chofer=user)
+        return Vehiculo.activos.all()
+
+    def perform_destroy(self, instance):
+        instance.is_active = False
+        instance.save()
+
+    @action(detail=False, methods=['get'], url_path='inactivos', permission_classes=[IsAuthenticated])
+    def inactivos(self, request):
+        vehiculos_inactivos = Vehiculo.objects.filter(is_active=False)
+        user = self.request.user
+        if user.groups.filter(name='Chofer').exists():
+            vehiculos_inactivos = vehiculos_inactivos.filter(chofer=user)
+        serializer = self.get_serializer(vehiculos_inactivos, many=True)
+        return Response(serializer.data)
+
+    @action(detail=True, methods=['post'], url_path='reactivar', permission_classes=[IsSupervisor])
+    def reactivar(self, request, pk=None):
+        vehiculo = self.get_object()
+        vehiculo.is_active = True
+        vehiculo.save()
+        return Response(self.get_serializer(vehiculo).data, status=status.HTTP_200_OK)
 
 
+class AgendamientoViewSet(viewsets.ModelViewSet):
+    serializer_class = AgendamientoSerializer
+    permission_classes = [IsAuthenticated]
 
+    def get_queryset(self):
+        user = self.request.user
+        if user.groups.filter(name__in=['Supervisor', 'Mecanico']).exists():
+            return Agendamiento.objects.select_related('vehiculo', 'mecanico_asignado').all().order_by('fecha_hora_programada')
+        elif user.groups.filter(name='Chofer').exists():
+            return Agendamiento.objects.filter(vehiculo__chofer=user).order_by('fecha_hora_programada')
+        return Agendamiento.objects.none()
 
+    def perform_create(self, serializer):
+        serializer.save(creado_por=self.request.user)
 
+    @action(detail=True, methods=['post'], url_path='confirmar-y-asignar', permission_classes=[IsSupervisor])
+    def confirmar_y_asignar(self, request, pk=None):
+        agendamiento = self.get_object()
+        mecanico_id_raw = request.data.get('mecanico_id')
+        try:
+            mecanico_id = int(mecanico_id_raw)
+        except (TypeError, ValueError):
+            return Response({'error': 'ID de mecánico inválido.'}, status=status.HTTP_400_BAD_REQUEST)
 
+        try:
+            mecanico = User.objects.get(id=mecanico_id, groups__name='Mecanico')
+        except User.DoesNotExist:
+            return Response({'error': 'El usuario seleccionado no es un mecánico válido.'}, status=status.HTTP_404_NOT_FOUND)
 
+        agendamiento.mecanico_asignado = mecanico
+        agendamiento.estado = Agendamiento.Estado.CONFIRMADO
+        agendamiento.save()
+        return Response(self.get_serializer(agendamiento).data, status=status.HTTP_200_OK)
 
-from rest_framework import viewsets, permissions
-from rest_framework.decorators import action
-from rest_framework.response import Response
-from .models import Orden, OrdenHistorialEstado, Usuario, Vehiculo, Agendamiento
-from .serializers import (
-    OrdenSerializer, 
-    UserSerializer, 
-    VehiculoSerializer, 
-    AgendamientoSerializer
-)
+    @action(detail=True, methods=['post'], url_path='registrar-ingreso', permission_classes=[IsSupervisorOrSeguridad])
+    def registrar_ingreso(self, request, pk=None):
+        agendamiento = self.get_object()
+        if agendamiento.estado != Agendamiento.Estado.CONFIRMADO:
+            return Response({'error': 'Solo se puede registrar el ingreso de una cita confirmada.'}, status=status.HTTP_400_BAD_REQUEST)
 
-# --- PERMISOS PERSONALIZADOS ---
-class IsSupervisorOrMecanico(permissions.BasePermission):
-    """
-    Permiso personalizado para permitir acceso solo a Supervisores o Mecánicos.
-    """
-    def has_permission(self, request, view):
-        if not request.user.is_authenticated:
-            return False
-        return (
-            request.user.groups.filter(name='Supervisor').exists() or
-            request.user.groups.filter(name='Mecanico').exists()
-        )
+        with transaction.atomic():
+            nueva_orden = Orden.objects.create(
+                vehiculo=agendamiento.vehiculo,
+                agendamiento_origen=agendamiento,
+                descripcion_falla=agendamiento.motivo_ingreso,
+                usuario_asignado=agendamiento.mecanico_asignado,
+            )
+            # Conservador: mantenemos el comportamiento original (FINALIZADO) para no cambiar el flujo actual.
+            agendamiento.estado = Agendamiento.Estado.FINALIZADO
+            agendamiento.save()
 
-# --- VIEWSETS ---
-# Aquí irían tus otros ViewSets (User, Vehiculo, Agendamiento) para mantener todo ordenado.
+        return Response({'message': 'Ingreso registrado y orden creada.', 'orden_id': nueva_orden.id}, status=status.HTTP_201_CREATED)
+
+    @action(detail=True, methods=['post'], url_path='cancelar', permission_classes=[IsSupervisor])
+    def cancelar(self, request, pk=None):
+        agendamiento = self.get_object()
+        agendamiento.estado = Agendamiento.Estado.CANCELADO
+        agendamiento.save()
+        return Response(self.get_serializer(agendamiento).data, status=status.HTTP_200_OK)
+
 
 class OrdenViewSet(viewsets.ModelViewSet):
-    """
-    ViewSet para ver y gestionar las Órdenes de Servicio.
-    """
-    queryset = Orden.objects.all().order_by('-fecha_ingreso')
     serializer_class = OrdenSerializer
-    permission_classes = [permissions.IsAuthenticated] # Permiso base para todas las acciones
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        if user.groups.filter(name='Supervisor').exists():
+            return Orden.objects.select_related('vehiculo', 'usuario_asignado').all().order_by('-fecha_ingreso')
+        elif user.groups.filter(name='Mecanico').exists():
+            return Orden.objects.filter(usuario_asignado=user).select_related('vehiculo').order_by('-fecha_ingreso')
+        elif user.groups.filter(name='Chofer').exists():
+            return Orden.objects.filter(vehiculo__chofer=user).select_related('vehiculo').order_by('-fecha_ingreso')
+        return Orden.objects.none()
 
     def get_permissions(self):
-        """
-        Asigna permisos más restrictivos para acciones específicas.
-        Solo Supervisores y Mecánicos pueden cambiar el estado.
-        """
         if self.action in ['cambiar_estado']:
             self.permission_classes = [IsSupervisorOrMecanico]
         return super().get_permissions()
 
     @action(detail=True, methods=['post'], url_path='cambiar-estado')
     def cambiar_estado(self, request, pk=None):
-        """
-        Endpoint para cambiar el estado de una orden y registrarlo en el historial.
-        Espera un POST con: {"estado": "Nuevo Estado", "motivo": "Opcional"}
-        """
         orden = self.get_object()
         nuevo_estado = request.data.get('estado')
         motivo = request.data.get('motivo', '')
 
-        # Validación simple para asegurar que el estado enviado es válido
-        if not nuevo_estado or nuevo_estado not in [choice[0] for choice in Orden.ESTADOS_ORDEN]:
-            return Response({'error': 'Debe proporcionar un estado válido.'}, status=400)
+        # Validación básica del estado (ajustar según cómo definas Orden.Estado)
+        try:
+            valid_values = list(Orden.Estado.values)
+        except Exception:
+            # si Orden.Estado no tiene .values, hacemos fallback a choices
+            valid_values = [c[0] for c in getattr(Orden, 'Estado', {}).choices] if hasattr(Orden, 'Estado') else []
 
-        estado_anterior = orden.estado
-        orden.estado = nuevo_estado
-        orden.save()
+        if not nuevo_estado or (valid_values and nuevo_estado not in valid_values):
+            return Response({'error': 'Debe proporcionar un estado válido.'}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Registrar el cambio en el historial
-        OrdenHistorialEstado.objects.create(
-            orden=orden,
-            estado=nuevo_estado, # Guardamos solo el estado nuevo
-            usuario=request.user,
-            motivo=motivo
-        )
-        
-        # Devolvemos la orden completamente actualizada con su nuevo historial
-        serializer = self.get_serializer(orden)
-        return Response(serializer.data)
+        with transaction.atomic():
+            orden.estado = nuevo_estado
+            orden.save()
+            OrdenHistorialEstado.objects.create(orden=orden, estado=nuevo_estado, usuario=request.user, motivo=motivo)
+
+        return Response(self.get_serializer(orden).data, status=status.HTTP_200_OK)
+
+
+class MecanicoListView(generics.ListAPIView):
+    serializer_class = UserSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return User.activos.filter(groups__name='Mecanico').order_by('first_name')
+
+
+class SeguridadAgendaView(generics.ListAPIView):
+    serializer_class = AgendamientoSerializer
+    permission_classes = [IsSupervisorOrSeguridad]
+
+    def get_queryset(self):
+        today = now().date()
+        start = make_aware(datetime.combine(today, datetime.min.time()))
+        end = start + timedelta(days=1)
+        return Agendamiento.objects.filter(
+            estado=Agendamiento.Estado.CONFIRMADO,
+            fecha_hora_programada__gte=start,
+            fecha_hora_programada__lt=end
+        ).order_by('fecha_hora_programada')

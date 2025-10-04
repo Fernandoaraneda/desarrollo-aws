@@ -1,3 +1,5 @@
+// src/pages/GestionOrdenes.jsx
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import apiClient from '../api/axios';
@@ -14,7 +16,8 @@ export default function GestionOrdenes() {
         const fetchOrdenes = async () => {
             try {
                 const response = await apiClient.get('/ordenes/');
-                setOrdenes(response.data);
+                // Aseguramos que el estado siempre sea un array
+                setOrdenes(response.data.results || response.data || []);
             } catch (err) {
                 setError('No se pudieron cargar las órdenes de servicio.');
             } finally {
@@ -33,7 +36,6 @@ export default function GestionOrdenes() {
                 <h1><Wrench /> Órdenes de Servicio</h1>
                 <button 
                     className={styles.createButton}
-                    // Aquí podrías navegar a una ruta para crear una nueva orden si fuera necesario
                     // onClick={() => navigate('/ordenes/crear')}
                 >
                     <PlusCircle size={20} /> Nueva Orden
@@ -50,31 +52,47 @@ export default function GestionOrdenes() {
                                 <th>Estado</th>
                                 <th>Asignado a</th>
                                 <th>Fecha Ingreso</th>
+                                <th>Hora Agendada</th>
                                 <th>Acciones</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {ordenes.map((orden) => (
-                                <tr key={orden.id}>
-                                    <td>#{orden.id}</td>
-                                    <td>{orden.vehiculo_info}</td>
-                                    <td>
-                                        <span className={`${styles.statusBadge} ${styles[orden.estado.toLowerCase().replace(/\s/g, '')]}`}>
-                                            {orden.estado}
-                                        </span>
-                                    </td>
-                                    <td>{orden.asignado_a}</td>
-                                    <td>{new Date(orden.fecha_ingreso).toLocaleDateString('es-CL')}</td>
-                                    <td>
-                                        <button 
-                                            className={styles.actionButton}
-                                            onClick={() => navigate(`/ordenes/${orden.id}`)}
-                                        >
-                                            Ver Detalle
-                                        </button>
+                            {/* --- CAMBIO IMPORTANTE: Lógica de renderizado más segura --- */}
+                            {ordenes.length > 0 ? (
+                                ordenes.map((orden) => (
+                                    <tr key={orden.id}>
+                                        <td>#{orden.id}</td>
+                                        <td>{orden.vehiculo_info}</td>
+                                        <td>
+                                            <span className={`${styles.statusBadge} ${styles[orden.estado.toLowerCase().replace(/\s/g, '')]}`}>
+                                                {orden.estado}
+                                            </span>
+                                        </td>
+                                        <td>{orden.asignado_a}</td>
+                                        <td>{new Date(orden.fecha_ingreso).toLocaleDateString('es-CL')}</td>
+                                        <td>
+                                            {orden.hora_agendada 
+                                                ? new Date(orden.hora_agendada).toLocaleString('es-CL', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) 
+                                                : 'N/A'
+                                            }
+                                        </td>
+                                        <td>
+                                            <button 
+                                                className={styles.actionButton}
+                                                onClick={() => navigate(`/ordenes/${orden.id}`)}
+                                            >
+                                                Ver Detalle
+                                            </button>
+                                        </td>
+                                    </tr>
+                                ))
+                            ) : (
+                                <tr>
+                                    <td colSpan="7" style={{ textAlign: 'center', padding: '2rem' }}>
+                                        No hay órdenes de servicio para mostrar.
                                     </td>
                                 </tr>
-                            ))}
+                            )}
                         </tbody>
                     </table>
                 </div>

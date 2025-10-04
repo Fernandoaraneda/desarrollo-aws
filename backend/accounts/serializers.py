@@ -132,53 +132,34 @@ class VehiculoSerializer(serializers.ModelSerializer):
 # SERIALIZERS DE AGENDAMIENTOS (Aquí están los cambios)
 # ----------------------------------------------------------------------
 class AgendamientoSerializer(serializers.ModelSerializer):
-    # Campos de solo lectura para mostrar información amigable en el frontend
     vehiculo_patente = serializers.CharField(source='vehiculo.patente', read_only=True)
     chofer_nombre = serializers.CharField(source='chofer_asociado.get_full_name', read_only=True)
+    mecanico_nombre = serializers.CharField(source='mecanico_asignado.get_full_name', read_only=True, default='Sin asignar')
     
-    # Campo para la creación/edición, con queryset dinámico
-    vehiculo = serializers.PrimaryKeyRelatedField(queryset=Vehiculo.objects.all())
+    # --- LÍNEA CORREGIDA ---
+    # Le decimos que el campo es opcional y puede ser nulo
+    imagen_averia = serializers.ImageField(required=False, allow_null=True)
+
+    vehiculo = serializers.PrimaryKeyRelatedField(queryset=Vehiculo.activos.all())
 
     class Meta:
         model = Agendamiento
         fields = [
             'id', 'vehiculo', 'vehiculo_patente', 'chofer_asociado', 'chofer_nombre',
-            'fecha_hora_programada', 'duracion_estimada_minutos', 'fecha_hora_fin', # Se incluye fecha_hora_fin
-            'motivo_ingreso', 'estado', 'creado_por'
+            'mecanico_asignado', 'mecanico_nombre',
+            'fecha_hora_programada', 'duracion_estimada_minutos', 'fecha_hora_fin',
+            'motivo_ingreso', 'estado', 'imagen_averia', 'creado_por'
         ]
-        # 'creado_por' y 'fecha_hora_fin' son gestionados por el backend
         read_only_fields = ['creado_por', 'fecha_hora_fin']
 
     def __init__(self, *args, **kwargs):
-        # Mantiene la lógica para filtrar vehículos según el rol del usuario
         super().__init__(*args, **kwargs)
+    
         if 'request' in self.context:
             user = self.context['request'].user
-            if user.groups.filter(name='Chofer').exists():
-                self.fields['vehiculo'].queryset = user.vehiculos.all()
-            else:
-                self.fields['vehiculo'].queryset = Vehiculo.objects.all()
+        if user.groups.filter(name='Chofer').exists():
+            self.fields['vehiculo'].queryset = Vehiculo.activos.filter(chofer=user)
 
-    def validate(self, data):
-        # <-- CAMBIO: Se añade la validación anti-solapamiento
-        inicio = data['fecha_hora_programada']
-        duracion = data.get('duracion_estimada_minutos', 60)
-        fin = inicio + timedelta(minutes=duracion)
-
-        # Busca agendamientos existentes cuyo rango de tiempo se cruce con el nuevo
-        agendamientos_solapados = Agendamiento.objects.filter(
-            fecha_hora_programada__lt=fin,
-            fecha_hora_fin__gt=inicio
-        )
-
-        # Si estamos actualizando, excluimos el propio agendamiento de la validación
-        if self.instance:
-            agendamientos_solapados = agendamientos_solapados.exclude(pk=self.instance.pk)
-
-        if agendamientos_solapados.exists():
-            raise serializers.ValidationError("El horario seleccionado ya no está disponible. Por favor, elija otro.")
-        
-        return data
 
     def create(self, validated_data):
         # <-- CAMBIO: Se añade la lógica para asignar el creador de la cita
@@ -211,16 +192,17 @@ class OrdenSerializer(serializers.ModelSerializer):
     asignado_a = serializers.CharField(source='usuario_asignado.get_full_name', read_only=True, default='No asignado')
     # Se anida el historial para tener toda la info en un solo endpoint
     historial_estados = OrdenHistorialEstadoSerializer(many=True, read_only=True)
-
+    imagen_averia_url = serializers.ImageField(source='agendamiento_origen.imagen_averia', read_only=True, allow_null=True)
+    hora_agendada = serializers.DateTimeField(source='agendamiento_origen.fecha_hora_programada', read_only=True, allow_null=True)
     class Meta:
         model = Orden
         fields = [
             'id', 'vehiculo', 'vehiculo_info', 'agendamiento_origen',
             'fecha_ingreso', 'fecha_entrega_estimada', 'fecha_entrega_real',
             'estado', 'descripcion_falla', 'diagnostico_tecnico',
-            'usuario_asignado', 'asignado_a', 'historial_estados'
+            'usuario_asignado', 'asignado_a', 'historial_estados', 'imagen_averia_url', 'hora_agendada'
         ]
         extra_kwargs = {
             # Se usa PrimaryKeyRelatedField para que al crear/actualizar solo necesitemos el ID del vehículo.
-            'vehiculo': {'queryset': Vehiculo.objects.all()}
+            'vehiculo': {'queryset': Vehiculo.activos.all()}
         }

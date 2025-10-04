@@ -13,11 +13,13 @@ from .views import (
     UserListView,
     UserCreateAPIView,
     UserRetrieveUpdateAPIView,
-    supervisor_dashboard_stats,  # Esta es la función que ya tienes
+    supervisor_dashboard_stats,
     VehiculoViewSet,
     AgendamientoViewSet,
     OrdenViewSet,
-    ChoferListView
+    ChoferListView,
+    MecanicoListView,
+    SeguridadAgendaView
 )
 
 router = DefaultRouter()
@@ -39,7 +41,8 @@ urlpatterns = [
     path("users/create/", UserCreateAPIView.as_view(), name="user-create"),
     path("users/<int:id>/", UserRetrieveUpdateAPIView.as_view(), name="user-detail-update"),
     path('choferes/', ChoferListView.as_view(), name='chofer-list'),
-    
+    path('mecanicos/', MecanicoListView.as_view(), name='mecanico-list'),
+    path('agenda/seguridad/', SeguridadAgendaView.as_view(), name='seguridad-agenda-list'),
     # Dashboard del supervisor - RUTA CORREGIDA
     path("dashboard/supervisor/stats/", supervisor_dashboard_stats, name="dashboard-supervisor-stats"),
     

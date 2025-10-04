@@ -1,5 +1,11 @@
+// src/App.jsx
+
 import { Routes, Route, Navigate } from "react-router-dom";
 import { useUserStore } from "./store/authStore.js";
+
+// --- Importación de Componentes de Lógica y Layout ---
+import PrivateRoute from "./components/PrivateRoute.jsx";
+import MainLayout from "./components/layout/MainLayout.jsx";
 
 // --- Importación de Páginas ---
 import Login from "./pages/Login.jsx";
@@ -8,25 +14,24 @@ import SetNewPassword from "./pages/SetNewPassword.jsx";
 import Dashboard from "./pages/Dashboard.jsx";
 import ProfilePage from "./pages/ProfilePage.jsx";
 import GestionUsuarios from './pages/GestionUsuarios.jsx';
-import CrearEditarUsuario from './pages/CrearEditarUsuario.jsx'; 
+import CrearEditarUsuario from './pages/CrearEditarUsuario.jsx';
 import GestionVehiculos from './pages/GestionVehiculos.jsx';
 import CrearEditarVehiculo from './pages/CrearEditarVehiculo.jsx';
 import GestionAgenda from './pages/GestionAgenda.jsx';
-
-// 👇 1. Importa los nuevos componentes que faltaban
+import PanelSupervisor from './pages/PanelSupervisor.jsx';
 import GestionOrdenes from "./pages/GestionOrdenes.jsx";
 import DetalleOrden from "./pages/DetalleOrden.jsx";
+import ConfirmarAsignarCita from './pages/ConfirmarAsignarCita.jsx';
 
 
-// --- Importación de Componentes de Lógica ---
-import PrivateRoute from "./components/PrivateRoute.jsx";
+
 
 function App() {
   const { user } = useUserStore();
 
   return (
     <Routes>
-      {/* --- RUTAS PÚBLICAS --- */}
+      {/* --- RUTAS PÚBLICAS (Login, etc.) --- */}
       <Route
         path="/"
         element={user ? <Navigate to="/dashboard" replace /> : <Login />}
@@ -36,28 +41,33 @@ function App() {
       
       {/* --- RUTAS PRIVADAS / PROTEGIDAS --- */}
       <Route element={<PrivateRoute />}>
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/profile" element={<ProfilePage />} />
         
-        {/* Rutas de Gestión de Usuarios */}
-        <Route path="/usuarios" element={<GestionUsuarios />} />
-        <Route path="/usuarios/crear" element={<CrearEditarUsuario />} />
-        <Route path="/usuarios/editar/:id" element={<CrearEditarUsuario />} />
-        
-        {/* Rutas de Gestión de Vehículos */}
-        <Route path="/vehiculos" element={<GestionVehiculos />} />
-        <Route path="/vehiculos/crear" element={<CrearEditarVehiculo />} />
-        <Route path="/vehiculos/editar/:patente" element={<CrearEditarVehiculo />} />
+          
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/profile" element={<ProfilePage />} />
+          
+          {/* Gestión de Usuarios */}
+          <Route path="/usuarios" element={<GestionUsuarios />} />
+          <Route path="/usuarios/crear" element={<CrearEditarUsuario />} />
+          <Route path="/usuarios/editar/:id" element={<CrearEditarUsuario />} />
+          
+          {/* Gestión de Vehículos */}
+          <Route path="/vehiculos" element={<GestionVehiculos />} />
+          <Route path="/vehiculos/crear" element={<CrearEditarVehiculo />} />
+          <Route path="/vehiculos/editar/:patente" element={<CrearEditarVehiculo />} />
 
-        {/* Ruta para la Agenda */}
-        <Route path="/agenda" element={<GestionAgenda />} />
+          {/* Agenda y Panel de Supervisor */}
+          <Route path="/agenda" element={<GestionAgenda />} />
+          <Route path="/panel-supervisor" element={<PanelSupervisor />} />
+          <Route path="/agenda/confirmar/:id" element={<ConfirmarAsignarCita />} />
+          {/* Órdenes de Servicio */}
+          <Route path="/ordenes" element={<GestionOrdenes />} />
+          <Route path="/ordenes/:id" element={<DetalleOrden />} />
 
-        {/* 👇 2. Añade las nuevas rutas para las Órdenes de Servicio */}
-        <Route path="/ordenes" element={<GestionOrdenes />} />
-        <Route path="/ordenes/:id" element={<DetalleOrden />} />
-
-      </Route>
+        </Route>
+     
       
+      {/* Ruta "Catch-all" para cualquier otra URL */}
       <Route path="*" element={<Navigate to={user ? "/dashboard" : "/"} replace />} />
     </Routes>
   );
