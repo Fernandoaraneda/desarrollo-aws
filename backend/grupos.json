@@ -84,7 +84,7 @@
     "model": "auth.group",
     "pk": 3,
     "fields": {
-        "name": "Mec�nico",
+        "name": "Mecanico",
         "permissions": [
             42,
             44,
