@@ -155,9 +155,20 @@ EMAIL_BACKEND = config(
 #    ]
 # -----------------------------
 CORS_ALLOWED_ORIGINS = config(
-    'CORS_ALLOWED_ORIGINS',
-    default='http://localhost:5173,http://127.0.0.1:5173'
-).split(',')
+    "CORS_ALLOWED_ORIGINS",
+    default="http://localhost:5173,http://127.0.0.1:5173"
+).split(",")
+
+CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_HEADERS = [
+    'content-type',
+    'authorization',
+    'accept',
+    'origin',
+    'x-requested-with',
+]
+
+CSRF_TRUSTED_ORIGINS = CORS_ALLOWED_ORIGINS 
 # -----------------------------
 # JWT CONFIG
 # -----------------------------
