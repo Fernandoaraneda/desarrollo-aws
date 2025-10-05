@@ -2,26 +2,33 @@ import React, { useState } from 'react';
 import { NavLink, useNavigate, Outlet } from 'react-router-dom';
 import { useUserStore } from '../../store/authStore.js';
 import styles from '../../css/mainlayout.module.css';
+import Notificaciones from './Notificaciones';
 
 // ✅ CAMBIO: Se añade el enlace a "Órdenes de Servicio" para Supervisor y Mecánico
 const navLinksByRole = {
   'Supervisor': [
     { to: '/dashboard', label: 'Inicio', icon: 'fas fa-home' },
     { to: '/panel-supervisor', label: 'Panel de Citas', icon: 'fas fa-calendar-check' },
+    { to: '/panel-ingresos', label: 'Panel de Ingresos', icon: 'fas fa-door-open' }, 
     { to: '/agenda', label: 'Agendar Cita', icon: 'fas fa-calendar-plus' },
     { to: '/ordenes', label: 'Órdenes de Servicio', icon: 'fas fa-clipboard-list' },
     { to: '/vehiculos', label: 'Gestionar Vehículos', icon: 'fas fa-truck' },
     { to: '/usuarios', label: 'Gestionar Usuarios', icon: 'fas fa-users-cog' },
+    { to: '/proximas-citas', label: 'Próximas Asignaciones', icon: 'fas fa-calendar-alt' }
     
   ],
   'Chofer': [
     { to: '/dashboard', label: 'Mi Estado', icon: 'fas fa-road' },
     { to: '/agenda', label: 'Agendar Ingreso', icon: 'fas fa-calendar-plus' },
+    { to: '/historial', label: 'Mi Historial', icon: 'fas fa-history' }
   ],
   'Mecanico': [
     { to: '/dashboard', label: 'Tareas Asignadas', icon: 'fas fa-tasks' },
-    // 👇 ESTA LÍNEA ES LA IMPORTANTE PARA EL MECÁNICO 👇
+    { to: '/proximas-citas', label: 'Próximas Asignaciones', icon: 'fas fa-calendar-alt' },
     { to: '/ordenes', label: 'Órdenes de Servicio', icon: 'fas fa-clipboard-list' }
+  ],
+  'Seguridad': [
+      { to: '/panel-ingresos', label: 'Registrar Ingreso', icon: 'fas fa-door-open' },
   ],
   'Administrativo': [
     { to: '/dashboard', label: 'Administracion', icon: 'fas fa-file-invoice' },
@@ -107,14 +114,17 @@ export default function MainLayout() {
             <i className="fas fa-bars"></i>
           </button>
           
-          <span className={styles.userInfo}>
-            Bienvenido, <strong>{user?.first_name || user?.username}</strong> ({user?.rol})
-          </span>
-        </header>
-        <main className={styles.mainContent}>
-          <Outlet />
-        </main>
-      </div>
-    </div>
-  );
+          <div className={styles.headerRight}> {/* Un div para agrupar a la derecha */}
+                        <Notificaciones /> {/* <-- 2. Añade el componente aquí */}
+                        <span className={styles.userInfo}>
+                            Bienvenido, <strong>{user?.first_name || user?.username}</strong> ({user?.rol})
+                        </span>
+                    </div>
+                </header>
+                <main className={styles.mainContent}>
+                    <Outlet />
+                </main>
+            </div>
+        </div>
+    );
 }

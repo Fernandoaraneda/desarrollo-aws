@@ -1,0 +1,33 @@
+/* src/css/notificaciones.module.css */
+
+.notificationWrapper { position: relative; }
+.bellButton { background: none; border: none; color: #9ca3af; cursor: pointer; position: relative; }
+.bellButton:hover { color: white; }
+.unreadBadge {
+    position: absolute; top: -5px; right: -5px;
+    background-color: #ef4444; color: white;
+    width: 18px; height: 18px; border-radius: 50%;
+    font-size: 0.7rem; font-weight: bold;
+    display: flex; align-items: center; justify-content: center;
+    border: 2px solid #1f2937; /* Asumiendo fondo oscuro del header */
+}
+
+.dropdown {
+    position: absolute; top: 150%; right: 0;
+    width: 350px; max-height: 400px;
+    background-color: white; color: #1f2937;
+    border-radius: 8px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+    border: 1px solid #e5e7eb;
+    overflow: hidden; z-index: 1000;
+}
+.dropdownHeader {
+    padding: 1rem; font-weight: bold;
+    border-bottom: 1px solid #e5e7eb;
+}
+.notificationList { list-style: none; padding: 0; margin: 0; max-height: 320px; overflow-y: auto; }
+.notificationList li { padding: 1rem; border-bottom: 1px solid #f3f4f6; cursor: pointer; }
+.notificationList li:hover { background-color: #f9fafb; }
+.notificationList li.unread { background-color: #eff6ff; }
+.notificationList li p { margin: 0 0 0.25rem 0; font-size: 0.9rem; }
+.notificationList li small { color: #6b7280; font-size: 0.75rem; }
+.noNotifications { padding: 2rem; text-align: center; color: #9ca3af; }

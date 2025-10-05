@@ -88,6 +88,11 @@ export default function ConfirmarAsignarCita() {
                             ))}
                         </select>
                     </div>
+                {agendamiento.solicita_grua && (
+                    <div className={styles.alertaGrua}>
+                        <p><strong>⚠️ ATENCIÓN:</strong> El chofer indicó que el vehículo necesita asistencia de grúa.</p>
+                    </div>
+                )}
 
                     {error && <p style={{ color: 'red', marginTop: '1rem' }}>{error}</p>}
                     

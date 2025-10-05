@@ -1,116 +1,107 @@
-.pageWrapper {
-    padding: 2rem;
-    background-color: #f9fafb;
-}
+/* src/css/GestionOrdenes.module.css (Versión para Tema Claro) */
 
-.header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 2rem;
+/* Estilos generales */
+.pageWrapper { 
+    padding: 2rem; 
+    background-color: #f9fafb; /* Un fondo gris muy claro para la página */
 }
-
-.header h1 {
-    font-size: 2rem;
-    font-weight: bold;
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-}
-
-.createButton {
-    display: flex;
-    align-items: center;
+.header { margin-bottom: 2rem; }
+.header h1 { 
+    font-size: 2rem; 
+    font-weight: bold; 
+    display: flex; 
+    align-items: center; 
     gap: 0.5rem;
-    background-color: #2563eb;
-    color: white;
-    font-weight: bold;
-    padding: 0.6rem 1.2rem;
-    border-radius: 8px;
-    border: none;
-    cursor: pointer;
-    transition: background-color 0.2s;
+    color: #111827; /* Texto oscuro */
 }
-.createButton:hover {
-    background-color: #1d4ed8;
-}
+.header p { color: #6b7280; } /* Texto gris oscuro */
 
-.tableCard {
-    background-color: white;
-    border-radius: 12px;
-    padding: 1.5rem;
-    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+.tableCard { 
+    background-color: #ffffff; /* Fondo blanco para la tarjeta */
+    padding: 1.5rem; 
+    border-radius: 8px; 
+    border: 1px solid #e5e7eb; /* Borde claro */
+    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
 }
-
-.tableContainer {
-    width: 100%;
-    overflow-x: auto;
+.tableContainer { overflow-x: auto; }
+.table { width: 100%; border-collapse: collapse; }
+.table th, .table td { 
+    padding: 0.75rem 1rem; 
+    text-align: left; 
+    border-bottom: 1px solid #e5e7eb; /* Borde claro */
+    color: #374151; /* Texto oscuro para celdas */
 }
-
-.table {
-    width: 100%;
-    min-width: 700px;
-    border-collapse: collapse;
+.table th { 
+    font-weight: 600; 
+    color: #6b7280; /* Texto gris oscuro para encabezados */
 }
 
-.table th, .table td {
-    padding: 0.75rem 1rem;
-    text-align: left;
-    border-bottom: 1px solid #e5e7eb;
-}
-
-.table th {
-    font-size: 0.75rem;
-    color: #6b7280;
-    text-transform: uppercase;
-}
-
-.statusBadge {
-    padding: 0.25rem 0.75rem;
-    border-radius: 9999px;
-    font-size: 0.75rem;
-    font-weight: 500;
-    text-transform: capitalize;
-}
-
-.statusBadge.ingresado { background-color: #e0e7ff; color: #4338ca; }
-.statusBadge.endiagnostico { background-color: #fef3c7; color: #92400e; }
-.statusBadge.enproceso { background-color: #dbeafe; color: #1e40af; }
-.statusBadge.pausado { background-color: #fee2e2; color: #991b1b; }
-.statusBadge.finalizado { background-color: #dcfce7; color: #166534; }
-
+/* Estilos para las acciones */
+.actionsCell { display: flex; gap: 0.5rem; }
 .actionButton {
-    background-color: #f3f4f6;
-    color: #374151;
-    font-weight: 500;
-    font-size: 0.875rem;
-    padding: 0.4rem 0.8rem;
+    display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0.75rem;
+    border: 1px solid #d1d5db; border-radius: 6px; cursor: pointer; font-size: 0.875rem;
+    background-color: #ffffff; color: #374151; transition: background-color 0.2s;
+}
+.actionButton:hover { background-color: #f9fafb; }
+.editButton { 
+    background-color: #f97316; 
+    color: white;
+    border-color: #f97316;
+}
+.editButton:hover { background-color: #fb923c; border-color: #fb923c; }
+
+/* Estilos para los Badges de Estado (Estos se mantienen igual, tienen buen contraste) */
+.statusBadge {
+    padding: 0.25rem 0.75rem; border-radius: 9999px; font-weight: 500; font-size: 0.8rem;
+    text-align: center; color: white;
+}
+.ingresado { background-color: #3b82f6; } /* Azul */
+.endiagnostico { background-color: #8b5cf6; } /* Púrpura */
+.enproceso { background-color: #eab308; } /* Amarillo */
+.pausado { background-color: #6b7280; } /* Gris */
+.finalizado { background-color: #22c55e; } /* Verde */
+
+/* --- Estilos para el Modal (Versión Clara) --- */
+.modalOverlay {
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background-color: rgba(17, 24, 39, 0.6); /* Fondo semi-transparente oscuro */
+    display: flex; justify-content: center; align-items: center; z-index: 1000;
+}
+.modalContent {
+    background-color: #ffffff; /* Fondo blanco */
+    color: #111827; /* Texto oscuro */
+    padding: 2rem; border-radius: 8px; 
+    width: 90%; max-width: 500px;
+    box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+}
+.modalContent h2 { font-size: 1.5rem; font-weight: bold; margin-bottom: 1rem; }
+.modalContent p { margin-bottom: 1.5rem; color: #6b7280; }
+.formField { margin-bottom: 1rem; }
+.formField label { display: block; margin-bottom: 0.5rem; font-weight: 500; color: #374151; }
+.formField select, .formField textarea {
+    width: 100%; padding: 0.75rem; border-radius: 6px;
+    background-color: #f9fafb; /* Fondo de input muy claro */
+    border: 1px solid #d1d5db; /* Borde gris claro */
+    color: #111827; /* Texto oscuro */
+}
+.formField select:focus, .formField textarea:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 1px #3b82f6;
+}
+.modalActions {
+    margin-top: 2rem; display: flex; justify-content: flex-end; gap: 1rem;
+}
+.modalActions button {
+    padding: 0.75rem 1.5rem; border: none; border-radius: 6px;
+    cursor: pointer; font-weight: bold; transition: background-color 0.2s;
+}
+.cancelButton { 
+    background-color: #e5e7eb; /* Fondo gris claro */
+    color: #374151; /* Texto oscuro */
     border: 1px solid #d1d5db;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: background-color 0.2s;
 }
-.actionButton:hover {
-    background-color: #e5e7eb;
-}
-
-.loading, .error {
-    text-align: center;
-    padding: 2rem;
-    font-size: 1.2rem;
-    font-weight: 500;
-}
-.error {
-    color: #ef4444;
-}
-
-@media (max-width: 640px) {
-    .pageWrapper {
-        padding: 1rem;
-    }
-    .header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 1rem;
-    }
-}
+.cancelButton:hover { background-color: #d1d5db; }
+.saveButton { background-color: #16a34a; color: white; }
+.saveButton:hover { background-color: #22c55e; }

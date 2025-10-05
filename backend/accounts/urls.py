@@ -19,7 +19,9 @@ from .views import (
     OrdenViewSet,
     ChoferListView,
     MecanicoListView,
-    SeguridadAgendaView
+    SeguridadAgendaView,
+    MisProximasCitasView,
+    mecanico_dashboard_stats
 )
 
 router = DefaultRouter()
@@ -45,11 +47,11 @@ urlpatterns = [
     path('agenda/seguridad/', SeguridadAgendaView.as_view(), name='seguridad-agenda-list'),
     # Dashboard del supervisor - RUTA CORREGIDA
     path("dashboard/supervisor/stats/", supervisor_dashboard_stats, name="dashboard-supervisor-stats"),
-    
+    path('mecanico/proximas-citas/', MisProximasCitasView.as_view(), name='mecanico-proximas-citas'),
     # Reset de contraseña
     path("password-reset/", PasswordResetRequestView.as_view(), name="password-reset"),
     path("password-reset-confirm/", PasswordResetConfirmView.as_view(), name="password-reset-confirm"),
-
+    path('dashboard/mecanico/stats/', mecanico_dashboard_stats, name='mecanico-dashboard-stats'),
     # Incluir rutas del router (vehiculos, agendamientos, ordenes)
     path('', include(router.urls)),
 ]

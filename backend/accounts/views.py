@@ -11,17 +11,17 @@ from django.core.exceptions import ValidationError
 from django.core.mail import send_mail
 from django.contrib.auth.password_validation import validate_password
 from django.db import transaction
-
+from django.utils import timezone
 from rest_framework import status, generics, permissions, viewsets
 from rest_framework.decorators import api_view, permission_classes, action
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from django.db.models import Count, Avg, F
+from django.db.models import Count, Avg, F, DateField
 from django.db.models.functions import TruncDay
 
-from .models import Orden, Agendamiento, Vehiculo, OrdenHistorialEstado
+from .models import Orden, Agendamiento, Vehiculo, OrdenHistorialEstado, OrdenPausa, OrdenDocumento, Notificacion
 from .serializers import (
     LoginSerializer,
     UserSerializer,
@@ -30,6 +30,7 @@ from .serializers import (
     VehiculoSerializer,
     AgendamientoSerializer,
     OrdenSerializer,
+    OrdenDocumentoSerializer
 )
 
 User = get_user_model()
@@ -248,18 +249,20 @@ def supervisor_dashboard_stats(request):
     # Órdenes última semana (por día)
     ordenes_semana_raw = (
         Orden.objects.filter(fecha_ingreso__gte=start_of_week_dt)
-        .annotate(dia_semana=TruncDay("fecha_ingreso"))
+        .annotate(dia_semana=TruncDay("fecha_ingreso", output_field=DateField()))
         .values("dia_semana")
         .annotate(creadas=Count("id"))
         .order_by("dia_semana")
     )
     ordenes_ultima_semana = []
+    dias_semana_map = {0: "Lun", 1: "Mar", 2: "Mié", 3: "Jue", 4: "Vie", 5: "Sáb", 6: "Dom"}
     for i in range(7):
         fecha_dia = start_of_week + timedelta(days=i)
-        dia_nombre = dias_semana.get(fecha_dia.weekday(), "")
+        dia_nombre = dias_semana_map.get(fecha_dia.weekday(), "")
         cre = 0
         for item in ordenes_semana_raw:
-            if item["dia_semana"].date() == fecha_dia:
+            # item["dia_semana"] ahora es un objeto date, por lo que la comparación es directa
+            if item["dia_semana"] == fecha_dia:
                 cre = item["creadas"]
                 break
         ordenes_ultima_semana.append({"dia": dia_nombre, "creadas": cre})
@@ -339,7 +342,7 @@ class AgendamientoViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        if user.groups.filter(name__in=['Supervisor', 'Mecanico']).exists():
+        if user.groups.filter(name__in=['Supervisor', 'Mecanico', 'Seguridad']).exists():
             return Agendamiento.objects.select_related('vehiculo', 'mecanico_asignado').all().order_by('fecha_hora_programada')
         elif user.groups.filter(name='Chofer').exists():
             return Agendamiento.objects.filter(vehiculo__chofer=user).order_by('fecha_hora_programada')
@@ -380,9 +383,21 @@ class AgendamientoViewSet(viewsets.ModelViewSet):
                 descripcion_falla=agendamiento.motivo_ingreso,
                 usuario_asignado=agendamiento.mecanico_asignado,
             )
+            if agendamiento.mecanico_asignado:
+                mensaje = f"Se te ha asignado una nueva orden (#{nueva_orden.id}) para el vehículo {nueva_orden.vehiculo.patente}."
+                Notificacion.objects.create(
+                    usuario=agendamiento.mecanico_asignado,
+                    mensaje=mensaje,
+                    link=f"/ordenes/{nueva_orden.id}" # Link para que al hacer clic, vaya al detalle de la orden
+                )
+            
+
             # Conservador: mantenemos el comportamiento original (FINALIZADO) para no cambiar el flujo actual.
             agendamiento.estado = Agendamiento.Estado.FINALIZADO
             agendamiento.save()
+
+            
+            
 
         return Response({'message': 'Ingreso registrado y orden creada.', 'orden_id': nueva_orden.id}, status=status.HTTP_201_CREATED)
 
@@ -431,10 +446,69 @@ class OrdenViewSet(viewsets.ModelViewSet):
 
         with transaction.atomic():
             orden.estado = nuevo_estado
+            if nuevo_estado == Orden.Estado.FINALIZADO:
+                orden.fecha_entrega_real = timezone.now()           
             orden.save()
             OrdenHistorialEstado.objects.create(orden=orden, estado=nuevo_estado, usuario=request.user, motivo=motivo)
+            
 
         return Response(self.get_serializer(orden).data, status=status.HTTP_200_OK)
+    @action(detail=True, methods=['post'], url_path='pausar')
+    def pausar(self, request, pk=None):
+        """Pausa una orden de trabajo."""
+        orden = self.get_object()
+        motivo = request.data.get('motivo', 'Pausa iniciada por el usuario.')
+
+        with transaction.atomic():
+            # Cambiamos el estado de la orden a 'Pausado'
+            orden.estado = Orden.Estado.PAUSADO
+            orden.save()
+            
+            # Creamos el registro de la pausa
+            OrdenPausa.objects.create(orden=orden, usuario=request.user, motivo=motivo)
+            
+            # Guardamos el historial del cambio de estado
+            OrdenHistorialEstado.objects.create(
+                orden=orden, estado=Orden.Estado.PAUSADO, usuario=request.user, motivo=motivo
+            )
+
+        return Response(self.get_serializer(orden).data, status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=['post'], url_path='reanudar')
+    def reanudar(self, request, pk=None):
+        """Reanuda una orden de trabajo que estaba en pausa."""
+        orden = self.get_object()
+
+        with transaction.atomic():
+            # Buscamos la pausa activa (la que no tiene fecha de fin) y la cerramos
+            pausa_activa = orden.pausas.filter(fin__isnull=True).first()
+            if pausa_activa:
+                pausa_activa.fin = timezone.now()
+                pausa_activa.save()
+            
+            # Volvemos la orden al estado 'En Proceso' (o el que consideres por defecto)
+            orden.estado = Orden.Estado.EN_PROCESO
+            orden.save()
+
+            # Guardamos el historial del cambio de estado
+            OrdenHistorialEstado.objects.create(
+                orden=orden, estado=Orden.Estado.EN_PROCESO, usuario=request.user, motivo="Trabajo reanudado."
+            )
+
+        return Response(self.get_serializer(orden).data, status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=['post'], url_path='subir-documento')
+    def subir_documento(self, request, pk=None):
+        """Sube un documento o foto asociado a una orden."""
+        orden = self.get_object()
+        
+        # Usamos un serializer específico para la subida de archivos
+        serializer = OrdenDocumentoSerializer(data=request.data, context={'request': request})
+        if serializer.is_valid():
+            # Asignamos la orden y el usuario antes de guardar
+            serializer.save(orden=orden, subido_por=request.user)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class MecanicoListView(generics.ListAPIView):
@@ -458,3 +532,72 @@ class SeguridadAgendaView(generics.ListAPIView):
             fecha_hora_programada__gte=start,
             fecha_hora_programada__lt=end
         ).order_by('fecha_hora_programada')
+
+
+class MisProximasCitasView(generics.ListAPIView):
+    """
+    Devuelve una lista de las próximas citas con estado 'Confirmado'
+    que han sido asignadas al mecánico que realiza la consulta.
+    Es una vista de solo lectura para planificación.
+    """
+    serializer_class = AgendamientoSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        # Nos aseguramos de que solo los mecánicos puedan usar esta vista
+        if user.groups.filter(name='Mecanico').exists():
+            return Agendamiento.objects.filter(
+                mecanico_asignado=user,
+                estado=Agendamiento.Estado.CONFIRMADO # Solo las que no han llegado
+            ).order_by('fecha_hora_programada')
+        
+        # Si no es mecánico, no devolvemos nada
+        return Agendamiento.objects.none()
+
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def mecanico_dashboard_stats(request):
+    """
+    Prepara y devuelve las estadísticas y tareas para el dashboard del mecánico.
+    """
+    user = request.user
+    if not user.groups.filter(name='Mecanico').exists():
+        return Response({'error': 'Acceso no autorizado'}, status=status.HTTP_403_FORBIDDEN)
+
+    # 1. Contar órdenes activas (todas las que no estén 'Finalizado')
+    ordenes_activas_count = Orden.objects.filter(
+        usuario_asignado=user
+    ).exclude(
+        estado=Orden.Estado.FINALIZADO
+    ).count()
+
+    # 2. Contar próximas asignaciones (agendamientos confirmados pero sin orden creada)
+    proximas_asignaciones_count = Agendamiento.objects.filter(
+        mecanico_asignado=user,
+        estado=Agendamiento.Estado.CONFIRMADO
+    ).count()
+    
+    # 3. Obtener la lista de órdenes activas
+    ordenes_activas = Orden.objects.filter(
+        usuario_asignado=user
+    ).exclude(
+        estado=Orden.Estado.FINALIZADO
+    ).order_by('fecha_ingreso')
+
+    # Serializar la lista de órdenes
+    ordenes_serializer = OrdenSerializer(ordenes_activas, many=True, context={'request': request})
+
+    # Construir la respuesta
+    data = {
+        'kpis': {
+            'ordenesActivas': ordenes_activas_count,
+            'proximasAsignaciones': proximas_asignaciones_count,
+        },
+        'tareas': ordenes_serializer.data
+    }
+    return Response(data, status=status.HTTP_200_OK)
+
+

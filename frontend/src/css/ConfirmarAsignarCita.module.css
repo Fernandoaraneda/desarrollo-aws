@@ -1,6 +1,10 @@
+/* src/css/ConfirmarAsignarCita.module.css */
+
+/* --- Estructura General de la Página --- */
 .pageWrapper {
   max-width: 800px;
-  margin: 0 auto;
+  margin: 2rem auto; /* Añade margen arriba y abajo */
+  padding: 0 1rem; /* Añade padding a los lados en móvil */
   animation: fadeIn 0.5s ease-in-out;
 }
 
@@ -21,51 +25,99 @@
   font-weight: 700;
   color: #111827;
   margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
 }
 
 .formHeader p {
   color: #6b7280;
+  margin-bottom: 2.5rem;
+  border-bottom: 1px solid #e5e7eb;
+  padding-bottom: 1.5rem;
+}
+
+
+/* --- SECCIÓN DE INFORMACIÓN Y DE IMAGEN (NUEVO) --- */
+.infoSection {
   margin-bottom: 2rem;
 }
 
-.formGrid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1.5rem;
+.infoSection h4 {
+  font-weight: 600;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #111827;
+  font-size: 1.125rem;
 }
 
+.infoSection p {
+  color: #374151;
+  margin-bottom: 0.5rem;
+}
+
+.infoSection p strong {
+  font-weight: 600;
+  color: #1f2937;
+}
+
+/* === LA SOLUCIÓN AL TAMAÑO DE LA IMAGEN === */
+.fullWidthImage {
+  width: 100%;                  /* Ocupa el 100% del ancho de su contenedor */
+  max-height: 400px;            /* LÍMITE: La altura máxima será de 400px */
+  object-fit: contain;          /* Asegura que toda la imagen se vea, sin deformarse */
+  border-radius: 8px;           /* Bordes redondeados consistentes */
+  background-color: #f3f4f6;    /* Un fondo por si la imagen es transparente */
+  border: 1px solid #e5e7eb;
+  margin-top: 0.5rem;
+}
+
+
+/* --- Formulario de Asignación --- */
 .formField {
+  margin-top: 1rem;
   display: flex;
   flex-direction: column;
-}
-
-.fullWidth {
-  grid-column: 1 / -1;
 }
 
 .formField label {
   font-weight: 600;
   margin-bottom: 0.5rem;
   color: #374151;
-  font-size: 0.875rem;
 }
 
-.formField input,
 .formField select {
   padding: 0.75rem;
   border: 1px solid #d1d5db;
   border-radius: 8px;
   font-size: 1rem;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  background-color: #f9fafb;
 }
 
-.formField input:focus,
 .formField select:focus {
   outline: none;
-  border-color: var(--accent-color);
-  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.3);
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3);
 }
 
+/* --- Alerta de Grúa (NUEVO) --- */
+.alertaGrua {
+    background-color: #fffbeb; /* Amarillo claro */
+    border: 1px solid #fde68a;
+    color: #b45309;
+    padding: 1rem;
+    border-radius: 8px;
+    margin-top: 1.5rem;
+    text-align: center;
+}
+.alertaGrua p {
+    margin: 0;
+}
+
+
+/* --- Botones de Acción --- */
 .formActions {
   margin-top: 2rem;
   padding-top: 1.5rem;
@@ -86,11 +138,11 @@
 }
 
 .submitButton {
-  background-color: var(--accent-color);
+  background-color: #16a34a; /* Verde */
   color: white;
 }
 .submitButton:hover {
-  background-color: var(--accent-color-hover);
+  background-color: #15803d;
 }
 
 .cancelButton {
@@ -99,50 +151,4 @@
 }
 .cancelButton:hover {
   background-color: #d1d5db;
-}
-
-
-/* =================== REGLAS RESPONSIVAS =================== */
-
-/* Tablets (hasta 1024px) */
-@media (max-width: 1024px) {
-  .formGrid {
-    grid-template-columns: 1fr 1fr; /* Mantiene 2 columnas, pero se ajusta al ancho */
-    gap: 1rem;
-  }
-}
-
-/* Móviles (hasta 640px) */
-@media (max-width: 640px) {
-  .pageWrapper {
-    padding: 1rem;
-  }
-  .formCard {
-    padding: 1rem;
-  }
-  .formHeader h1 {
-    font-size: 1.5rem;
-  }
-  .formHeader p {
-    font-size: 0.875rem;
-  }
-  .formGrid {
-    grid-template-columns: 1fr; /* Cada campo ocupa toda la fila */
-    gap: 0.75rem;
-  }
-  .formField input,
-  .formField select {
-    font-size: 0.875rem;
-    padding: 0.5rem;
-  }
-  .formActions {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 0.5rem;
-  }
-  .submitButton,
-  .cancelButton {
-    width: 100%;
-    padding: 0.75rem;
-  }
 }

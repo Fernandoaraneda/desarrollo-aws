@@ -56,7 +56,9 @@ export default function GestionAgenda() {
         dataParaEnviar.append('motivo_ingreso', formData.motivo_ingreso);
         dataParaEnviar.append('fecha_hora_programada', formData.fecha_hora_programada);
         dataParaEnviar.append('duracion_estimada_minutos', DURACION_CITA_MINUTOS);
-        
+        dataParaEnviar.append('solicita_grua', formData.solicita_grua || false);
+
+
         if (imagenFile) {
             dataParaEnviar.append('imagen_averia', imagenFile);
         }
@@ -167,6 +169,16 @@ export default function GestionAgenda() {
                                 onChange={handleChange}
                                 required
                             ></textarea>
+                            <div className={styles.formFieldCheckbox}>
+                                <input 
+                                    type="checkbox" 
+                                    id="solicita_grua"
+                                    name="solicita_grua"
+                                    checked={formData.solicita_grua || false}
+                                    onChange={e => setFormData(prev => ({ ...prev, solicita_grua: e.target.checked }))}
+                                />
+                                <label htmlFor="solicita_grua">El vehículo no puede moverse por sí mismo y necesita una grúa.</label>
+                            </div>
                         </div>
                         <div className={styles.formField}>
                             <label htmlFor="imagen_averia"><Paperclip size={16} /> Adjuntar Imagen (Opcional)</label>

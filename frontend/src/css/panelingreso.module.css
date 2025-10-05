@@ -185,3 +185,41 @@
 .ingresoButton:hover {
   background-color: #218838;
 }
+/* --- ESTILOS PARA LA BARRA DE BÚSQUEDA --- */
+
+/* 1. El contenedor principal para los controles de la tabla (incluida la búsqueda) */
+.tableControls {
+  display: flex;
+  justify-content: flex-end; /* Alinea la búsqueda a la derecha */
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  padding: 1rem 1.5rem; 
+  border-bottom: 1px solid #e5e7eb; /* O el color de borde que prefieras */
+}
+
+/* 2. El contenedor específico de la barra de búsqueda */
+.searchBox {
+  position: relative;
+  max-width: 400px;
+  width: 100%; /* Para que sea responsivo en móviles */
+}
+
+.searchBox input {
+  width: 100%;
+  padding: 0.75rem 1rem 0.75rem 2.5rem; /* Deja espacio a la izquierda para el icono */
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 1rem;
+  background-color: #f9fafb; /* Un fondo leggermente gris */
+}
+
+/* 3. El icono de la lupa dentro de la barra */
+.searchIcon {
+  position: absolute;
+  left: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #9ca3af; /* Color gris para el icono */
+  pointer-events: none; /* Para que no interfiera con el clic en el input */
+}

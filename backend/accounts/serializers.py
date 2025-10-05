@@ -1,19 +1,28 @@
+# ----------------------------------------------------------------------
+# IMPORTACIONES
+# ----------------------------------------------------------------------
 from rest_framework import serializers
 from django.contrib.auth import get_user_model, authenticate
 from django.contrib.auth.models import Group
 from django.contrib.auth.password_validation import validate_password
+from django.db.models import Q
 from datetime import timedelta
-from django.db.models import Q # <-- CAMBIO: Se importa Q para consultas complejas
-from .models import Vehiculo, Agendamiento, Orden, OrdenHistorialEstado
+
+# Importación de modelos locales
+from .models import Vehiculo, Agendamiento, Orden, OrdenHistorialEstado, OrdenDocumento
+
 
 User = get_user_model()
 
-# ----------------------------------------------------------------------
-# SERIALIZERS DE USUARIOS (Sin cambios)
-# ----------------------------------------------------------------------
+
+# ======================================================================
+# 🔐 SERIALIZERS DE USUARIOS
+# ======================================================================
+
 class UserSerializer(serializers.ModelSerializer):
     """
     Serializador para LEER la información de los usuarios.
+    Incluye el nombre del rol (primer grupo al que pertenece).
     """
     rol = serializers.SerializerMethodField(read_only=True)
 
@@ -23,8 +32,9 @@ class UserSerializer(serializers.ModelSerializer):
             'id', 'username', 'first_name', 'last_name',
             'email', 'rol', 'is_active', 'rut', 'telefono'
         ]
-    
+
     def get_rol(self, obj):
+        """Obtiene el nombre del grupo/rol del usuario."""
         group = obj.groups.first()
         return group.name if group else None
 
@@ -32,6 +42,7 @@ class UserSerializer(serializers.ModelSerializer):
 class UserCreateUpdateSerializer(serializers.ModelSerializer):
     """
     Serializador para CREAR y ACTUALIZAR usuarios.
+    Permite asignar el rol y establecer contraseña.
     """
     rol = serializers.CharField(write_only=True)
     password = serializers.CharField(write_only=True, required=False, allow_blank=True)
@@ -43,27 +54,39 @@ class UserCreateUpdateSerializer(serializers.ModelSerializer):
             'password', 'is_active', 'rol', 'rut', 'telefono'
         ]
 
+    # -----------------------
+    # Validaciones
+    # -----------------------
     def validate_password(self, value):
-        """Valida la contraseña con las reglas de Django (mínimo, comunes, etc.)."""
+        """Valida la contraseña según las reglas de Django."""
         if value:
             validate_password(value)
         return value
 
+    # -----------------------
+    # Métodos CRUD
+    # -----------------------
     def create(self, validated_data):
+        """Crea un usuario y lo asigna a un grupo/rol."""
         rol_name = validated_data.pop('rol')
         password = validated_data.pop('password', None)
+
         user = User(**validated_data)
         if password:
             user.set_password(password)
         user.save()
+
+        # Asigna el grupo correspondiente
         try:
             group = Group.objects.get(name=rol_name)
             user.groups.add(group)
         except Group.DoesNotExist:
             pass
+
         return user
 
     def update(self, instance, validated_data):
+        """Actualiza un usuario existente (rol y contraseña incluidos)."""
         if 'rol' in validated_data:
             rol_name = validated_data.pop('rol')
             instance.groups.clear()
@@ -72,7 +95,7 @@ class UserCreateUpdateSerializer(serializers.ModelSerializer):
                 instance.groups.add(group)
             except Group.DoesNotExist:
                 pass
-        
+
         password = validated_data.pop('password', None)
         if password:
             validate_password(password, instance)
@@ -84,7 +107,7 @@ class UserCreateUpdateSerializer(serializers.ModelSerializer):
 class LoginSerializer(serializers.Serializer):
     """
     Serializador para el INICIO DE SESIÓN.
-    Valida las credenciales.
+    Valida las credenciales del usuario.
     """
     username = serializers.CharField()
     password = serializers.CharField(write_only=True)
@@ -102,20 +125,26 @@ class LoginSerializer(serializers.Serializer):
 
 class ChangePasswordSerializer(serializers.Serializer):
     """
-    Serializador para que un usuario CAMBIE SU PROPIA CONTRASEÑA.
+    Serializador para CAMBIO DE CONTRASEÑA del propio usuario.
     """
     old_password = serializers.CharField(required=True)
     new_password = serializers.CharField(required=True)
 
     def validate_new_password(self, value):
+        """Valida la nueva contraseña antes de guardarla."""
         validate_password(value, self.context['request'].user)
         return value
 
 
-# ----------------------------------------------------------------------
-# SERIALIZERS DE VEHÍCULOS (Sin cambios)
-# ----------------------------------------------------------------------
+# ======================================================================
+# 🚗 SERIALIZERS DE VEHÍCULOS
+# ======================================================================
+
 class VehiculoSerializer(serializers.ModelSerializer):
+    """
+    Serializador para Vehículos.
+    Muestra el nombre del chofer asociado si existe.
+    """
     chofer_nombre = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
@@ -123,23 +152,26 @@ class VehiculoSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
     def get_chofer_nombre(self, obj):
+        """Devuelve el nombre completo del chofer o 'Sin asignar'."""
         if obj.chofer:
             return f"{obj.chofer.first_name} {obj.chofer.last_name}"
         return "Sin asignar"
 
 
-# ----------------------------------------------------------------------
-# SERIALIZERS DE AGENDAMIENTOS (Aquí están los cambios)
-# ----------------------------------------------------------------------
+# ======================================================================
+# 📅 SERIALIZERS DE AGENDAMIENTOS
+# ======================================================================
+
 class AgendamientoSerializer(serializers.ModelSerializer):
+    """
+    Serializador para agendamientos (citas programadas).
+    Incluye datos del vehículo, chofer y mecánico.
+    """
     vehiculo_patente = serializers.CharField(source='vehiculo.patente', read_only=True)
     chofer_nombre = serializers.CharField(source='chofer_asociado.get_full_name', read_only=True)
     mecanico_nombre = serializers.CharField(source='mecanico_asignado.get_full_name', read_only=True, default='Sin asignar')
-    
-    # --- LÍNEA CORREGIDA ---
-    # Le decimos que el campo es opcional y puede ser nulo
-    imagen_averia = serializers.ImageField(required=False, allow_null=True)
 
+    imagen_averia = serializers.ImageField(required=False, allow_null=True)
     vehiculo = serializers.PrimaryKeyRelatedField(queryset=Vehiculo.activos.all())
 
     class Meta:
@@ -148,31 +180,51 @@ class AgendamientoSerializer(serializers.ModelSerializer):
             'id', 'vehiculo', 'vehiculo_patente', 'chofer_asociado', 'chofer_nombre',
             'mecanico_asignado', 'mecanico_nombre',
             'fecha_hora_programada', 'duracion_estimada_minutos', 'fecha_hora_fin',
-            'motivo_ingreso', 'estado', 'imagen_averia', 'creado_por'
+            'motivo_ingreso', 'estado', 'imagen_averia', 'creado_por', 'solicita_grua'
         ]
         read_only_fields = ['creado_por', 'fecha_hora_fin']
 
     def __init__(self, *args, **kwargs):
+        """Filtra los vehículos visibles según el rol del usuario."""
         super().__init__(*args, **kwargs)
-    
-        if 'request' in self.context:
-            user = self.context['request'].user
-        if user.groups.filter(name='Chofer').exists():
+        user = self.context.get('request').user if 'request' in self.context else None
+        if user and user.groups.filter(name='Chofer').exists():
             self.fields['vehiculo'].queryset = Vehiculo.activos.filter(chofer=user)
 
-
     def create(self, validated_data):
-        # <-- CAMBIO: Se añade la lógica para asignar el creador de la cita
-        # Asigna el usuario logueado como 'creado_por' y 'chofer_asociado'
+        """
+        Asigna automáticamente el usuario logueado como creador y chofer asociado.
+        """
         user = self.context['request'].user
         validated_data['creado_por'] = user
         validated_data['chofer_asociado'] = user
         return super().create(validated_data)
-    
 
-# ----------------------------------------------------------------------
-# SERIALIZERS DE ÓRDENES DE SERVICIO
-# ----------------------------------------------------------------------
+
+# ======================================================================
+# 🧾 SERIALIZERS DE ÓRDENES DE SERVICIO
+# ======================================================================
+
+class OrdenDocumentoSerializer(serializers.ModelSerializer):
+    """
+    Serializador para listar y subir documentos asociados a una orden.
+    """
+    subido_por_nombre = serializers.CharField(source='subido_por.get_full_name', read_only=True)
+    archivo_url = serializers.SerializerMethodField()
+
+    class Meta:
+        model = OrdenDocumento
+        fields = ['id', 'tipo', 'descripcion', 'archivo', 'archivo_url', 'fecha', 'subido_por_nombre']
+        read_only_fields = ['subido_por_nombre', 'fecha', 'archivo_url']
+
+    def get_archivo_url(self, obj):
+        """Devuelve la URL absoluta del archivo (si existe)."""
+        request = self.context.get('request')
+        if obj.archivo and hasattr(obj.archivo, 'url'):
+            return request.build_absolute_uri(obj.archivo.url)
+        return None
+
+
 class OrdenHistorialEstadoSerializer(serializers.ModelSerializer):
     """
     Serializador para mostrar el historial de cambios de estado de una orden.
@@ -186,23 +238,30 @@ class OrdenHistorialEstadoSerializer(serializers.ModelSerializer):
 
 class OrdenSerializer(serializers.ModelSerializer):
     """
-    Serializador para ver y gestionar las Órdenes de Servicio.
+    Serializador principal para Órdenes de Servicio.
+    Incluye:
+    - Información del vehículo
+    - Técnico asignado
+    - Historial de estados
+    - Documentos y fotos
     """
     vehiculo_info = serializers.StringRelatedField(source='vehiculo', read_only=True)
     asignado_a = serializers.CharField(source='usuario_asignado.get_full_name', read_only=True, default='No asignado')
-    # Se anida el historial para tener toda la info en un solo endpoint
     historial_estados = OrdenHistorialEstadoSerializer(many=True, read_only=True)
+    documentos = OrdenDocumentoSerializer(many=True, read_only=True)
+
     imagen_averia_url = serializers.ImageField(source='agendamiento_origen.imagen_averia', read_only=True, allow_null=True)
     hora_agendada = serializers.DateTimeField(source='agendamiento_origen.fecha_hora_programada', read_only=True, allow_null=True)
+
     class Meta:
         model = Orden
         fields = [
             'id', 'vehiculo', 'vehiculo_info', 'agendamiento_origen',
             'fecha_ingreso', 'fecha_entrega_estimada', 'fecha_entrega_real',
             'estado', 'descripcion_falla', 'diagnostico_tecnico',
-            'usuario_asignado', 'asignado_a', 'historial_estados', 'imagen_averia_url', 'hora_agendada'
+            'usuario_asignado', 'asignado_a',
+            'historial_estados', 'imagen_averia_url', 'hora_agendada', 'documentos'
         ]
         extra_kwargs = {
-            # Se usa PrimaryKeyRelatedField para que al crear/actualizar solo necesitemos el ID del vehículo.
             'vehiculo': {'queryset': Vehiculo.activos.all()}
         }

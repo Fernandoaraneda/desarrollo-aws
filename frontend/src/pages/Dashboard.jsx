@@ -6,9 +6,8 @@ import { useUserStore } from "../store/authStore";
 
 // ✅ 1. Importa los componentes específicos para cada rol
 import SupervisorWidgets from "../components/dashboard/SupervisorWidgets.jsx";
-import MecanicoTaskList from "../components/dashboard/MecanicoTaskList.jsx";
-import ChoferStatus from "../components/dashboard/ChoferStatus.jsx";
-
+import DashboardMecanico from "../components/dashboard/DashboardMecanico.jsx";
+import DashboardChofer from "../components/dashboard/DashboardChofer.jsx";
 export default function Dashboard() {
   const { user, logout } = useUserStore();
   const navigate = useNavigate();
@@ -26,9 +25,9 @@ export default function Dashboard() {
       case 'Supervisor':
         return <SupervisorWidgets />;
       case 'Mecanico':
-        return <MecanicoTaskList />;
+        return <DashboardMecanico />;
       case 'Chofer':
-        return <ChoferStatus />;
+        return <DashboardChofer />;
       default:
         return <p>Bienvenido. No tienes una vista de dashboard específica.</p>;
     }
