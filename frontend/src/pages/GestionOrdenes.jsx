@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import apiClient from '../api/axios.js';
-import styles from '../css/GestionOrdenes.module.css'; // Usaremos un nuevo CSS para el modal
+import styles from '../css/gestionordenes.module.css'; // Usaremos un nuevo CSS para el modal
 import { Wrench, Eye, Edit } from 'lucide-react';
 
 // --- Componente Modal para cambiar el estado ---
