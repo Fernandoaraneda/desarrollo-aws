@@ -61,6 +61,13 @@ export default function SetNewPasswordPage() {
 
   return (
     <div className={styles.containerFormWrapper}>
+            <video
+                autoPlay
+                loop
+                muted
+                className={styles.videoBackground}
+                src="/src/assets/Fondo_para_Login_de_PepsiCo_Flota.mp4"
+              ></video>
       <div className={`${styles.containerForm} ${styles.signIn} ${styles.active}`}>
         <form className={styles.formulario} onSubmit={handleSetPassword}>
           <h2 className={styles.createAccount}>Establecer Nueva Contraseña</h2>

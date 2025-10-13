@@ -36,6 +36,13 @@ export default function ResetPasswordPage() {
 
   return (
     <div className={styles.containerFormWrapper}>
+            <video
+                autoPlay
+                loop
+                muted
+                className={styles.videoBackground}
+                src="/src/assets/Fondo_para_Login_de_PepsiCo_Flota.mp4"
+              ></video>
       <div className={`${styles.containerForm} ${styles.signIn} ${styles.active}`}>
         <form className={styles.formulario} onSubmit={handleReset}>
           <h2 className={styles.createAccount}>Restablecer Contraseña</h2>

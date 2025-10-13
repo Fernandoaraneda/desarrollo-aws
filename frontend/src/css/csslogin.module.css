@@ -20,7 +20,6 @@ body {
     align-items: center;
     justify-content: center;
     /* El fondo ahora es parte de este contenedor específico */
-    background-image: url(src/assets/img2.jpg);
     background-position: center;
     background-repeat: no-repeat;
     background-size: cover;
@@ -325,4 +324,21 @@ body {
     .formulario input[type="button"] {
         font-size: 0.85rem;
     }
+}
+.videoBackground {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover; /* para que ocupe todo el contenedor sin deformarse */
+  z-index: -1;       /* queda detrás del contenido */
+}
+
+.containerFormWrapper {
+  position: relative; /* importante para que el video quede dentro del contenedor */
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
