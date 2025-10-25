@@ -50,3 +50,16 @@ npm run dev
 npm run dev -- --host 0.0.0.0
 
 
+
+
+
+----------------------------------------------------------
+CARGAR GRUPOS Y PERMISOS DE CADA ROL
+
+python manage.py loaddata grupos.json
+
+
+CARGAR DATOS FAKE 
+
+
+python manage.py populate_data
