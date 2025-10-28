@@ -18,7 +18,7 @@ const KpiCard = ({ title, value, icon, color }) => (
   </div>
 );
 
-// --- Componente Principal del Dashboard del Supervisor (Con Auto-actualización) ---
+// --- Componente Principal del Dashboard del Supervisor (Con Auto-actualización y Exportación CSV) ---
 export default function SupervisorWidgets() {
   const [data, setData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -84,6 +84,54 @@ export default function SupervisorWidgets() {
     setAutoRefresh(!autoRefresh);
   };
 
+  // ✅ 6. Función para exportar los datos visibles en CSV
+  const handleDownloadCSV = () => {
+    if (!data) return;
+
+    const { kpis, ordenesPorEstado, ordenesUltimaSemana, ordenesRecientes } = data;
+
+    const exportData = {
+      KPIs: kpis,
+      OrdenesPorEstado: ordenesPorEstado,
+      OrdenesUltimaSemana: ordenesUltimaSemana,
+      OrdenesRecientes: ordenesRecientes,
+    };
+
+    let csvContent = "data:text/csv;charset=utf-8,";
+
+    Object.entries(exportData).forEach(([sectionName, sectionData]) => {
+      csvContent += `\n--- ${sectionName} ---\n`;
+
+      if (Array.isArray(sectionData)) {
+        if (sectionData.length === 0) {
+          csvContent += "Sin datos\n";
+        } else {
+          const headers = Object.keys(sectionData[0]).join(",");
+          csvContent += headers + "\n";
+          sectionData.forEach(obj => {
+            const row = Object.values(obj).map(value => `"${value ?? ''}"`).join(",");
+            csvContent += row + "\n";
+          });
+        }
+      } else if (typeof sectionData === "object" && sectionData !== null) {
+        Object.entries(sectionData).forEach(([key, value]) => {
+          csvContent += `${key},${value}\n`;
+        });
+      } else {
+        csvContent += `${sectionData}\n`;
+      }
+    });
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "dashboard_supervisor.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  // ✅ Renderizado de estados
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center p-8">
@@ -140,6 +188,15 @@ export default function SupervisorWidgets() {
           >
             <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
             {isRefreshing ? 'Actualizando...' : 'Actualizar'}
+          </button>
+
+          {/* ✅ Nuevo botón para descargar CSV */}
+          <button
+            onClick={handleDownloadCSV}
+            className="flex items-center gap-2 px-3 py-2 rounded text-sm bg-emerald-500 hover:bg-emerald-600 text-white transition-colors"
+            title="Descargar datos en CSV"
+          >
+            📥 Descargar CSV
           </button>
           
           <label className="flex items-center gap-2 text-sm text-gray-400 cursor-pointer">
