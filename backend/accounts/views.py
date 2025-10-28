@@ -199,6 +199,22 @@ class ChoferListView(generics.ListAPIView):
 # --------------------
 dias_semana = {0: "Lun", 1: "Mar", 2: "Mié", 3: "Jue", 4: "Vie", 5: "Sáb", 6: "Dom"}
 
+# backend/accounts/views.py
+# (Asegúrate de que estas importaciones estén al principio de tu archivo)
+from datetime import datetime, timedelta
+from django.utils import timezone
+from django.utils.timezone import now, make_aware
+from django.db.models import Count, Avg, F, DateField
+from django.db.models.functions import TruncDay
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.response import Response
+from rest_framework import status
+from .models import Orden, Agendamiento  # <-- ¡ASEGÚRATE DE IMPORTAR AGENDAMIENTO!
+
+
+# ... (El resto de tus vistas como LoginView, VehiculoViewSet, etc.) ...
+
+# --- ESTA ES LA FUNCIÓN MODIFICADA ---
 @api_view(["GET"])
 @permission_classes([IsSupervisor])
 def supervisor_dashboard_stats(request):
@@ -207,24 +223,34 @@ def supervisor_dashboard_stats(request):
     start_of_week = today - timedelta(days=today.weekday())
     start_of_week_dt = make_aware(datetime.combine(start_of_week, datetime.min.time()))
 
+    # --- ✅ 1. CONSULTA CORREGIDA ---
+    # Cambiamos 'PENDIENTE' por 'Agendamiento.Estado.PROGRAMADO' 
+    # para que coincida con tu models.py
+    pendientes_aprobacion = Agendamiento.objects.filter(
+        estado=Agendamiento.Estado.PROGRAMADO
+    ).count()
+    # --- FIN DE LA CORRECCIÓN ---
+
     # Vehículos en taller (fallback si no existe manager 'activas')
     try:
         vehiculos_en_taller = Orden.objects.activas().values('vehiculo').distinct().count()
     except Exception:
-        vehiculos_en_taller = Orden.objects.values('vehiculo').distinct().count()
+        # Fallback si 'activas' no existe o falla
+        vehiculos_en_taller = Orden.objects.exclude(estado=Orden.Estado.FINALIZADO).values('vehiculo').distinct().count()
+
 
     # Agendamientos para HOY (usamos CONFIRMADO para alinearnos con SeguridadAgendaView)
     start_today = make_aware(datetime.combine(today, datetime.min.time()))
     end_today = start_today + timedelta(days=1)
     agendamientos_hoy = Agendamiento.objects.filter(
-        estado=Agendamiento.Estado.CONFIRMADO,
+        estado=Agendamiento.Estado.CONFIRMADO, # Correcto
         fecha_hora_programada__gte=start_today,
         fecha_hora_programada__lt=end_today
     ).count()
 
     # Órdenes finalizadas este mes
     ordenes_finalizadas_mes = Orden.objects.filter(
-        estado=Orden.Estado.FINALIZADO,
+        estado=Orden.Estado.FINALIZADO, # Correcto
         fecha_entrega_real__gte=start_of_month_dt
     ).count()
 
@@ -261,7 +287,6 @@ def supervisor_dashboard_stats(request):
         dia_nombre = dias_semana_map.get(fecha_dia.weekday(), "")
         cre = 0
         for item in ordenes_semana_raw:
-            # item["dia_semana"] ahora es un objeto date, por lo que la comparación es directa
             if item["dia_semana"] == fecha_dia:
                 cre = item["creadas"]
                 break
@@ -286,6 +311,7 @@ def supervisor_dashboard_stats(request):
             "mecanico": mecanico_nombre,
         })
 
+    # --- ✅ 2. DATO AÑADIDO A LA RESPUESTA ---
     response_data = {
         "kpis": {
             "vehiculosEnTaller": vehiculos_en_taller,
@@ -293,13 +319,14 @@ def supervisor_dashboard_stats(request):
             "ordenesFinalizadasMes": ordenes_finalizadas_mes,
             "tiempoPromedioRep": tiempo_promedio_str,
         },
+        "alertas": {
+            "pendientesAprobacion": pendientes_aprobacion, # <-- Este dato ahora será correcto
+        },
         "ordenesPorEstado": ordenes_por_estado,
         "ordenesUltimaSemana": ordenes_ultima_semana,
         "ordenesRecientes": ordenes_recientes_data,
     }
     return Response(response_data, status=status.HTTP_200_OK)
-
-
 # --------------------
 # ViewSets
 # --------------------

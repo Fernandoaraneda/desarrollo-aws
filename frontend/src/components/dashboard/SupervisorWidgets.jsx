@@ -1,6 +1,9 @@
+// src/pages/SupervisorWidgets.jsx
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line } from 'recharts';
-import { Truck, Calendar, Wrench, Clock, RefreshCw } from 'lucide-react';
+// --- ✅ 1. 'Bell' AÑADIDO ---
+import { Truck, Calendar, Wrench, Clock, RefreshCw, Bell } from 'lucide-react';
 import apiClient from '../../api/axios.js';
 import styles from '../../css/supervisor-dashboard.module.css';
 import { useUserStore } from '../../store/authStore.js';
@@ -28,23 +31,19 @@ export default function SupervisorWidgets() {
   const [error, setError] = useState(null);
   const { user } = useUserStore();
 
-  // ✅ 1. Función para obtener los datos del dashboard
+  // ✅ 1. Función para obtener los datos del dashboard (SIN CAMBIOS)
   const fetchData = useCallback(async (showRefreshIndicator = false) => {
     if (!user) return;
-
     try {
       if (showRefreshIndicator) {
         setIsRefreshing(true);
       }
-
       console.log('Obteniendo datos del dashboard...'); // Debug
       const response = await apiClient.get('/dashboard/supervisor/stats/');
       console.log('Datos recibidos:', response.data); // Debug
-
       setData(response.data);
       setLastUpdated(new Date());
       setError(null);
-
     } catch (error) {
       console.error("Error al cargar los datos del dashboard", error);
       setError(error.response?.data?.error || 'Error al cargar los datos');
@@ -56,52 +55,47 @@ export default function SupervisorWidgets() {
     }
   }, [user]);
 
-  // ✅ 2. Efecto para la carga inicial
+  // ✅ 2. Efecto para la carga inicial (SIN CAMBIOS)
   useEffect(() => {
     if (user) {
       fetchData();
     }
   }, [user, fetchData]);
 
-  // ✅ 3. Efecto para la auto-actualización cada 30 segundos
+  // ✅ 3. Efecto para la auto-actualización cada 30 segundos (SIN CAMBIOS)
   useEffect(() => {
     if (!autoRefresh || !user) return;
-
     const interval = setInterval(() => {
       fetchData(true);
     }, 30000); // 30 segundos
-
     return () => clearInterval(interval);
   }, [autoRefresh, user, fetchData]);
 
-  // ✅ 4. Función para refrescar manualmente
+  // ✅ 4. Función para refrescar manually (SIN CAMBIOS)
   const handleManualRefresh = () => {
     fetchData(true);
   };
 
-  // ✅ 5. Función para alternar auto-refresh
+  // ✅ 5. Función para alternar auto-refresh (SIN CAMBIOS)
   const toggleAutoRefresh = () => {
     setAutoRefresh(!autoRefresh);
   };
 
-  // ✅ 6. Función para exportar los datos visibles en CSV
+  // ✅ 6. Función para exportar los datos visibles en CSV (SIN CAMBIOS)
   const handleDownloadCSV = () => {
     if (!data) return;
-
-    const { kpis, ordenesPorEstado, ordenesUltimaSemana, ordenesRecientes } = data;
-
+    // --- ✅ 'alertas' AÑADIDO A LA EXPORTACIÓN ---
+    const { kpis, ordenesPorEstado, ordenesUltimaSemana, ordenesRecientes, alertas } = data;
     const exportData = {
+      Alertas: alertas, // <-- Añadido
       KPIs: kpis,
       OrdenesPorEstado: ordenesPorEstado,
       OrdenesUltimaSemana: ordenesUltimaSemana,
       OrdenesRecientes: ordenesRecientes,
     };
-
     let csvContent = "data:text/csv;charset=utf-8,";
-
     Object.entries(exportData).forEach(([sectionName, sectionData]) => {
       csvContent += `\n--- ${sectionName} ---\n`;
-
       if (Array.isArray(sectionData)) {
         if (sectionData.length === 0) {
           csvContent += "Sin datos\n";
@@ -121,7 +115,6 @@ export default function SupervisorWidgets() {
         csvContent += `${sectionData}\n`;
       }
     });
-
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
@@ -131,7 +124,7 @@ export default function SupervisorWidgets() {
     document.body.removeChild(link);
   };
 
-  // ✅ Renderizado de estados
+  // ✅ Renderizado de estados (SIN CAMBIOS)
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center p-8">
@@ -140,7 +133,6 @@ export default function SupervisorWidgets() {
       </div>
     );
   }
-
   if (error) {
     return (
       <div className="flex flex-col items-center justify-center p-8">
@@ -154,7 +146,6 @@ export default function SupervisorWidgets() {
       </div>
     );
   }
-
   if (!data) {
     return (
       <div className="flex flex-col items-center justify-center p-8">
@@ -169,51 +160,73 @@ export default function SupervisorWidgets() {
     );
   }
 
-  const { kpis, ordenesPorEstado, ordenesUltimaSemana, ordenesRecientes } = data;
+  // --- ✅ 2. 'alertas' EXTRAÍDO DE LOS DATOS ---
+  const { kpis, ordenesPorEstado, ordenesUltimaSemana, ordenesRecientes, alertas } = data;
+  const pendientesAprobacion = alertas?.pendientesAprobacion || 0;
+
 
   return (
     <div className="w-full">
 
-      <div className={styles.controlsToolbar}>
+      {/* --- ✅ 3. NUEVO CONTENEDOR 'topRowContainer' --- */}
+      <div className={styles.topRowContainer}>
 
-        <button
-          onClick={handleManualRefresh}
-          disabled={isRefreshing}
-          className={`flex items-center gap-2 px-3 py-2 rounded text-sm transition-colors ${isRefreshing
-              ? 'bg-green-500 text-white cursor-not-allowed'
-              : 'bg-blue-500 hover:bg-blue-600 text-white'
-            }`}
-          title="Actualizar datos"
-        >
-          <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-          {isRefreshing ? 'Actualizando...' : 'Actualizar'}
-        </button>
+        {/* --- ✅ 4. NUEVO WIDGET DE ALERTAS AÑADIDO --- */}
+        <div className={styles.alertWidget}>
+          <Bell /> {/* Ícono importado */}
+          <div>
+            <p>
+              Tienes <strong>{pendientesAprobacion}</strong> agendamiento(s)
+              <br />
+              pendientes de aprobación.
+            </p>
+          </div>
+        </div>
 
-        <button
-          onClick={handleDownloadCSV}
-          className="flex items-center gap-2 px-3 py-2 rounded text-sm bg-emerald-500 hover:bg-emerald-600 text-white transition-colors"
-          title="Descargar datos en CSV"
-        >
-          📥 Descargar CSV
-        </button>
+        {/* --- 5. TU BARRA DE CONTROLES (AHORA DENTRO DEL WRAPPER) --- */}
+        <div className={styles.controlsToolbar}>
+          <button
+            onClick={handleManualRefresh}
+            disabled={isRefreshing}
+            className={`flex items-center gap-2 px-3 py-2 rounded text-sm transition-colors ${isRefreshing
+                ? 'bg-green-500 text-white cursor-not-allowed'
+                : 'bg-blue-500 hover:bg-blue-600 text-white'
+              }`}
+            title="Actualizar datos"
+          >
+            <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+            {isRefreshing ? 'Actualizando...' : 'Actualizar'}
+          </button>
 
-        <label> {/* El CSS Module se encargará de estilizar esto */}
-          <input
-            type="checkbox"
-            checked={autoRefresh}
-            onChange={toggleAutoRefresh}
-            className="cursor-pointer"
-          />
-          Auto-actualizar (30s)
-        </label>
+          <button
+            onClick={handleDownloadCSV}
+            className="flex items-center gap-2 px-3 py-2 rounded text-sm bg-emerald-500 hover:bg-emerald-600 text-white transition-colors"
+            title="Descargar datos en CSV"
+          >
+            📥 Descargar CSV
+          </button>
 
-        {lastUpdated && (
-          <span> {/* El CSS Module se encargará de estilizar esto */}
-            Última actualización: {lastUpdated.toLocaleTimeString()}
-          </span>
-        )}
+          <label> {/* El CSS Module se encargará de estilizar esto */}
+            <input
+              type="checkbox"
+              checked={autoRefresh}
+              onChange={toggleAutoRefresh}
+              className="cursor-pointer"
+            />
+            Auto-actualizar (30s)
+          </label>
+
+          {lastUpdated && (
+            <span> {/* El CSS Module se encargará de estilizar esto */}
+              Última actualización: {lastUpdated.toLocaleTimeString()}
+            </span>
+          )}
+        </div>
       </div>
+      {/* --- FIN DEL 'topRowContainer' --- */}
 
+
+      {/* --- EL RESTO DE TU DASHBOARD (SIN CAMBIOS) --- */}
       <div className={styles.dashboardGrid}>
         {/* Fila de KPIs */}
         <KpiCard
