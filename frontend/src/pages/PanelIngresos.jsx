@@ -2,8 +2,8 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import apiClient from '/src/api/axios.js';
-import styles from '/src/css/panelingreso.module.css'; // Reutilizamos los estilos
-import { LogIn, CalendarClock, Search } from 'lucide-react';
+import styles from '/src/css/panelingreso.module.css';
+import { LogIn, LogOut, CalendarClock, Search } from 'lucide-react';
 
 export default function PanelIngresos() {
     const [agendamientos, setAgendamientos] = useState([]);
@@ -11,18 +11,18 @@ export default function PanelIngresos() {
     const [error, setError] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
 
+    // Filtrado por patente o chofer
     const filteredAgendamientos = useMemo(() => {
-        if (!searchTerm) {
-            return agendamientos; // Si no hay búsqueda, devuelve la lista completa
-        }
+        if (!searchTerm) return agendamientos;
         return agendamientos.filter(a =>
             (a.vehiculo_patente?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
             (a.chofer_nombre?.toLowerCase() || '').includes(searchTerm.toLowerCase())
         );
     }, [agendamientos, searchTerm]);
+
+    // Carga de citas confirmadas
     const fetchCitasPorIngresar = async () => {
         try {
-            // Hacemos la llamada a la API para traer solo las citas con estado 'Confirmado'
             const response = await apiClient.get('/agendamientos/', {
                 params: { estado: 'Confirmado' }
             });
@@ -38,23 +38,35 @@ export default function PanelIngresos() {
         fetchCitasPorIngresar();
     }, []);
 
+    // Registrar ingreso
     const handleRegistrarIngreso = async (id) => {
-        // Pedimos confirmación al usuario antes de realizar la acción
         if (!window.confirm("¿Está seguro de que desea registrar el ingreso de este vehículo? Esta acción creará una nueva orden de trabajo.")) {
             return;
         }
 
         try {
-            // Llamamos al endpoint específico para registrar el ingreso
             await apiClient.post(`/agendamientos/${id}/registrar-ingreso/`);
-            alert("¡Ingreso registrado con éxito! Se ha creado la orden de trabajo.");
-            
-            // Actualizamos la lista en el frontend para que la cita desaparezca sin recargar la página
-            setAgendamientos(prevAgendamientos => prevAgendamientos.filter(a => a.id !== id));
-
+            alert("✅ Ingreso registrado con éxito. Se ha creado la orden de trabajo.");
+            setAgendamientos(prev => prev.filter(a => a.id !== id));
         } catch (err) {
             const errorMsg = err.response?.data?.error || "Error al registrar el ingreso.";
-            alert(`Error: ${errorMsg}`); // Usamos alert para notificar el error
+            alert(`Error: ${errorMsg}`);
+        }
+    };
+
+    // Registrar salida
+    const handleRegistrarSalida = async (id) => {
+        if (!window.confirm("¿Está seguro de que desea registrar la salida de este vehículo?")) {
+            return;
+        }
+
+        try {
+            await apiClient.post(`/agendamientos/${id}/registrar-salida/`);
+            alert("🚗 Salida registrada con éxito.");
+            setAgendamientos(prev => prev.filter(a => a.id !== id));
+        } catch (err) {
+            const errorMsg = err.response?.data?.error || "Error al registrar la salida.";
+            alert(`Error: ${errorMsg}`);
         }
     };
 
@@ -64,21 +76,23 @@ export default function PanelIngresos() {
     return (
         <div className={styles.pageWrapper}>
             <header className={styles.header}>
-                <h1><CalendarClock size={32} /> Panel de Ingresos Pendientes</h1>
-                <p>Vehículos con cita confirmada esperando llegada al taller.</p>
+                <h1><CalendarClock size={32} /> Panel de Ingresos y Salidas</h1>
+                <p>Vehículos con cita confirmada esperando ingreso o salida.</p>
             </header>
+
             <div className={styles.tableCard}>
-                <div className={styles.tableControls}> {/* Reutilizamos esta clase si la tienes */}
-                <div className={styles.searchBox}>
-                    <Search size={20} className={styles.searchIcon} />
-                    <input
-                        type="text"
-                        placeholder="Buscar por patente o chofer..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                    />
+                <div className={styles.tableControls}>
+                    <div className={styles.searchBox}>
+                        <Search size={20} className={styles.searchIcon} />
+                        <input
+                            type="text"
+                            placeholder="Buscar por patente o chofer..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                        />
                     </div>
                 </div>
+
                 <div className={styles.tableContainer}>
                     <table className={styles.table}>
                         <thead>
@@ -92,7 +106,7 @@ export default function PanelIngresos() {
                             </tr>
                         </thead>
                         <tbody>
-                             {filteredAgendamientos.length > 0 ? (
+                            {filteredAgendamientos.length > 0 ? (
                                 filteredAgendamientos.map(a => (
                                     <tr key={a.id}>
                                         <td>{new Date(a.fecha_hora_programada).toLocaleString('es-CL')}</td>
@@ -101,18 +115,24 @@ export default function PanelIngresos() {
                                         <td>{a.mecanico_nombre}</td>
                                         <td>{a.motivo_ingreso}</td>
                                         <td>
-                                            <button 
-                                                className={`${styles.actionButton} ${styles.ingresoButton}`} // Podemos añadir un estilo específico
+                                            <button
+                                                className={`${styles.actionButton} ${styles.ingresoButton}`}
                                                 onClick={() => handleRegistrarIngreso(a.id)}
                                             >
-                                                <LogIn size={16} /> Registrar Ingreso
+                                                <LogIn size={16} /> Ingreso
+                                            </button>
+                                            <button
+                                                className={`${styles.actionButton} ${styles.salidaButton}`}
+                                                onClick={() => handleRegistrarSalida(a.id)}
+                                                style={{ marginLeft: '8px' }}
+                                            >
+                                                <LogOut size={16} /> Salida
                                             </button>
                                         </td>
                                     </tr>
                                 ))
                             ) : (
                                 <tr>
-                                    {/* Y actualizamos el mensaje para cuando no hay resultados */}
                                     <td colSpan="6" style={{ textAlign: 'center', padding: '1rem' }}>
                                         No se encontraron citas que coincidan con la búsqueda.
                                     </td>
