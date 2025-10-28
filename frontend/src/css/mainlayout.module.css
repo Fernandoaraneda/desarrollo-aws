@@ -201,3 +201,60 @@
     font-size: 0.9rem;
   }
 }
+
+/* --- NUEVOS ESTILOS PARA EL ACORDEÓN --- */
+
+.accordionItem {
+  overflow: hidden; /* Asegura que el contenido no se desborde al cerrar */
+}
+
+/* Estilo del botón principal del acordeón */
+.accordionButton {
+  position: relative; /* Para posicionar la flecha */
+  width: 100%;
+  justify-content: flex-start; /* Alinea el contenido a la izquierda */
+}
+
+/* Icono de flecha (derecha/abajo) */
+.accordionIcon {
+  position: absolute;
+  right: 1.25rem; /* Posiciona la flecha a la derecha */
+  font-size: 0.8rem;
+  transition: transform 0.2s ease-in-out;
+}
+
+.accordionIcon.isOpen {
+  transform: rotate(90deg); /* Gira la flecha 90 grados */
+}
+
+/* Contenedor de los sub-enlaces */
+.accordionContent {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s cubic-bezier(0, 1, 0, 1); /* Transición suave de cierre */
+  background-color: rgba(0, 0, 0, 0.1); /* Fondo ligeramente más oscuro */
+}
+
+.accordionContent.isOpen {
+  /* Altura máxima suficiente para mostrar varios enlaces */
+  max-height: 500px; 
+  transition: max-height 0.5s ease-in-out; /* Transición suave de apertura */
+}
+
+/* Estilo de los sub-enlaces */
+.subLink {
+  padding-left: 2.5rem; /* Indentación para mostrar jerarquía */
+  font-size: 0.9rem;
+  color: #ffffff; /* <-- CAMBIO AQUÍ: Forzamos el color a blanco */
+}
+
+.subLink:hover {
+  background-color: var(--primary-color-dark); /* Color de hover */
+}
+
+/* Estilo del sub-enlace activo */
+.subLink.activeLink {
+  background-color: var(--primary-color);
+  color: #fff;
+  font-weight: 600;
+}

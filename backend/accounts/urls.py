@@ -21,7 +21,9 @@ from .views import (
     MecanicoListView,
     SeguridadAgendaView,
     MisProximasCitasView,
-    mecanico_dashboard_stats
+    mecanico_dashboard_stats,
+    RegistrarSalidaView,
+    OrdenesPendientesSalidaView
 )
 
 router = DefaultRouter()
@@ -52,6 +54,18 @@ urlpatterns = [
     path("password-reset/", PasswordResetRequestView.as_view(), name="password-reset"),
     path("password-reset-confirm/", PasswordResetConfirmView.as_view(), name="password-reset-confirm"),
     path('dashboard/mecanico/stats/', mecanico_dashboard_stats, name='mecanico-dashboard-stats'),
+
+
+    path('ordenes/pendientes-salida/', OrdenesPendientesSalidaView.as_view(), name='ordenes-pendientes-salida'
+        ),
+        
+        # POST /api/ordenes/123/registrar-salida/
+        path('ordenes/<int:pk>/registrar-salida/', RegistrarSalidaView.as_view(), name='registrar-salida'
+        ),
+
+
+
+
     # Incluir rutas del router (vehiculos, agendamientos, ordenes)
     path('', include(router.urls)),
 ]

@@ -1,9 +1,7 @@
-// src/pages/PanelIngresos.jsx
-
 import React, { useState, useEffect, useMemo } from 'react';
 import apiClient from '/src/api/axios.js';
 import styles from '/src/css/panelingreso.module.css';
-import { LogIn, LogOut, CalendarClock, Search } from 'lucide-react';
+import { LogIn, CalendarClock, Search } from 'lucide-react'; // ✅ CAMBIO: Se quitó LogOut
 
 export default function PanelIngresos() {
     const [agendamientos, setAgendamientos] = useState([]);
@@ -22,13 +20,15 @@ export default function PanelIngresos() {
 
     // Carga de citas confirmadas
     const fetchCitasPorIngresar = async () => {
+        setIsLoading(true);
+        setError(null);
         try {
-            const response = await apiClient.get('/agendamientos/', {
-                params: { estado: 'Confirmado' }
-            });
+            // ✅ CAMBIO: Usamos la vista específica de seguridad que filtra por 'Confirmado' y por día.
+            const response = await apiClient.get('/agenda/seguridad/');
             setAgendamientos(response.data.results || response.data || []);
         } catch (err) {
             setError("No se pudieron cargar las citas pendientes de ingreso.");
+            console.error("Error fetching citas para ingreso:", err);
         } finally {
             setIsLoading(false);
         }
@@ -40,35 +40,25 @@ export default function PanelIngresos() {
 
     // Registrar ingreso
     const handleRegistrarIngreso = async (id) => {
-        if (!window.confirm("¿Está seguro de que desea registrar el ingreso de este vehículo? Esta acción creará una nueva orden de trabajo.")) {
+        // Usamos un modal custom en lugar de window.confirm si está disponible,
+        // pero mantenemos la lógica de confirmación.
+        if (!confirm("¿Está seguro de que desea registrar el ingreso de este vehículo? Esta acción creará una nueva orden de trabajo.")) {
             return;
         }
 
         try {
             await apiClient.post(`/agendamientos/${id}/registrar-ingreso/`);
-            alert("✅ Ingreso registrado con éxito. Se ha creado la orden de trabajo.");
+            alert("✅ Ingreso registrado con éxito. Se ha creado la orden de trabajo."); // Reemplazar 'alert' por un modal/toast si se prefiere
+            // ✅ SOLUCIÓN PROBLEMA 2: Al registrar, filtramos el agendamiento de la UI.
+            // Al recargar (F5), la API /agenda/seguridad/ ya no lo devolverá porque su estado cambió.
             setAgendamientos(prev => prev.filter(a => a.id !== id));
         } catch (err) {
             const errorMsg = err.response?.data?.error || "Error al registrar el ingreso.";
-            alert(`Error: ${errorMsg}`);
+            alert(`Error: ${errorMsg}`); // Reemplazar 'alert'
         }
     };
 
-    // Registrar salida
-    const handleRegistrarSalida = async (id) => {
-        if (!window.confirm("¿Está seguro de que desea registrar la salida de este vehículo?")) {
-            return;
-        }
-
-        try {
-            await apiClient.post(`/agendamientos/${id}/registrar-salida/`);
-            alert("🚗 Salida registrada con éxito.");
-            setAgendamientos(prev => prev.filter(a => a.id !== id));
-        } catch (err) {
-            const errorMsg = err.response?.data?.error || "Error al registrar la salida.";
-            alert(`Error: ${errorMsg}`);
-        }
-    };
+    // ❌ CAMBIO: Se eliminó la función handleRegistrarSalida
 
     if (isLoading) return <p>Cargando citas por ingresar...</p>;
     if (error) return <p style={{ color: 'red' }}>{error}</p>;
@@ -76,8 +66,9 @@ export default function PanelIngresos() {
     return (
         <div className={styles.pageWrapper}>
             <header className={styles.header}>
-                <h1><CalendarClock size={32} /> Panel de Ingresos y Salidas</h1>
-                <p>Vehículos con cita confirmada esperando ingreso o salida.</p>
+                {/* ✅ CAMBIO: Título actualizado */}
+                <h1><LogIn size={32} /> Panel de Ingresos</h1>
+                <p>Vehículos con cita confirmada para hoy esperando ingreso.</p>
             </header>
 
             <div className={styles.tableCard}>
@@ -115,33 +106,28 @@ export default function PanelIngresos() {
                                         <td>{a.mecanico_nombre}</td>
                                         <td>{a.motivo_ingreso}</td>
                                         <td>
+                                            {/* ✅ CAMBIO: Solo se deja el botón de Ingreso */}
                                             <button
                                                 className={`${styles.actionButton} ${styles.ingresoButton}`}
                                                 onClick={() => handleRegistrarIngreso(a.id)}
                                             >
                                                 <LogIn size={16} /> Ingreso
                                             </button>
-                                            <button
-                                                className={`${styles.actionButton} ${styles.salidaButton}`}
-                                                onClick={() => handleRegistrarSalida(a.id)}
-                                                style={{ marginLeft: '8px' }}
-                                            >
-                                                <LogOut size={16} /> Salida
-                                            </button>
+                                            {/* ❌ CAMBIO: Botón de Salida eliminado */}
                                         </td>
                                     </tr>
                                 ))
                             ) : (
                                 <tr>
                                     <td colSpan="6" style={{ textAlign: 'center', padding: '1rem' }}>
-                                        No se encontraron citas que coincidan con la búsqueda.
+                                        No hay citas pendientes de ingreso para hoy.
                                     </td>
                                 </tr>
                             )}
                         </tbody>
                     </table>
                 </div>
-            </div>
+                     </div>
         </div>
     );
 }

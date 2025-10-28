@@ -434,20 +434,19 @@ class OrdenViewSet(viewsets.ModelViewSet):
         nuevo_estado = request.data.get('estado')
         motivo = request.data.get('motivo', '')
 
-        # Validación básica del estado (ajustar según cómo definas Orden.Estado)
         try:
             valid_values = list(Orden.Estado.values)
         except Exception:
-            # si Orden.Estado no tiene .values, hacemos fallback a choices
             valid_values = [c[0] for c in getattr(Orden, 'Estado', {}).choices] if hasattr(Orden, 'Estado') else []
-
         if not nuevo_estado or (valid_values and nuevo_estado not in valid_values):
             return Response({'error': 'Debe proporcionar un estado válido.'}, status=status.HTTP_400_BAD_REQUEST)
 
         with transaction.atomic():
             orden.estado = nuevo_estado
-            if nuevo_estado == Orden.Estado.FINALIZADO:
-                orden.fecha_entrega_real = timezone.now()           
+           # --- LÍNEA PROBLEMÁTICA ELIMINADA ---
+            # if nuevo_estado == Orden.Estado.FINALIZADO:
+            #     orden.fecha_entrega_real = timezone.now() 
+            # --------------------------------------         
             orden.save()
             OrdenHistorialEstado.objects.create(orden=orden, estado=nuevo_estado, usuario=request.user, motivo=motivo)
             
@@ -601,3 +600,103 @@ def mecanico_dashboard_stats(request):
     return Response(data, status=status.HTTP_200_OK)
 
 
+# accounts/views.py
+from django.shortcuts import get_object_or_404
+from django.utils import timezone
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from rest_framework.permissions import IsAuthenticated 
+# ^ Asumo que usas esto. Si tienes permisos por roles (ej. IsSeguridad), ¡mejor!
+
+from .models import Orden, Agendamiento, Orden # Importa tus modelos
+from .serializers import OrdenSalidaListSerializer # Importa el nuevo serializer
+
+# ... (Aquí van tus otras vistas: LoginView, RegisterView, etc.) ...
+
+# --- AÑADE ESTAS DOS NUEVAS VISTAS ---
+
+class OrdenesPendientesSalidaView(APIView):
+    """
+    Endpoint [GET] para listar todas las órdenes de trabajo que
+    están en estado 'Finalizado' pero aún no tienen una
+    fecha de entrega real (es decir, no han salido del taller).
+    """
+    # permission_classes = [IsAuthenticated, TuPermisoDeSeguridadOSupervisor] 
+    
+    def get(self, request, *args, **kwargs):
+        try:
+            # 1. Filtramos las órdenes:
+            #    - Estado sea FINALIZADO
+            #    - fecha_entrega_real esté VACÍA (isnull=True)
+            ordenes_listas = Orden.objects.filter(
+                estado=Orden.Estado.FINALIZADO,
+                fecha_entrega_real__isnull=True
+            ).select_related( # Optimizamos la consulta
+                'vehiculo', 
+                'agendamiento_origen__chofer_asociado', 
+                'usuario_asignado'
+            ).order_by('fecha_ingreso') # Opcional: ordenar por la más antigua
+
+            # 2. Serializamos los datos
+            serializer = OrdenSalidaListSerializer(ordenes_listas, many=True)
+            
+            # 3. Devolvemos la lista a React
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            return Response(
+                {"error": f"Error al obtener órdenes: {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+
+class RegistrarSalidaView(APIView):
+    """
+    Endpoint [POST] para registrar la salida de un vehículo.
+    Recibe el ID (pk) de la Orden en la URL.
+    """
+    # permission_classes = [IsAuthenticated, TuPermisoDeSeguridadOSupervisor] 
+    
+    def post(self, request, pk, *args, **kwargs):
+        try:
+            # 1. Buscamos la orden
+            orden = get_object_or_404(Orden, pk=pk)
+
+            # 2. Validaciones
+            if orden.fecha_entrega_real:
+                return Response(
+                    {"error": "Esta salida ya fue registrada."}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            if orden.estado != Orden.Estado.FINALIZADO:
+                return Response(
+                    {"error": "El trabajo en este vehículo aún no ha sido finalizado por el taller."}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            # 3. --- ¡LA LÓGICA CLAVE! ---
+            #    Establecemos la fecha de salida a "AHORA"
+            orden.fecha_entrega_real = timezone.now()
+            
+            # 4. (Opcional pero recomendado)
+            #    Si quieres, puedes pasar el Agendamiento original a 'Finalizado'
+            if orden.agendamiento_origen:
+                if orden.agendamiento_origen.estado != Agendamiento.Estado.FINALIZADO:
+                    orden.agendamiento_origen.estado = Agendamiento.Estado.FINALIZADO
+                    orden.agendamiento_origen.save()
+
+            # 5. Guardamos la orden
+            orden.save()
+
+            return Response(
+                {"mensaje": f"Salida del vehículo {orden.vehiculo.patente} registrada con éxito."},
+                status=status.HTTP_200_OK
+            )
+            
+        except Exception as e:
+             return Response(
+                {"error": f"Error al registrar la salida: {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )

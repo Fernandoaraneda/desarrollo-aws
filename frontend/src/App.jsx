@@ -24,6 +24,7 @@ import GestionOrdenes from "./pages/GestionOrdenes.jsx";
 import DetalleOrden from "./pages/DetalleOrden.jsx";
 import ConfirmarAsignarCita from './pages/ConfirmarAsignarCita.jsx';
 import PanelIngresos from './pages/PanelIngresos';
+import PanelSalida from './pages/Panelsalida.jsx';
 import ProximasCitas from './pages/ProximasCitas';
 import HistorialChofer from "./pages/HistorialChofer.jsx";
 function App() {
@@ -109,6 +110,15 @@ function App() {
             <PanelIngresos />
           </ProtectedRoute>
         } />
+
+
+        <Route path="/panel-salidas" element={
+          <ProtectedRoute roles={['Supervisor', 'Seguridad']}> {/* Registrar Salida Física */}
+            <PanelSalida />
+          </ProtectedRoute>
+        } />
+
+
 
         {/* Órdenes de Servicio */}
         <Route path="/ordenes" element={

@@ -1,22 +1,56 @@
+// src/components/layout/MainLayout.jsx
+
 import React, { useState } from 'react';
 import { NavLink, useNavigate, Outlet } from 'react-router-dom';
 import { useUserStore } from '../../store/authStore.js';
 import styles from '../../css/mainlayout.module.css';
 import Notificaciones from './Notificaciones';
+// ✅ 1. Importamos el nuevo componente
+import AccordionMenu from './AccordionMenu'; 
 
-// ✅ CAMBIO: Se añade el enlace a "Órdenes de Servicio" para Supervisor y Mecánico
+// ✅ 2. MODIFICAMOS LA ESTRUCTURA DE DATOS
 const navLinksByRole = {
   'Supervisor': [
-    { to: '/dashboard', label: 'Inicio', icon: 'fas fa-home' },
-    { to: '/panel-supervisor', label: 'Panel de Citas', icon: 'fas fa-calendar-check' },
-    { to: '/panel-ingresos', label: 'Panel de Ingresos', icon: 'fas fa-door-open' }, 
-    { to: '/agenda', label: 'Agendar Cita', icon: 'fas fa-calendar-plus' },
-    { to: '/ordenes', label: 'Órdenes de Servicio', icon: 'fas fa-clipboard-list' },
-    { to: '/vehiculos', label: 'Gestionar Vehículos', icon: 'fas fa-truck' },
-    { to: '/usuarios', label: 'Gestionar Usuarios', icon: 'fas fa-users-cog' },
-    { to: '/proximas-citas', label: 'Próximas Asignaciones', icon: 'fas fa-calendar-alt' }
+    // --- 3 Enlaces Principales ---
+    { type: 'link', to: '/dashboard', label: 'Inicio', icon: 'fas fa-home' },
+    { type: 'link', to: '/panel-supervisor', label: 'Panel de Citas', icon: 'fas fa-calendar-check' },
+    { type: 'link', to: '/usuarios', label: 'Gestionar Usuarios', icon: 'fas fa-users-cog' },
+    { type: 'link', to: '/vehiculos', label: 'Gestionar Vehículos', icon: 'fas fa-truck' },
     
+    // --- Acordeón 1: ---
+    { 
+      type: 'accordion', 
+      label: 'Gestión Mecanico', 
+      icon: 'fas fa-tachometer-alt', // Icono para el acordeón
+      links: [
+        { to: '/ordenes', label: 'Órdenes de Servicio', icon: 'fas fa-clipboard-list' },
+        { to: '/proximas-citas', label: 'Asignaciones Mecánico', icon: 'fas fa-calendar-alt' },
+      ]
+    },
+    
+    // --- Acordeón 2: Seguridad ---
+    { 
+      type: 'accordion', 
+      label: 'Panel Seguridad', 
+      icon: 'fas fa-shield-alt', // Icono para el acordeón
+      links: [
+        { to: '/panel-ingresos', label: 'Panel de Ingresos', icon: 'fas fa-door-open' },
+        { to: '/panel-salidas', label: 'Registrar Salida', icon: 'fas fa-door-closed' },
+      ]
+    },
+
+    // --- Acordeón 3:  chofer ---
+    { 
+      type: 'accordion', 
+      label: 'Vistas chofer', 
+      icon: 'fas fa-user-friends', // Icono para el acordeón
+      links: [
+        { to: '/agenda', label: 'Agendar Ingreso', icon: 'fas fa-calendar-plus' },
+        { to: '/historial', label: 'Mi Historial', icon: 'fas fa-history' }
+      ]
+    },
   ],
+  // Los otros roles se mantienen igual (planos)
   'Chofer': [
     { to: '/dashboard', label: 'Mi Estado', icon: 'fas fa-road' },
     { to: '/agenda', label: 'Agendar Ingreso', icon: 'fas fa-calendar-plus' },
@@ -29,9 +63,11 @@ const navLinksByRole = {
   ],
   'Seguridad': [
       { to: '/panel-ingresos', label: 'Registrar Ingreso', icon: 'fas fa-door-open' },
+      { to: '/panel-salidas', label: 'Registrar Salida', icon: 'fas fa-door-closed' },
   ],
   'Administrativo': [
     { to: '/dashboard', label: 'Administracion', icon: 'fas fa-file-invoice' },
+    { to: '/reportes', label: 'Reportes', icon: 'fas fa-chart-bar' }
   ]
 };
 
@@ -61,15 +97,38 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
       </NavLink>
 
       <nav className={styles.sidebarNav}>
-        {userLinks.map(link => (
-          <NavLink
-            key={link.to} to={link.to} onClick={handleLinkClick}
-            className={({ isActive }) => `${styles.navLink} ${isActive ? styles.activeLink : ''}`}
-          >
-            <i className={link.icon}></i> <span>{link.label}</span>
-          </NavLink>
-        ))}
+        
+        {/* ✅ 3. ACTUALIZAMOS EL RENDERIZADO DE LINKS */}
+        {userLinks.map((item, index) => {
+          
+          // Si es un acordeón (Supervisor)
+          if (item.type === 'accordion') {
+            return (
+              <AccordionMenu 
+                key={index} 
+                item={item} 
+                handleLinkClick={handleLinkClick} 
+              />
+            );
+          }
+
+          // Si es un link normal (Supervisor) o si es otro rol (Chofer, Mecanico, etc.)
+          // (Los otros roles no tienen 'item.type', así que entran aquí)
+          return (
+            <NavLink
+              key={item.to || index} 
+              to={item.to} 
+              onClick={handleLinkClick}
+              className={({ isActive }) => `${styles.navLink} ${isActive ? styles.activeLink : ''}`}
+            >
+              <i className={item.icon}></i> <span>{item.label}</span>
+            </NavLink>
+          );
+        })}
+
         <hr style={{ borderColor: 'var(--border-color)', margin: '1rem' }} />
+        
+        {/* Links comunes (Mi Perfil) */}
         {commonLinks.map(link => (
           <NavLink
             key={link.to} to={link.to} onClick={handleLinkClick}
@@ -91,6 +150,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
 };
 
 
+// El componente MainLayout (export default) no cambia
 export default function MainLayout() {
   const { user } = useUserStore();
   const [isSidebarOpen, setSidebarOpen] = useState(false);
@@ -114,17 +174,17 @@ export default function MainLayout() {
             <i className="fas fa-bars"></i>
           </button>
           
-          <div className={styles.headerRight}> {/* Un div para agrupar a la derecha */}
-                        <Notificaciones /> {/* <-- 2. Añade el componente aquí */}
-                        <span className={styles.userInfo}>
-                            Bienvenido, <strong>{user?.first_name || user?.username}</strong> ({user?.rol})
-                        </span>
-                    </div>
-                </header>
-                <main className={styles.mainContent}>
-                    <Outlet />
-                </main>
-            </div>
-        </div>
-    );
+          <div className={styles.headerRight}> 
+            <Notificaciones /> 
+            <span className={styles.userInfo}>
+              Bienvenido, <strong>{user?.first_name || user?.username}</strong> ({user?.rol})
+            </span>
+          </div>
+        </header>
+        <main className={styles.mainContent}>
+          <Outlet />
+        </main>
+      </div>
+    </div>
+  );
 }

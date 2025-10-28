@@ -265,3 +265,57 @@ class OrdenSerializer(serializers.ModelSerializer):
         extra_kwargs = {
             'vehiculo': {'queryset': Vehiculo.activos.all()}
         }
+
+
+
+
+class OrdenSalidaListSerializer(serializers.ModelSerializer):
+    """
+    Serializer para listar las órdenes que están 'Finalizado' pero
+    pendientes de salida (fecha_entrega_real is null).
+    """
+    # Usamos SerializerMethodField para obtener datos de modelos relacionados
+    # y evitar errores si alguno es Nulo.
+    
+    vehiculo_patente = serializers.SerializerMethodField()
+    chofer_nombre = serializers.SerializerMethodField()
+    mecanico_nombre = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Orden
+        fields = (
+            'id',
+            'estado',
+            'vehiculo_patente',
+            'chofer_nombre',
+            'mecanico_nombre',
+            'descripcion_falla',
+            'diagnostico_tecnico',
+            'fecha_ingreso',
+        )
+
+    def get_vehiculo_patente(self, obj):
+        # obj es la instancia de Orden
+        if obj.vehiculo:
+            return obj.vehiculo.patente
+        return "N/A"
+
+    def get_chofer_nombre(self, obj):
+        # Accedemos al chofer a través del agendamiento de origen
+        if obj.agendamiento_origen and obj.agendamiento_origen.chofer_asociado:
+            return obj.agendamiento_origen.chofer_asociado.get_full_name()
+        
+        # Si no hay agendamiento, intentamos desde el vehículo (si tienes esa lógica)
+        if obj.vehiculo and obj.vehiculo.chofer:
+             return obj.vehiculo.chofer.get_full_name()
+        return "No asignado"
+
+    def get_mecanico_nombre(self, obj):
+        if obj.usuario_asignado:
+            return obj.usuario_asignado.get_full_name()
+        
+        # Fallback por si el mecánico estaba en el agendamiento
+        if obj.agendamiento_origen and obj.agendamiento_origen.mecanico_asignado:
+            return obj.agendamiento_origen.mecanico_asignado.get_full_name()
+            
+        return "No asignado"

@@ -40,10 +40,8 @@ export default function Dashboard() {
       <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
         <div>
           <h1 className="text-3xl font-bold">
-            Inicio
           </h1>
           <p className="text-gray-400">
-            Hola, {user?.first_name || user?.username} (Rol: {user?.rol})
           </p>
         </div>
       </header>

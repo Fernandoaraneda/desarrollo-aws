@@ -31,20 +31,20 @@ export default function SupervisorWidgets() {
   // ✅ 1. Función para obtener los datos del dashboard
   const fetchData = useCallback(async (showRefreshIndicator = false) => {
     if (!user) return;
-    
+
     try {
       if (showRefreshIndicator) {
         setIsRefreshing(true);
       }
-      
+
       console.log('Obteniendo datos del dashboard...'); // Debug
       const response = await apiClient.get('/dashboard/supervisor/stats/');
       console.log('Datos recibidos:', response.data); // Debug
-      
+
       setData(response.data);
       setLastUpdated(new Date());
       setError(null);
-      
+
     } catch (error) {
       console.error("Error al cargar los datos del dashboard", error);
       setError(error.response?.data?.error || 'Error al cargar los datos');
@@ -145,8 +145,8 @@ export default function SupervisorWidgets() {
     return (
       <div className="flex flex-col items-center justify-center p-8">
         <p className="text-red-400 mb-4">Error: {error}</p>
-        <button 
-          onClick={handleManualRefresh} 
+        <button
+          onClick={handleManualRefresh}
           className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
         >
           Reintentar
@@ -159,8 +159,8 @@ export default function SupervisorWidgets() {
     return (
       <div className="flex flex-col items-center justify-center p-8">
         <p className="text-gray-300 mb-4">No se pudieron cargar los datos del dashboard.</p>
-        <button 
-          onClick={handleManualRefresh} 
+        <button
+          onClick={handleManualRefresh}
           className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
         >
           Reintentar
@@ -173,77 +173,74 @@ export default function SupervisorWidgets() {
 
   return (
     <div className="w-full">
-      {/* ✅ Header con controles de actualización */}
-      <div className="flex justify-end mb-4 px-4">
-        <div className="flex items-center gap-4 flex-wrap">
-          <button
-            onClick={handleManualRefresh}
-            disabled={isRefreshing}
-            className={`flex items-center gap-2 px-3 py-2 rounded text-sm transition-colors ${
-              isRefreshing 
-                ? 'bg-green-500 text-white cursor-not-allowed' 
-                : 'bg-blue-500 hover:bg-blue-600 text-white'
-            }`}
-            title="Actualizar datos"
-          >
-            <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-            {isRefreshing ? 'Actualizando...' : 'Actualizar'}
-          </button>
 
-          {/* ✅ Nuevo botón para descargar CSV */}
-          <button
-            onClick={handleDownloadCSV}
-            className="flex items-center gap-2 px-3 py-2 rounded text-sm bg-emerald-500 hover:bg-emerald-600 text-white transition-colors"
-            title="Descargar datos en CSV"
-          >
-            📥 Descargar CSV
-          </button>
-          
-          <label className="flex items-center gap-2 text-sm text-gray-400 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={autoRefresh}
-              onChange={toggleAutoRefresh}
-              className="cursor-pointer"
-            />
-            Auto-actualizar (30s)
-          </label>
-          
-          {lastUpdated && (
-            <span className="text-xs text-gray-500">
-              Última actualización: {lastUpdated.toLocaleTimeString()}
-            </span>
-          )}
-        </div>
+      <div className={styles.controlsToolbar}>
+
+        <button
+          onClick={handleManualRefresh}
+          disabled={isRefreshing}
+          className={`flex items-center gap-2 px-3 py-2 rounded text-sm transition-colors ${isRefreshing
+              ? 'bg-green-500 text-white cursor-not-allowed'
+              : 'bg-blue-500 hover:bg-blue-600 text-white'
+            }`}
+          title="Actualizar datos"
+        >
+          <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+          {isRefreshing ? 'Actualizando...' : 'Actualizar'}
+        </button>
+
+        <button
+          onClick={handleDownloadCSV}
+          className="flex items-center gap-2 px-3 py-2 rounded text-sm bg-emerald-500 hover:bg-emerald-600 text-white transition-colors"
+          title="Descargar datos en CSV"
+        >
+          📥 Descargar CSV
+        </button>
+
+        <label> {/* El CSS Module se encargará de estilizar esto */}
+          <input
+            type="checkbox"
+            checked={autoRefresh}
+            onChange={toggleAutoRefresh}
+            className="cursor-pointer"
+          />
+          Auto-actualizar (30s)
+        </label>
+
+        {lastUpdated && (
+          <span> {/* El CSS Module se encargará de estilizar esto */}
+            Última actualización: {lastUpdated.toLocaleTimeString()}
+          </span>
+        )}
       </div>
 
       <div className={styles.dashboardGrid}>
         {/* Fila de KPIs */}
-        <KpiCard 
-          title="Vehículos en Taller" 
-          value={kpis?.vehiculosEnTaller || 0} 
-          icon={<Truck />} 
-          color="#3b82f6" 
+        <KpiCard
+          title="Vehículos en Taller"
+          value={kpis?.vehiculosEnTaller || 0}
+          icon={<Truck />}
+          color="#3b82f6"
         />
-        <KpiCard 
-          title="Agendamientos para Hoy" 
-          value={kpis?.agendamientosHoy || 0} 
-          icon={<Calendar />} 
-          color="#10b981" 
+        <KpiCard
+          title="Agendamientos para Hoy"
+          value={kpis?.agendamientosHoy || 0}
+          icon={<Calendar />}
+          color="#10b981"
         />
-        <KpiCard 
-          title="Órdenes Finalizadas (Mes)" 
-          value={kpis?.ordenesFinalizadasMes || 0} 
-          icon={<Wrench />} 
-          color="#f97316" 
+        <KpiCard
+          title="Órdenes Finalizadas (Mes)"
+          value={kpis?.ordenesFinalizadasMes || 0}
+          icon={<Wrench />}
+          color="#f97316"
         />
-        <KpiCard 
-          title="Tiempo Promedio Reparación" 
-          value={kpis?.tiempoPromedioRep || "N/A"} 
-          icon={<Clock />} 
-          color="#8b5cf6" 
+        <KpiCard
+          title="Tiempo Promedio Reparación"
+          value={kpis?.tiempoPromedioRep || "N/A"}
+          icon={<Clock />}
+          color="#8b5cf6"
         />
-        
+
         {/* Gráfico de Órdenes por Estado */}
         <div className={`${styles.card} ${styles.largeCard}`}>
           <h3 className={styles.chartTitle}>Carga de Trabajo Actual</h3>
@@ -258,7 +255,7 @@ export default function SupervisorWidgets() {
             </BarChart>
           </ResponsiveContainer>
         </div>
-        
+
         {/* Gráfico de Flujo de Ingresos */}
         <div className={`${styles.card} ${styles.largeCard}`}>
           <h3 className={styles.chartTitle}>Ingresos en la Última Semana</h3>
