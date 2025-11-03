@@ -175,11 +175,14 @@ export default function MainLayout() {
           </button>
           
           <div className={styles.headerRight}> 
-            <Notificaciones /> 
-            <span className={styles.userInfo}>
-              Bienvenido, <strong>{user?.first_name || user?.username}</strong> ({user?.rol})
-            </span>
-          </div>
+  <span className={styles.userInfo}>
+    Bienvenido, <strong>{user?.first_name || user?.username}</strong> ({user?.rol})
+  </span>
+  <div className={styles.notificationContainer}>
+    <Notificaciones />
+  </div>
+</div>
+
         </header>
         <main className={styles.mainContent}>
           <Outlet />

@@ -52,7 +52,7 @@ npm run dev -- --host 0.0.0.0
 
 
 
-
+npm install react-datepicker date-fns
 ----------------------------------------------------------
 CARGAR GRUPOS Y PERMISOS DE CADA ROL
 

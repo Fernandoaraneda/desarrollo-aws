@@ -8,6 +8,7 @@ from django.contrib.auth.password_validation import validate_password
 from django.db.models import Q
 from datetime import timedelta
 
+
 # Importación de modelos locales
 from .models import Vehiculo, Agendamiento, Orden, OrdenHistorialEstado, OrdenDocumento
 
@@ -184,6 +185,12 @@ class AgendamientoSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ['creado_por', 'fecha_hora_fin']
 
+        extra_kwargs = {
+            'fecha_hora_programada': {'required': False, 'allow_null': True},
+            'vehiculo': {'required': True},
+            'motivo_ingreso': {'required': True}
+        }
+
     def __init__(self, *args, **kwargs):
         """Filtra los vehículos visibles según el rol del usuario."""
         super().__init__(*args, **kwargs)
@@ -319,3 +326,50 @@ class OrdenSalidaListSerializer(serializers.ModelSerializer):
             return obj.agendamiento_origen.mecanico_asignado.get_full_name()
             
         return "No asignado"
+    
+
+
+    def validate(self, data):
+        """
+        Validación personalizada para DRF (se ejecuta antes de crear/guardar).
+        """
+        # 1. Validar duplicados de vehículo
+        vehiculo = data.get('vehiculo')
+        
+        # Chequeamos si estamos creando (no hay 'instance')
+        is_create = self.instance is None
+        
+        if vehiculo and is_create:
+            # Busca si este vehículo ya tiene OTRA cita que esté "activa"
+            citas_activas = Agendamiento.objects.filter(
+                vehiculo=vehiculo
+            ).exclude(
+                estado__in=[
+                    Agendamiento.Estado.FINALIZADO,
+                    Agendamiento.Estado.CANCELADO
+                ]
+            )
+            
+            # Si ya existe una cita activa, lanza un error
+            if citas_activas.exists():
+                raise serializers.ValidationError(
+                    f"El vehículo {vehiculo.patente} ya tiene una cita activa (Programada o En Taller). "
+                    "No puede agendar otra hasta que la anterior se complete."
+                )
+        
+        # (Aquí irían otras validaciones si las tuvieras)
+        
+        return data
+    
+
+
+    # ... (tus otras importaciones)
+from .models import Notificacion
+
+# ... (tus otros serializers) ...
+
+# --- 👇 AÑADE ESTE SERIALIZER NUEVO ---
+class NotificacionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Notificacion
+        fields = ['id', 'mensaje', 'link', 'leida', 'fecha']

@@ -17,8 +17,7 @@ from rest_framework.decorators import api_view, permission_classes, action
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
-
-from django.db.models import Count, Avg, F, DateField
+from django.db.models import Count, Avg, F, DateField, Q
 from django.db.models.functions import TruncDay
 
 from .models import Orden, Agendamiento, Vehiculo, OrdenHistorialEstado, OrdenPausa, OrdenDocumento, Notificacion
@@ -378,23 +377,114 @@ class AgendamientoViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         serializer.save(creado_por=self.request.user)
 
+# accounts/views.py
+
     @action(detail=True, methods=['post'], url_path='confirmar-y-asignar', permission_classes=[IsSupervisor])
     def confirmar_y_asignar(self, request, pk=None):
         agendamiento = self.get_object()
+        
+        # 1. OBTENER DATOS (SIN chofer_id)
         mecanico_id_raw = request.data.get('mecanico_id')
+        fecha_hora_asignada_str = request.data.get('fecha_hora_asignada')
+        motivo_cambio = request.data.get('motivo_reagendamiento', None)
+
+        # 2. VALIDAR MECÁNICO
         try:
             mecanico_id = int(mecanico_id_raw)
-        except (TypeError, ValueError):
-            return Response({'error': 'ID de mecánico inválido.'}, status=status.HTTP_400_BAD_REQUEST)
+            mecanico = User.objects.get(id=mecanico_id, groups__name='Mecanico')
+        except (TypeError, ValueError, User.DoesNotExist):
+            return Response({'error': 'El mecánico seleccionado es inválido.'}, status=status.HTTP_404_NOT_FOUND)
+
+        # 3. VALIDAR FECHA Y HORA
+        fecha_a_validar = None
+        hubo_cambio_fecha = False
+
+        if not fecha_hora_asignada_str:
+             # --- 👇 ARREGLO DEL SYNTAX ERROR ---
+             return Response({'error': 'Debe seleccionar una fecha y hora.'}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
-            mecanico = User.objects.get(id=mecanico_id, groups__name='Mecanico')
-        except User.DoesNotExist:
-            return Response({'error': 'El usuario seleccionado no es un mecánico válido.'}, status=status.HTTP_404_NOT_FOUND)
+            # fromisoformat() ya maneja el string 'Z' (UTC) de JavaScript
+            fecha_a_validar = datetime.fromisoformat(fecha_hora_asignada_str)
+            
+            # Comparamos la nueva fecha con la original (si existía)
+            if agendamiento.fecha_hora_programada != fecha_a_validar:
+                hubo_cambio_fecha = True
+                
+        except (ValueError, TypeError):
+            return Response({'error': 'Formato de fecha/hora asignada es inválido.'}, status=status.HTTP_400_BAD_REQUEST)
 
+        # Calculamos el fin
+        fecha_fin = fecha_a_validar + timedelta(minutes=agendamiento.duracion_estimada_minutos)
+    
+        # 4. VALIDACIÓN DE CONFLICTO (MECÁNICO)
+        overlapping_mecanico = Agendamiento.objects.filter(
+            Q(fecha_hora_programada__lt=fecha_fin) &
+            Q(fecha_hora_fin__gt=fecha_a_validar) &
+            Q(mecanico_asignado=mecanico) &
+            Q(estado__in=[Agendamiento.Estado.CONFIRMADO, Agendamiento.Estado.EN_TALLER])
+        ).exclude(pk=agendamiento.pk) 
+    
+        if overlapping_mecanico.exists():
+            return Response(
+                {'error': f"Conflicto de horario (Mecánico): El mecánico {mecanico.get_full_name()} ya tiene una cita en ese rango."}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # 5. VALIDACIÓN DE CONFLICTO (VEHÍCULO)
+        overlapping_vehiculo = Agendamiento.objects.filter(
+            Q(fecha_hora_programada__lt=fecha_fin) &
+            Q(fecha_hora_fin__gt=fecha_a_validar) &
+            Q(vehiculo=agendamiento.vehiculo)
+        ).exclude(
+            estado__in=[Agendamiento.Estado.FINALIZADO, Agendamiento.Estado.CANCELADO]
+        ).exclude(pk=agendamiento.pk) # Excluir la cita que estamos moviendo
+
+        if overlapping_vehiculo.exists():
+            return Response(
+                {'error': f"Conflicto de horario (Vehículo): El vehículo {agendamiento.vehiculo.patente} ya tiene OTRA cita activa en ese nuevo rango."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # 6. GUARDAR TODO (SIN chofer_asociado)
         agendamiento.mecanico_asignado = mecanico
         agendamiento.estado = Agendamiento.Estado.CONFIRMADO
-        agendamiento.save()
+        agendamiento.fecha_hora_programada = fecha_a_validar # Asignamos la nueva fecha
+        
+        if hubo_cambio_fecha:
+            agendamiento.motivo_reagendamiento = motivo_cambio
+            
+            # Notificar al chofer (Esta lógica está bien)
+            try:
+                # El chofer ya está en 'agendamiento.chofer_asociado' desde que se creó la cita
+                if agendamiento.chofer_asociado:
+                    mensaje = f"Su cita para {agendamiento.vehiculo.patente} fue asignada/reagendada para el {fecha_a_validar.strftime('%d-%m-%Y a las %H:%M')}. Motivo: {motivo_cambio or 'Asignación de taller.'}"
+                    Notificacion.objects.create(
+                        usuario=agendamiento.chofer_asociado,
+                        mensaje=mensaje,
+                        link=f"/historial" 
+                    )
+            except Exception as e:
+                print(f"Error al crear notificación de reagendamiento: {e}")
+            try:
+            # 1. Buscamos a todos los usuarios del grupo "Seguridad"
+                usuarios_seguridad = User.objects.filter(groups__name='Seguridad', is_active=True)
+            
+            # 2. Creamos el mensaje
+                mensaje_seguridad = f"Vehículo {agendamiento.vehiculo.patente} (Chofer: {agendamiento.chofer_asociado.first_name}) tiene cita confirmada para el {fecha_a_validar.strftime('%d-%m a las %H:%M')}."
+            
+            # 3. Creamos una notificación para cada uno de ellos
+                for user_seg in usuarios_seguridad:
+                 Notificacion.objects.create(
+                    usuario=user_seg,
+                    mensaje=mensaje_seguridad,
+                    link="/panel-ingresos" # El link a su panel de trabajo
+                )
+            except Exception as e:
+                    # Si falla la notificación de seguridad, no detenemos la operación
+                print(f"Error al crear notificación para Seguridad: {e}")
+                
+        agendamiento.save() # Esta línea ya no dará error
         return Response(self.get_serializer(agendamiento).data, status=status.HTTP_200_OK)
 
     @action(detail=True, methods=['post'], url_path='registrar-ingreso', permission_classes=[IsSupervisorOrSeguridad])
@@ -477,6 +567,36 @@ class OrdenViewSet(viewsets.ModelViewSet):
             orden.save()
             OrdenHistorialEstado.objects.create(orden=orden, estado=nuevo_estado, usuario=request.user, motivo=motivo)
             
+            try:
+    # 1. Encontrar al chofer asociado a esta orden
+                chofer_a_notificar = None
+                if orden.agendamiento_origen and orden.agendamiento_origen.chofer_asociado:
+                    chofer_a_notificar = orden.agendamiento_origen.chofer_asociado
+                elif orden.vehiculo and orden.vehiculo.chofer:  # Fallback si no hay agendamiento
+                    chofer_a_notificar = orden.vehiculo.chofer
+
+                if chofer_a_notificar:
+                    # 2. Definir mensajes claros para cada estado
+                    mensajes = {
+                        'En Diagnostico': 'está siendo diagnosticado por un mecánico.',
+                        'En Proceso': 'ha entrado en proceso de reparación.',
+                        'Pausado': f'ha sido pausado (Motivo: {motivo or "N/A"}).',
+                        'Finalizado': '¡está listo! El trabajo en su vehículo ha finalizado.'
+                    }
+
+                    # 3. Crear la notificación
+                    mensaje_chofer = mensajes.get(nuevo_estado)
+                    if mensaje_chofer:
+                        Notificacion.objects.create(
+                            usuario=chofer_a_notificar,
+                            mensaje=f"Actualización: Su vehículo {orden.vehiculo.patente} {mensaje_chofer}",
+                            link="/dashboard"  # El dashboard del chofer
+                        )
+
+            except Exception as e:
+                # Si falla la notificación, no detenemos la operación
+                print(f"Error al crear notificación de cambio de estado: {e}")
+
 
         return Response(self.get_serializer(orden).data, status=status.HTTP_200_OK)
     @action(detail=True, methods=['post'], url_path='pausar')
@@ -727,3 +847,83 @@ class RegistrarSalidaView(APIView):
                 {"error": f"Error al registrar la salida: {str(e)}"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+        
+from django.utils import timezone
+from datetime import datetime, timedelta
+from django.db.models import Q
+from rest_framework.response import Response # ¡Importante!
+from django.utils.timezone import make_aware #
+from django.utils import timezone
+from datetime import datetime
+
+class MecanicoAgendaView(generics.ListAPIView):
+    serializer_class = AgendamientoSerializer
+    permission_classes = [IsSupervisor]
+
+    def get_queryset(self):
+        mecanico_id = self.kwargs.get('mecanico_id')
+        if not mecanico_id:
+            return Agendamiento.objects.none()
+        
+        queryset = Agendamiento.objects.filter(
+            mecanico_asignado_id=mecanico_id,
+            estado__in=[
+                Agendamiento.Estado.CONFIRMADO, 
+                Agendamiento.Estado.EN_TALLER
+            ]
+        )
+
+        # --- 👇 INICIO DEL ARREGLO ---
+        fecha_str = self.request.query_params.get('fecha')
+        if fecha_str:
+            try:
+                fecha = datetime.strptime(fecha_str, '%Y-%m-%d').date()
+                
+                current_tz = timezone.get_current_timezone()
+
+                # Esta es la forma MODERNA de hacerlo (con tzinfo)
+                start_of_day = datetime.combine(fecha, datetime.min.time(), tzinfo=current_tz)
+                end_of_day = datetime.combine(fecha, datetime.max.time(), tzinfo=current_tz)
+
+                # Filtramos el queryset por ese rango de día
+                queryset = queryset.filter(
+                    fecha_hora_programada__gte=start_of_day,
+                    fecha_hora_programada__lte=end_of_day
+                )
+            except ValueError:
+                pass # Ignora la fecha si el formato es incorrecto
+        # --- 👆 FIN DEL ARREGLO ---
+
+        return queryset.order_by('fecha_hora_programada')
+
+
+# accounts/views.py
+
+# --- 👇 AÑADE ESTAS IMPORTACIONES AL PRINCIPIO DEL ARCHIVO ---
+from rest_framework import viewsets, permissions, status
+from rest_framework.decorators import action
+from .models import Notificacion
+from .serializers import NotificacionSerializer
+# --- (Asegúrate de no duplicar importaciones si ya existen) ---
+
+
+# ... (El resto de tus vistas como AgendamientoViewSet, OrdenViewSet, etc.) ...
+
+
+# --- 👇 AÑADE ESTA VISTA NUEVA (al final del archivo está bien) ---
+class NotificacionViewSet(viewsets.ModelViewSet):
+    """
+    API para leer, crear y marcar notificaciones como leídas.
+    """
+    serializer_class = NotificacionSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        """Filtra notificaciones solo para el usuario logueado."""
+        return Notificacion.objects.filter(usuario=self.request.user).order_by('-fecha')
+
+    @action(detail=False, methods=['post'], url_path='marcar-como-leidas')
+    def marcar_como_leidas(self, request):
+        """Acción para marcar todas las notificaciones del usuario como leídas."""
+        Notificacion.objects.filter(usuario=request.user, leida=False).update(leida=True)
+        return Response(status=status.HTTP_204_NO_CONTENT)

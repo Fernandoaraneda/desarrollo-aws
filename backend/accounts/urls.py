@@ -23,14 +23,17 @@ from .views import (
     MisProximasCitasView,
     mecanico_dashboard_stats,
     RegistrarSalidaView,
-    OrdenesPendientesSalidaView
+    OrdenesPendientesSalidaView,
+    MecanicoAgendaView,
+    NotificacionViewSet
+
 )
 
 router = DefaultRouter()
 router.register(r'vehiculos', VehiculoViewSet, basename='vehiculo')
 router.register(r'agendamientos', AgendamientoViewSet, basename='agendamiento')
 router.register(r'ordenes', OrdenViewSet, basename='orden')
-
+router.register(r'notificaciones', NotificacionViewSet, basename='notificacion') # --- 👈 AÑADE ESTA LÍNEA
 urlpatterns = [
     # Autenticación
     path("login/", LoginView.as_view(), name="login"),
@@ -46,6 +49,7 @@ urlpatterns = [
     path("users/<int:id>/", UserRetrieveUpdateAPIView.as_view(), name="user-detail-update"),
     path('choferes/', ChoferListView.as_view(), name='chofer-list'),
     path('mecanicos/', MecanicoListView.as_view(), name='mecanico-list'),
+    path('mecanicos/<int:mecanico_id>/agenda/', MecanicoAgendaView.as_view(), name='mecanico-agenda'),
     path('agenda/seguridad/', SeguridadAgendaView.as_view(), name='seguridad-agenda-list'),
     # Dashboard del supervisor - RUTA CORREGIDA
     path("dashboard/supervisor/stats/", supervisor_dashboard_stats, name="dashboard-supervisor-stats"),

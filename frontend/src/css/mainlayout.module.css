@@ -258,3 +258,22 @@
   color: #fff;
   font-weight: 600;
 }
+
+
+
+.headerRight {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  justify-content: space-between; /* separa el texto y la campana */
+}
+
+.userInfo {
+  font-size: 0.9rem;
+}
+
+/* Este contenedor empuja la campana totalmente a la derecha */
+.notificationContainer {
+  margin-left: auto;
+  position: relative;
+}

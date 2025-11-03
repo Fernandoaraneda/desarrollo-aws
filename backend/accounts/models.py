@@ -126,7 +126,11 @@ class Agendamiento(TimeStampedModel):
         null=True,  # Puede ser nulo al principio
         blank=True
     )
-    fecha_hora_programada = models.DateTimeField()
+    fecha_hora_programada = models.DateTimeField(
+        null=True, 
+        blank=True,
+        help_text="La fecha/hora asignada por el Supervisor. Puede estar vacía si es solo una solicitud."
+    )
     duracion_estimada_minutos = models.PositiveIntegerField(default=60)
     fecha_hora_fin = models.DateTimeField(editable=False, null=True, blank=True)
     motivo_ingreso = models.TextField()
@@ -139,6 +143,13 @@ class Agendamiento(TimeStampedModel):
     )
     creado_por = models.ForeignKey(Usuario, on_delete=models.PROTECT, related_name="agendamientos_creados")
 
+    motivo_reagendamiento = models.TextField(
+        "Motivo de Reagendamiento", 
+        blank=True, 
+        null=True,
+        help_text="El motivo por el cual el supervisor cambió la hora de la cita original."
+    )
+
     def save(self, *args, **kwargs):
         if self.fecha_hora_programada and self.duracion_estimada_minutos:
             self.fecha_hora_fin = self.fecha_hora_programada + timedelta(minutes=self.duracion_estimada_minutos)
@@ -146,13 +157,27 @@ class Agendamiento(TimeStampedModel):
 
     def clean(self):
         super().clean()
-        if self.fecha_hora_programada and self.fecha_hora_fin:
-            overlapping = Agendamiento.objects.filter(
-                Q(fecha_hora_programada__lt=self.fecha_hora_fin) &
-                Q(fecha_hora_fin__gt=self.fecha_hora_programada)
-            ).exclude(pk=self.pk)
-            if overlapping.exists():
-                raise ValidationError("Conflicto de horario: Ya existe una cita en el rango de tiempo seleccionado.")
+
+        if self.fecha_hora_programada and self.fecha_hora_programada < timezone.now():
+            raise ValidationError("La fecha de la cita no puede ser en el pasado.")
+        if self.pk is None and self.vehiculo:
+            
+            # Busca si este vehículo ya tiene OTRA cita que esté "activa"
+            citas_activas_existentes = Agendamiento.objects.filter(
+                vehiculo=self.vehiculo
+            ).exclude(
+                estado__in=[
+                    Agendamiento.Estado.FINALIZADO,
+                    Agendamiento.Estado.CANCELADO
+                ]
+            )
+            
+            # Si ya existe una cita activa, lanza un error
+            if citas_activas_existentes.exists():
+                raise ValidationError(
+                    f"El vehículo {self.vehiculo.patente} ya tiene una cita activa (Programada o En Taller). "
+                    "No puede agendar una nueva hasta que la anterior se complete."
+                )
 
     def __str__(self):
         return f"Cita para {self.vehiculo.patente} el {self.fecha_hora_programada.strftime('%d-%m-%Y %H:%M')}"
