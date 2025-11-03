@@ -198,14 +198,7 @@ class AgendamientoSerializer(serializers.ModelSerializer):
         if user and user.groups.filter(name='Chofer').exists():
             self.fields['vehiculo'].queryset = Vehiculo.activos.filter(chofer=user)
 
-    def create(self, validated_data):
-        """
-        Asigna automáticamente el usuario logueado como creador y chofer asociado.
-        """
-        user = self.context['request'].user
-        validated_data['creado_por'] = user
-        validated_data['chofer_asociado'] = user
-        return super().create(validated_data)
+    
 
 
 # ======================================================================

@@ -19,7 +19,11 @@ from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.db.models import Count, Avg, F, DateField, Q
 from django.db.models.functions import TruncDay
-
+from django.core.mail import send_mail
+from django.template.loader import render_to_string
+from django.utils.html import strip_tags
+from django.conf import settings
+# accounts/views.py (Línea 26 - CORREGIDA)
 from .models import Orden, Agendamiento, Vehiculo, OrdenHistorialEstado, OrdenPausa, OrdenDocumento, Notificacion
 from .serializers import (
     LoginSerializer,
@@ -33,6 +37,53 @@ from .serializers import (
 )
 
 User = get_user_model()
+
+# ... (después de las importaciones)
+
+def enviar_correo_notificacion(usuario, subject, message_body):
+    """
+    Envía un correo electrónico de notificación usando la plantilla HTML.
+    """
+    # 1. Asegurarnos que el usuario tenga un email
+    if not usuario.email:
+        print(f"Usuario {usuario.username} no tiene email, no se envía correo.")
+        return
+
+    # 2. ***** CONFIGURACIÓN DE PRUEBA *****
+    #    Forzamos que TODOS los correos se envíen a tu email de prueba.
+    #    En producción, deberías cambiar esto a 'usuario.email'.
+    recipient_email = 'fer.araneda@duocuc.cl'
+    print(f"Enviando correo de prueba a: {recipient_email} (Usuario real: {usuario.email})")
+    
+    # 3. Preparar el contexto para la plantilla HTML
+    context = {
+        'subject': subject,
+        'message_body': message_body,
+        'nombre_usuario': usuario.first_name or usuario.username,
+    }
+    
+    try:
+        # 4. Renderizar la plantilla HTML
+        html_message = render_to_string('emails/notificacion_base.html', context)
+        # 5. Crear una versión de texto plano como fallback
+        plain_message = strip_tags(html_message)
+        # 6. Obtener el email remitente desde settings
+        from_email = settings.EMAIL_HOST_USER
+
+        # 7. Enviar el correo
+        send_mail(
+            subject,
+            plain_message,
+            from_email,
+            [recipient_email], # La lista de destinatarios
+            html_message=html_message,
+            fail_silently=False # Poner en True en producción para que no falle la app si el email falla
+        )
+        print(f"Correo enviado exitosamente a {recipient_email}")
+
+    except Exception as e:
+        # Imprime el error en la consola del backend para debugging
+        print(f"ERROR al enviar correo a {recipient_email}: {e}")
 
 
 # --------------------
@@ -375,7 +426,40 @@ class AgendamientoViewSet(viewsets.ModelViewSet):
         return Agendamiento.objects.none()
 
     def perform_create(self, serializer):
-        serializer.save(creado_por=self.request.user)
+        user = self.request.user
+        
+        # 1. Guardamos la instancia UNA SOLA VEZ y la asignamos a una variable
+        agendamiento = serializer.save(creado_por=user, chofer_asociado=user)
+        
+        # 2. Ahora usamos esa variable 'agendamiento' para las notificaciones
+        try:
+            # 2. Obtenemos a todos los supervisores activos
+            supervisores = User.objects.filter(groups__name='Supervisor', is_active=True)
+            
+            # 3. Preparamos el mensaje
+            chofer = agendamiento.creado_por
+            chofer_nombre = f"{chofer.first_name} {chofer.last_name}".strip() or chofer.username
+            patente = agendamiento.vehiculo.patente
+            
+            subject = f"Nueva Solicitud de Cita: {patente}"
+            mensaje = f"El chofer {chofer_nombre} ha solicitado un ingreso para el vehículo {patente}. Motivo: {agendamiento.motivo_ingreso}"
+            link_supervisor = "/panel-supervisor" # Link al panel donde aprueban
+
+            # 4. Enviamos notificación y email a CADA supervisor
+            for supervisor in supervisores:
+                Notificacion.objects.create(
+                    usuario=supervisor,
+                    mensaje=mensaje,
+                    link=link_supervisor
+                )
+                
+                # 5. Enviamos el correo
+                enviar_correo_notificacion(supervisor, subject, mensaje)
+
+        except Exception as e:
+            # Es importante que la creación de la cita no falle si la notificación falla.
+            # Imprimimos el error en la consola del backend para debugging.
+            print(f"ERROR al notificar al supervisor sobre nueva cita: {e}")
 
 # accounts/views.py
 
@@ -464,6 +548,8 @@ class AgendamientoViewSet(viewsets.ModelViewSet):
                         mensaje=mensaje,
                         link=f"/historial" 
                     )
+                    subject_chofer = f"Actualización de Cita: Vehículo {agendamiento.vehiculo.patente}"
+                    enviar_correo_notificacion(agendamiento.chofer_asociado, subject_chofer, mensaje)
             except Exception as e:
                 print(f"Error al crear notificación de reagendamiento: {e}")
             try:
@@ -480,6 +566,8 @@ class AgendamientoViewSet(viewsets.ModelViewSet):
                     mensaje=mensaje_seguridad,
                     link="/panel-ingresos" # El link a su panel de trabajo
                 )
+                subject_seguridad = f"Cita Confirmada: Vehículo {agendamiento.vehiculo.patente}"
+                enviar_correo_notificacion(user_seg, subject_seguridad, mensaje_seguridad)
             except Exception as e:
                     # Si falla la notificación de seguridad, no detenemos la operación
                 print(f"Error al crear notificación para Seguridad: {e}")
@@ -508,7 +596,8 @@ class AgendamientoViewSet(viewsets.ModelViewSet):
                     link=f"/ordenes/{nueva_orden.id}" # Link para que al hacer clic, vaya al detalle de la orden
                 )
             
-
+                subject_mecanico = f"Nueva Orden Asignada: #{nueva_orden.id}"
+                enviar_correo_notificacion(agendamiento.mecanico_asignado, subject_mecanico, mensaje)
             # Conservador: mantenemos el comportamiento original (FINALIZADO) para no cambiar el flujo actual.
             agendamiento.estado = Agendamiento.Estado.FINALIZADO
             agendamiento.save()
@@ -592,7 +681,11 @@ class OrdenViewSet(viewsets.ModelViewSet):
                             mensaje=f"Actualización: Su vehículo {orden.vehiculo.patente} {mensaje_chofer}",
                             link="/dashboard"  # El dashboard del chofer
                         )
-
+                        subject_chofer_estado = f"Actualización Orden #{orden.id}: {orden.vehiculo.patente}"
+                        # Re-construimos el mensaje completo para el email
+                        mensaje_email = f"Actualización: Su vehículo {orden.vehiculo.patente} {mensaje_chofer}"
+                        enviar_correo_notificacion(chofer_a_notificar, subject_chofer_estado, mensaje_email)
+                        
             except Exception as e:
                 # Si falla la notificación, no detenemos la operación
                 print(f"Error al crear notificación de cambio de estado: {e}")

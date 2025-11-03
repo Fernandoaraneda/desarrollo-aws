@@ -186,3 +186,18 @@ SIMPLE_JWT = {
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+
+
+# ----------------------------------------------------------------------
+# CONFIGURACIÓN DE CORREO ELECTRÓNICO (GMAIL)
+# ----------------------------------------------------------------------
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'joseyenid2@gmail.com' # Tu correo de Gmail
+EMAIL_HOST_PASSWORD = 'yehj nbvx uevu npkw' # ¡Usa la contraseña de aplicación de 16 letras!
+
+# Opcional: El correo que aparecerá como "De"
+DEFAULT_FROM_EMAIL = 'Taller PepsiCo <joseyenid2@gmail.com>'

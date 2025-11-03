@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ subject }}</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+            color: #333;
+        }
+        .wrapper {
+            width: 100%;
+            background-color: #f8f8f8;
+            padding: 20px 0;
+        }
+        .container {
+            width: 90%;
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .header {
+            background-color: #004b93; /* Color corporativo Pepsi */
+            color: #ffffff;
+            padding: 20px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+        .content {
+            padding: 30px;
+        }
+        .content p {
+            font-size: 16px;
+            margin-bottom: 20px;
+        }
+        .content strong {
+            color: #004b93;
+        }
+        .footer {
+            background-color: #f8f8f8;
+            color: #888;
+            padding: 20px;
+            text-align: center;
+            font-size: 12px;
+            border-top: 1px solid #ddd;
+        }
+    </style>
+</head>
+<body>
+    <div class="wrapper">
+        <div class="container">
+            <div class="header">
+                <h1>Taller PepsiCo</h1>
+            </div>
+            <div class="content">
+                <p>Hola <strong>{{ nombre_usuario }}</strong>,</p>
+                
+                <p>{{ message_body }}</p>
+
+                <p>Saludos,<br>El equipo de Taller PepsiCo</p>
+            </div>
+            <div class="footer">
+                <p>Este es un correo electrónico generado automáticamente. Por favor, no respondas a este mensaje.</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
