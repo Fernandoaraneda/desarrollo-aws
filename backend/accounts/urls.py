@@ -25,7 +25,10 @@ from .views import (
     RegistrarSalidaView,
     OrdenesPendientesSalidaView,
     MecanicoAgendaView,
-    NotificacionViewSet
+    NotificacionViewSet,
+    LlaveVehiculoViewSet, 
+    PrestamoLlaveViewSet,
+    LlaveHistorialEstadoViewSet
 
 )
 
@@ -33,7 +36,11 @@ router = DefaultRouter()
 router.register(r'vehiculos', VehiculoViewSet, basename='vehiculo')
 router.register(r'agendamientos', AgendamientoViewSet, basename='agendamiento')
 router.register(r'ordenes', OrdenViewSet, basename='orden')
-router.register(r'notificaciones', NotificacionViewSet, basename='notificacion') # --- 👈 AÑADE ESTA LÍNEA
+router.register(r'notificaciones', NotificacionViewSet, basename='notificacion')
+router.register(r'llaves', LlaveVehiculoViewSet, basename='llave')
+router.register(r'prestamos-llaves', PrestamoLlaveViewSet, basename='prestamo-llave')
+router.register(r'llaves-historial-estado', LlaveHistorialEstadoViewSet, basename='llave-historial')
+
 urlpatterns = [
     # Autenticación
     path("login/", LoginView.as_view(), name="login"),

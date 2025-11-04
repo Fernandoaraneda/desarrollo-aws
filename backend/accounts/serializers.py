@@ -9,8 +9,9 @@ from django.db.models import Q
 from datetime import timedelta
 
 
+
 # Importación de modelos locales
-from .models import Vehiculo, Agendamiento, Orden, OrdenHistorialEstado, OrdenDocumento
+from .models import Vehiculo, Agendamiento, Orden, OrdenHistorialEstado, OrdenDocumento, Notificacion, LlaveVehiculo, PrestamoLlave, LlaveHistorialEstado
 
 
 User = get_user_model()
@@ -356,13 +357,63 @@ class OrdenSalidaListSerializer(serializers.ModelSerializer):
     
 
 
-    # ... (tus otras importaciones)
-from .models import Notificacion
 
-# ... (tus otros serializers) ...
-
-# --- 👇 AÑADE ESTE SERIALIZER NUEVO ---
 class NotificacionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Notificacion
         fields = ['id', 'mensaje', 'link', 'leida', 'fecha']
+
+
+
+# ======================================================================
+#  SERIALIZERS DE GESTIÓN DE LLAVES
+# ======================================================================
+
+class LlaveVehiculoSerializer(serializers.ModelSerializer):
+    """
+    Serializer para listar el inventario de llaves.
+    Muestra la patente y quién la tiene ahora.
+    """
+    vehiculo_patente = serializers.CharField(source='vehiculo.patente', read_only=True)
+    poseedor_info = serializers.CharField(source='poseedor_actual.get_full_name', read_only=True, default='En Bodega')
+
+    class Meta:
+        model = LlaveVehiculo
+        fields = [
+            'id', 'vehiculo', 'vehiculo_patente', 'codigo_interno', 
+            'tipo', 'estado', 'poseedor_actual', 'poseedor_info','motivo_reporte'
+        ]
+        read_only_fields = ['vehiculo_patente', 'estado', 'poseedor_actual', 'poseedor_info','motivo_reporte']
+        extra_kwargs = {
+            'vehiculo': {'write_only': True} # Solo necesitamos el ID para crear
+        }
+
+
+class PrestamoLlaveSerializer(serializers.ModelSerializer):
+    """
+    Serializer para el historial de préstamos.
+    """
+    usuario_nombre = serializers.CharField(source='usuario_retira.get_full_name', read_only=True)
+    llave_info = serializers.CharField(source='llave.__str__', read_only=True)
+
+    class Meta:
+        model = PrestamoLlave
+        fields = [
+            'id', 'llave', 'llave_info', 'usuario_retira', 'usuario_nombre',
+            'fecha_hora_retiro', 'fecha_hora_devolucion',
+            'observaciones_retiro', 'observaciones_devolucion'
+        ]
+
+class LlaveHistorialEstadoSerializer(serializers.ModelSerializer):
+    """
+    Serializer para el historial de reportes de llaves.
+    """
+    usuario_nombre = serializers.CharField(source='usuario_reporta.get_full_name', read_only=True)
+    llave_info = serializers.CharField(source='llave.__str__', read_only=True)
+    
+    class Meta:
+        model = LlaveHistorialEstado
+        fields = [
+            'id', 'llave', 'llave_info', 'usuario_reporta', 'usuario_nombre',
+            'estado_anterior', 'estado_nuevo', 'motivo', 'fecha'
+        ]

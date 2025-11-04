@@ -23,8 +23,10 @@ from django.core.mail import send_mail
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
 from django.conf import settings
+
+from rest_framework import filters
 # accounts/views.py (Línea 26 - CORREGIDA)
-from .models import Orden, Agendamiento, Vehiculo, OrdenHistorialEstado, OrdenPausa, OrdenDocumento, Notificacion
+from .models import Orden, Agendamiento, Vehiculo, OrdenHistorialEstado, OrdenPausa, OrdenDocumento, Notificacion,LlaveVehiculo, PrestamoLlave, LlaveHistorialEstado
 from .serializers import (
     LoginSerializer,
     UserSerializer,
@@ -33,7 +35,9 @@ from .serializers import (
     VehiculoSerializer,
     AgendamientoSerializer,
     OrdenSerializer,
-    OrdenDocumentoSerializer
+    OrdenDocumentoSerializer,
+    NotificacionSerializer,
+    LlaveVehiculoSerializer, PrestamoLlaveSerializer,LlaveHistorialEstadoSerializer
 )
 
 User = get_user_model()
@@ -91,17 +95,33 @@ def enviar_correo_notificacion(usuario, subject, message_body):
 # --------------------
 class IsSupervisor(permissions.BasePermission):
     def has_permission(self, request, view):
-        return bool(request.user and request.user.is_authenticated and request.user.groups.filter(name='Supervisor').exists())
+        return bool(request.user and request.user.is_authenticated and 
+                    request.user.groups.filter(name__in=['Supervisor', 'Administrativo']).exists())
 
 class IsSupervisorOrMecanico(permissions.BasePermission):
     def has_permission(self, request, view):
-        return bool(request.user and request.user.is_authenticated and request.user.groups.filter(name__in=['Supervisor', 'Mecanico']).exists())
+        return bool(request.user and request.user.is_authenticated and 
+                    request.user.groups.filter(name__in=['Supervisor', 'Mecanico', 'Administrativo']).exists())
 
 class IsSupervisorOrSeguridad(permissions.BasePermission):
     def has_permission(self, request, view):
-        return bool(request.user and request.user.is_authenticated and request.user.groups.filter(name__in=['Supervisor', 'Seguridad']).exists())
+        return bool(request.user and request.user.is_authenticated and 
+                    request.user.groups.filter(name__in=['Supervisor', 'Seguridad', 'Administrativo']).exists())
 
-
+class IsControlLlaves(permissions.BasePermission):
+    """
+    Permiso para el Encargado de Llaves o Supervisor.
+    """
+    def has_permission(self, request, view):
+        return bool(request.user and request.user.is_authenticated and 
+                    request.user.groups.filter(name__in=['Control Llaves', 'Supervisor', 'Administrativo']).exists())
+class IsSupervisorOrControlLlaves(permissions.BasePermission):
+    """
+    Permiso para Supervisor O Encargado de Llaves (para ver listas de usuarios).
+    """
+    def has_permission(self, request, view):
+        return bool(request.user and request.user.is_authenticated and 
+                    request.user.groups.filter(name__in=['Supervisor', 'Control Llaves', 'Administrativo']).exists())
 # --------------------
 # Autenticación y perfil
 # --------------------
@@ -222,7 +242,7 @@ class ChangePasswordView(generics.GenericAPIView):
 class UserListView(generics.ListAPIView):
     queryset = User.objects.all().order_by("first_name")
     serializer_class = UserSerializer
-    permission_classes = [IsSupervisor]
+    permission_classes = [IsSupervisorOrControlLlaves]
 
 class UserCreateAPIView(generics.CreateAPIView):
     queryset = User.objects.all()
@@ -391,6 +411,37 @@ class VehiculoViewSet(viewsets.ModelViewSet):
         if user.groups.filter(name='Chofer').exists():
             return Vehiculo.activos.filter(chofer=user)
         return Vehiculo.activos.all()
+    def perform_create(self, serializer):
+        """
+        Se ejecuta después de crear un Vehículo.
+        Automatiza la creación de sus llaves por defecto.
+        """
+        # 1. Guarda el vehículo primero (esto nos da el objeto 'vehiculo')
+        vehiculo = serializer.save()
+
+        # 2. Ahora, crea las llaves asociadas (como sugeriste)
+        try:
+            # Llave 1: La Original
+            LlaveVehiculo.objects.get_or_create(
+                vehiculo=vehiculo,
+                tipo=LlaveVehiculo.Tipo.ORIGINAL,
+                defaults={
+                    'codigo_interno': f"{vehiculo.patente}-ORI" # ej: ABCD12-ORI
+                }
+            )
+
+            # Llave 2: El Duplicado (Copia)
+            LlaveVehiculo.objects.get_or_create(
+                vehiculo=vehiculo,
+                tipo=LlaveVehiculo.Tipo.DUPLICADO,
+                defaults={
+                    'codigo_interno': f"{vehiculo.patente}-DUP" # ej: ABCD12-DUP
+                }
+            )
+        except Exception as e:
+            # Si algo falla aquí, no queremos que la creación del vehículo se detenga
+            # solo lo reportamos en la consola del backend.
+            print(f"ERROR: No se pudieron crear llaves automáticas para {vehiculo.patente}: {e}")
 
     def perform_destroy(self, instance):
         instance.is_active = False
@@ -419,7 +470,7 @@ class AgendamientoViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        if user.groups.filter(name__in=['Supervisor', 'Mecanico', 'Seguridad']).exists():
+        if user.groups.filter(name__in=['Supervisor', 'Mecanico', 'Seguridad','Administrativo']).exists():
             return Agendamiento.objects.select_related('vehiculo', 'mecanico_asignado').all().order_by('fecha_hora_programada')
         elif user.groups.filter(name='Chofer').exists():
             return Agendamiento.objects.filter(vehiculo__chofer=user).order_by('fecha_hora_programada')
@@ -434,7 +485,7 @@ class AgendamientoViewSet(viewsets.ModelViewSet):
         # 2. Ahora usamos esa variable 'agendamiento' para las notificaciones
         try:
             # 2. Obtenemos a todos los supervisores activos
-            supervisores = User.objects.filter(groups__name='Supervisor', is_active=True)
+            supervisores = User.objects.filter(groups__name=['Supervisor', 'Administrativo'], is_active=True)
             
             # 3. Preparamos el mensaje
             chofer = agendamiento.creado_por
@@ -621,7 +672,7 @@ class OrdenViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        if user.groups.filter(name='Supervisor').exists():
+        if user.groups.filter(name__in=['Supervisor', 'Administrativo']).exists():
             return Orden.objects.select_related('vehiculo', 'usuario_asignado').all().order_by('-fecha_ingreso')
         elif user.groups.filter(name='Mecanico').exists():
             return Orden.objects.filter(usuario_asignado=user).select_related('vehiculo').order_by('-fecha_ingreso')
@@ -1020,3 +1071,212 @@ class NotificacionViewSet(viewsets.ModelViewSet):
         """Acción para marcar todas las notificaciones del usuario como leídas."""
         Notificacion.objects.filter(usuario=request.user, leida=False).update(leida=True)
         return Response(status=status.HTTP_204_NO_CONTENT)
+    
+
+
+
+# ======================================================================
+# 🔑 API DE GESTIÓN DE LLAVES (NUEVO)
+# ======================================================================
+
+class LlaveVehiculoViewSet(viewsets.ModelViewSet):
+    """
+    API para gestionar el inventario de llaves (Pañol).
+    Cubre: Control de duplicados, Reportar pérdidas.
+    """
+    queryset = LlaveVehiculo.objects.all().select_related('vehiculo', 'poseedor_actual')
+    serializer_class = LlaveVehiculoSerializer
+    permission_classes = [IsControlLlaves] # Protegido para el nuevo rol
+
+    @action(detail=True, methods=['post'], url_path='registrar-devolucion')
+    @transaction.atomic
+    def registrar_devolucion(self, request, pk=None):
+        """
+        Cierra un préstamo activo (RECIBIR LLAVE).
+        El 'pk' aquí es el ID de la *LlaveVehiculo*.
+        """
+        llave = self.get_object() # <-- Usa self.get_object() que es más seguro.
+
+        try:
+            # Buscamos el préstamo ACTIVO (sin fecha de devolución) para esta llave
+            prestamo = PrestamoLlave.objects.get(llave=llave, fecha_hora_devolucion__isnull=True)
+        except PrestamoLlave.DoesNotExist:
+            return Response({'error': 'Esta llave no tiene un préstamo activo para devolver.'}, status=status.HTTP_404_NOT_FOUND)
+
+        # 1. Cerramos el préstamo
+        prestamo.fecha_hora_devolucion = timezone.now()
+        prestamo.observaciones_devolucion = request.data.get('observaciones', '')
+        prestamo.save()
+
+        llave.estado = LlaveVehiculo.Estado.EN_BODEGA
+        llave.poseedor_actual = None
+        llave.save()
+
+        serializer = self.get_serializer(llave)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=['post'], url_path='registrar-retiro')
+    @transaction.atomic
+    def registrar_retiro(self, request, pk=None):
+        """
+        Crea un nuevo préstamo (PRESTAR LLAVE). El 'pk' es el ID de la Llave.
+        """
+        llave = self.get_object() # Obtiene la llave
+        usuario_id = request.data.get('usuario_id')
+        observaciones = request.data.get('observaciones', '')
+
+        if llave.estado != LlaveVehiculo.Estado.EN_BODEGA:
+            return Response({'error': 'La llave no existe o ya está prestada.'}, status=status.HTTP_404_NOT_FOUND)
+
+        try:
+            usuario = User.objects.get(id=usuario_id, is_active=True)
+        except User.DoesNotExist:
+            return Response({'error': 'El usuario seleccionado no existe.'}, status=status.HTTP_404_NOT_FOUND)
+
+        # 1. Creamos el nuevo registro de préstamo
+        prestamo = PrestamoLlave.objects.create(
+            llave=llave,
+            usuario_retira=usuario,
+            observaciones_retiro=observaciones
+        )
+
+        # 2. Actualizamos el estado y poseedor de la llave
+        llave.estado = LlaveVehiculo.Estado.PRESTADA
+        llave.poseedor_actual = usuario
+        llave.save()
+
+        # Devolvemos la llave actualizada
+        serializer = self.get_serializer(llave)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    @action(detail=True, methods=['post'], url_path='reportar-estado')
+    @transaction.atomic
+    def reportar_estado(self, request, pk=None):
+        """
+        Acción para marcar una llave como 'Perdida' o 'Dañada'
+        """
+        llave = self.get_object()
+        nuevo_estado = request.data.get('estado') # "Perdida" o "Dañada"
+        motivo = request.data.get('motivo')
+
+        if not motivo:
+            return Response({'error': 'Se requiere un motivo para el reporte.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if nuevo_estado not in [LlaveVehiculo.Estado.PERDIDA, LlaveVehiculo.Estado.DAÑADA]:
+            return Response({'error': 'Estado no válido. Solo se puede reportar como "Perdida" o "Dañada".'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if llave.estado != LlaveVehiculo.Estado.EN_BODEGA:
+            return Response(
+                {'error': 'Solo se pueden reportar llaves que están "En Bodega". Devuelva la llave antes de reportarla.'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        estado_anterior = llave.estado
+        llave.estado = nuevo_estado
+        llave.motivo_reporte = motivo
+        llave.save()
+
+        LlaveHistorialEstado.objects.create(
+            llave=llave,
+            usuario_reporta=request.user,
+            estado_anterior=estado_anterior,
+            estado_nuevo=nuevo_estado,
+            motivo=motivo
+        )
+
+        # (Opcional: notificar al Supervisor)
+        
+        serializer = self.get_serializer(llave)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    # --- AÑADE ESTA NUEVA ACCIÓN (después de 'historial') ---
+    @action(detail=True, methods=['post'], url_path='revertir-reporte')
+    @transaction.atomic
+    def revertir_reporte(self, request, pk=None):
+        """
+        Revierte un reporte, marcando la llave como "En Bodega"
+        y limpiando el motivo.
+        """
+        llave = self.get_object()
+        
+        if llave.estado not in [LlaveVehiculo.Estado.PERDIDA, LlaveVehiculo.Estado.DAÑADA]:
+            return Response({'error': 'Esta llave no tiene un reporte activo que revertir.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        estado_anterior = llave.estado # <-- Captura el estado actual
+        llave.estado = LlaveVehiculo.Estado.EN_BODEGA
+        llave.motivo_reporte = None # Limpiamos el motivo
+        llave.save()
+
+        # --- ¡NUEVA LÓGICA DE HISTORIAL! ---
+        LlaveHistorialEstado.objects.create(
+            llave=llave,
+            usuario_reporta=request.user,
+            estado_anterior=estado_anterior,
+            estado_nuevo=LlaveVehiculo.Estado.EN_BODEGA,
+            motivo="Reporte revertido. Llave vuelve a estar operativa."
+        )
+        
+        serializer = self.get_serializer(llave)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=['get'], url_path='historial')
+    def historial(self, request, pk=None):
+        """
+        Devuelve el historial de préstamos de una llave específica.
+        """
+        llave = self.get_object()
+        prestamos = llave.prestamos.all().select_related('usuario_retira')
+        serializer = PrestamoLlaveSerializer(prestamos, many=True)
+        return Response(serializer.data)
+
+
+class PrestamoLlaveViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    API para LEER el historial de préstamos.
+    """
+    queryset = PrestamoLlave.objects.all().select_related('llave__vehiculo', 'usuario_retira')
+    serializer_class = PrestamoLlaveSerializer
+    permission_classes = [IsControlLlaves]
+    # La acción 'registrar-retiro' se mueve a LlaveVehiculoViewSet
+    # para que esté centrada en la "llave"
+
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['llave__vehiculo__patente', 'usuario_retira__username', 'usuario_retira__first_name', 'usuario_retira__last_name']
+
+    @action(detail=True, methods=['post'], url_path='registrar-devolucion')
+    @transaction.atomic
+    def registrar_devolucion(self, request, pk=None):
+        """
+        Cierra un préstamo activo (RECIBIR LLAVE).
+        El 'pk' aquí es el ID de la *LlaveVehiculo* para encontrar el préstamo activo.
+        """
+        try:
+            # Buscamos el préstamo ACTIVO (sin fecha de devolución) para esta llave
+            prestamo = PrestamoLlave.objects.get(llave_id=pk, fecha_hora_devolucion__isnull=True)
+        except PrestamoLlave.DoesNotExist:
+            return Response({'error': 'Esta llave no tiene un préstamo activo para devolver.'}, status=status.HTTP_404_NOT_FOUND)
+
+        # 1. Cerramos el préstamo
+        prestamo.fecha_hora_devolucion = timezone.now()
+        prestamo.observaciones_devolucion = request.data.get('observaciones', '')
+        prestamo.save()
+
+        # 2. Actualizamos la llave
+        llave = prestamo.llave
+        llave.estado = LlaveVehiculo.Estado.EN_BODEGA
+        llave.poseedor_actual = None
+        llave.save()
+
+        serializer = self.get_serializer(prestamo)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
+
+class LlaveHistorialEstadoViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    API para LEER el historial de reportes de llaves.
+    """
+    queryset = LlaveHistorialEstado.objects.all().select_related('llave__vehiculo', 'usuario_reporta')
+    serializer_class = LlaveHistorialEstadoSerializer
+    permission_classes = [IsControlLlaves]
+
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['llave__vehiculo__patente', 'usuario_reporta__username', 'usuario_reporta__first_name', 'usuario_reporta__last_name']

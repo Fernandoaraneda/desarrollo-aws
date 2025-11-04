@@ -16,39 +16,6 @@ const navLinksByRole = {
     { type: 'link', to: '/panel-supervisor', label: 'Panel de Citas', icon: 'fas fa-calendar-check' },
     { type: 'link', to: '/usuarios', label: 'Gestionar Usuarios', icon: 'fas fa-users-cog' },
     { type: 'link', to: '/vehiculos', label: 'Gestionar Vehículos', icon: 'fas fa-truck' },
-    
-    // --- Acordeón 1: ---
-    { 
-      type: 'accordion', 
-      label: 'Gestión Mecanico', 
-      icon: 'fas fa-tachometer-alt', // Icono para el acordeón
-      links: [
-        { to: '/ordenes', label: 'Órdenes de Servicio', icon: 'fas fa-clipboard-list' },
-        { to: '/proximas-citas', label: 'Asignaciones Mecánico', icon: 'fas fa-calendar-alt' },
-      ]
-    },
-    
-    // --- Acordeón 2: Seguridad ---
-    { 
-      type: 'accordion', 
-      label: 'Panel Seguridad', 
-      icon: 'fas fa-shield-alt', // Icono para el acordeón
-      links: [
-        { to: '/panel-ingresos', label: 'Panel de Ingresos', icon: 'fas fa-door-open' },
-        { to: '/panel-salidas', label: 'Registrar Salida', icon: 'fas fa-door-closed' },
-      ]
-    },
-
-    // --- Acordeón 3:  chofer ---
-    { 
-      type: 'accordion', 
-      label: 'Vistas chofer', 
-      icon: 'fas fa-user-friends', // Icono para el acordeón
-      links: [
-        { to: '/agenda', label: 'Agendar Ingreso', icon: 'fas fa-calendar-plus' },
-        { to: '/historial', label: 'Mi Historial', icon: 'fas fa-history' }
-      ]
-    },
   ],
   // Los otros roles se mantienen igual (planos)
   'Chofer': [
@@ -66,9 +33,57 @@ const navLinksByRole = {
       { to: '/panel-salidas', label: 'Registrar Salida', icon: 'fas fa-door-closed' },
   ],
   'Administrativo': [
-    { to: '/dashboard', label: 'Administracion', icon: 'fas fa-file-invoice' },
-    { to: '/reportes', label: 'Reportes', icon: 'fas fa-chart-bar' }
-  ]
+    // --- LISTA COMPLETA (COPIADA DEL SUPERVISOR ORIGINAL) ---
+    { type: 'link', to: '/dashboard', label: 'Inicio', icon: 'fas fa-home' },
+    { type: 'link', to: '/panel-supervisor', label: 'Panel de Citas', icon: 'fas fa-calendar-check' },
+    { type: 'link', to: '/usuarios', label: 'Gestionar Usuarios', icon: 'fas fa-users-cog' },
+    { type: 'link', to: '/vehiculos', label: 'Gestionar Vehículos', icon: 'fas fa-truck' },
+    // --- Acordeón 1: ---
+    { 
+      type: 'accordion', 
+      label: 'Gestión Mecanico', 
+      icon: 'fas fa-tachometer-alt',
+      links: [
+        { to: '/ordenes', label: 'Órdenes de Servicio', icon: 'fas fa-clipboard-list' },
+        { to: '/proximas-citas', label: 'Asignaciones Mecánico', icon: 'fas fa-calendar-alt' },
+      ]
+    },
+    // --- Acordeón 2: Seguridad ---
+    { 
+      type: 'accordion', 
+      label: 'Panel Seguridad', 
+      icon: 'fas fa-shield-alt',
+      links: [
+        { to: '/panel-ingresos', label: 'Panel de Ingresos', icon: 'fas fa-door-open' },
+        { to: '/panel-salidas', label: 'Registrar Salida', icon: 'fas fa-door-closed' },
+      ]
+    },
+    // --- Acordeón 3:  chofer ---
+    { 
+      type: 'accordion', 
+      label: 'Vistas Chofer', 
+      icon: 'fas fa-user-friends',
+      links: [
+        { to: '/agenda', label: 'Agendar Ingreso', icon: 'fas fa-calendar-plus' },
+        { to: '/historial', label: 'Mi Historial', icon: 'fas fa-history' }
+      ]
+    },
+    // --- Acordeón 4: Gestor de llaves ---
+    { 
+      type: 'accordion', 
+      label: 'Manejo de Llaves', 
+      icon: 'fas fa-shield-alt',
+      links: [
+        { to: '/gestion-llaves', label: 'Gestión de Llaves', icon: 'fas fa-key' },
+        { to: '/gestion-llaves/historial', label: 'Historial de Llaves', icon: 'fas fa-history' },
+      ]
+    },
+  ],
+  'Control Llaves': [
+    { to: '/gestion-llaves', label: 'Gestión de Llaves', icon: 'fas fa-key' },
+    { to: '/gestion-llaves/historial', label: 'Historial de Llaves', icon: 'fas fa-history' },
+  ],
+
 };
 
 const Sidebar = ({ isOpen, toggleSidebar }) => {

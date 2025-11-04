@@ -3,10 +3,8 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import { useUserStore } from "./store/authStore.js";
 
-// --- Importación de Componentes de Lógica y Layout ---
-// ✅ CAMBIO: Se elimina la importación del antiguo 'PrivateRoute'.
 import MainLayout from "./components/layout/MainLayout.jsx";
-import ProtectedRoute from './components/ProtectedRoute'; // ✅ CAMBIO: Usamos nuestro nuevo y único componente de protección.
+import ProtectedRoute from './components/ProtectedRoute'; 
 
 // --- Importación de Páginas ---
 import Login from "./pages/Login.jsx";
@@ -27,6 +25,12 @@ import PanelIngresos from './pages/PanelIngresos';
 import PanelSalida from './pages/Panelsalida.jsx';
 import ProximasCitas from './pages/ProximasCitas';
 import HistorialChofer from "./pages/HistorialChofer.jsx";
+import GestionLlaves from './pages/GestionLlaves.jsx';
+import GestionLlavesHistorial from './pages/GestionLlavesHistorial';
+
+
+
+
 function App() {
   const { user } = useUserStore();
 
@@ -41,79 +45,78 @@ function App() {
       <Route path="/set-new-password" element={<SetNewPassword />} />
       
       {/* --- RUTAS PRIVADAS / PROTEGIDAS --- */}
-      {/* ✅ CAMBIO: Todas las rutas privadas se anidan dentro del MainLayout */}
       <Route element={<MainLayout />}>
         
         <Route path="/dashboard" element={
-          <ProtectedRoute> {/* Cualquier usuario logueado puede ver el Dashboard */}
+          <ProtectedRoute> 
             <Dashboard />
           </ProtectedRoute>
         } />
         <Route path="/profile" element={
-          <ProtectedRoute> {/* Cualquier usuario logueado puede ver su perfil */}
+          <ProtectedRoute> 
             <ProfilePage />
           </ProtectedRoute>
         } />
         
         {/* Gestión de Usuarios (Solo Supervisor) */}
         <Route path="/usuarios" element={
-          <ProtectedRoute roles={['Supervisor']}>
+          <ProtectedRoute roles={['Supervisor','Administrativo']}>
             <GestionUsuarios />
           </ProtectedRoute>
         } />
         <Route path="/usuarios/crear" element={
-          <ProtectedRoute roles={['Supervisor']}>
+          <ProtectedRoute roles={['Supervisor','Administrativo']}>
             <CrearEditarUsuario />
           </ProtectedRoute>
         } />
         <Route path="/usuarios/editar/:id" element={
-          <ProtectedRoute roles={['Supervisor']}>
+          <ProtectedRoute roles={['Supervisor','Administrativo']}>
             <CrearEditarUsuario />
           </ProtectedRoute>
         } />
         
         {/* Gestión de Vehículos (Solo Supervisor) */}
         <Route path="/vehiculos" element={
-          <ProtectedRoute roles={['Supervisor']}>
+          <ProtectedRoute roles={['Supervisor','Administrativo']}>
             <GestionVehiculos />
           </ProtectedRoute>
         } />
         <Route path="/vehiculos/crear" element={
-          <ProtectedRoute roles={['Supervisor']}>
+          <ProtectedRoute roles={['Supervisor','Administrativo']}>
             <CrearEditarVehiculo />
           </ProtectedRoute>
         } />
         <Route path="/vehiculos/editar/:patente" element={
-          <ProtectedRoute roles={['Supervisor']}>
+          <ProtectedRoute roles={['Supervisor','Administrativo']}>
             <CrearEditarVehiculo />
           </ProtectedRoute>
         } />
 
         {/* Flujo de Agenda */}
         <Route path="/agenda" element={
-          <ProtectedRoute roles={['Supervisor', 'Chofer']}> {/* Agendar */}
+          <ProtectedRoute roles={['Supervisor', 'Chofer','Administrativo']}> {/* Agendar */}
             <GestionAgenda />
           </ProtectedRoute>
         } />
         <Route path="/panel-supervisor" element={
-          <ProtectedRoute roles={['Supervisor']}> {/* Confirmar Citas */}
+          <ProtectedRoute roles={['Supervisor','Administrativo']}> {/* Confirmar Citas */}
             <PanelSupervisor />
           </ProtectedRoute>
         } />
         <Route path="/agenda/confirmar/:id" element={
-          <ProtectedRoute roles={['Supervisor']}> {/* Asignar Mecánico */}
+          <ProtectedRoute roles={['Supervisor','Administrativo']}> {/* Asignar Mecánico */}
             <ConfirmarAsignarCita />
           </ProtectedRoute>
         } />
         <Route path="/panel-ingresos" element={
-          <ProtectedRoute roles={['Supervisor', 'Seguridad']}> {/* Registrar Ingreso Físico */}
+          <ProtectedRoute roles={['Supervisor', 'Seguridad','Administrativo']}> {/* Registrar Ingreso Físico */}
             <PanelIngresos />
           </ProtectedRoute>
         } />
 
 
         <Route path="/panel-salidas" element={
-          <ProtectedRoute roles={['Supervisor', 'Seguridad']}> {/* Registrar Salida Física */}
+          <ProtectedRoute roles={['Supervisor', 'Seguridad','Administrativo']}> {/* Registrar Salida Física */}
             <PanelSalida />
           </ProtectedRoute>
         } />
@@ -122,12 +125,12 @@ function App() {
 
         {/* Órdenes de Servicio */}
         <Route path="/ordenes" element={
-          <ProtectedRoute roles={['Supervisor', 'Mecanico']}>
+          <ProtectedRoute roles={['Supervisor', 'Mecanico','Administrativo']}>
             <GestionOrdenes />
           </ProtectedRoute>
         } />
         <Route path="/ordenes/:id" element={
-          <ProtectedRoute roles={['Supervisor', 'Mecanico', 'Chofer']}> {/* El chofer puede ver el detalle de su orden */}
+          <ProtectedRoute roles={['Supervisor', 'Mecanico', 'Chofer','Administrativo']}> {/* El chofer puede ver el detalle de su orden */}
             <DetalleOrden />
           </ProtectedRoute>
         } />
@@ -136,17 +139,37 @@ function App() {
         <Route
           path="/proximas-citas"
           element={
-            <ProtectedRoute roles={['Mecanico', 'Supervisor']}>
+            <ProtectedRoute roles={['Mecanico', 'Supervisor','Administrativo']}>
               <ProximasCitas />
             </ProtectedRoute>
           }
         />
         <Route path="/historial" element={<HistorialChofer />} />
+
+        <Route 
+            path="/gestion-llaves"
+            element={
+                <ProtectedRoute roles={['Control Llaves', 'Supervisor','Administrativo']}>
+                    <GestionLlaves />
+                </ProtectedRoute>
+            }
+        />
+
+        <Route 
+            path="/gestion-llaves/historial"
+            element={
+                <ProtectedRoute roles={['Control Llaves', 'Supervisor','Administrativo']}>
+                    <GestionLlavesHistorial />
+                </ProtectedRoute>
+            }
+        />
+
       </Route>
 
       
       {/* Ruta "Catch-all" para cualquier otra URL */}
       <Route path="*" element={<Navigate to={user ? "/dashboard" : "/"} replace />} />
+
     </Routes>
   );
 }

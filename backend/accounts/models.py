@@ -404,3 +404,109 @@ class Notificacion(models.Model):
         verbose_name = "Notificación"
         verbose_name_plural = "Notificaciones"
         ordering = ['-fecha']
+
+
+
+# --------------------------------------------------------------------------
+# GESTIÓN DE LLAVES (NUEVO MÓDULO)
+# --------------------------------------------------------------------------
+
+class LlaveVehiculo(TimeStampedModel):
+    """
+    Representa una llave física en el inventario (el pañol).
+    Cubre: "Control de duplicados, chapas, etc."
+    """
+    class Tipo(models.TextChoices):
+        ORIGINAL = 'Original', 'Original'
+        DUPLICADO = 'Duplicado', 'Duplicado'
+        CONTROL_ACCESO = 'Control', 'Control de Acceso'
+        TALLER = 'Taller', 'Llave de Taller'
+
+    class Estado(models.TextChoices):
+        EN_BODEGA = 'En Bodega', 'En Bodega'
+        PRESTADA = 'Prestada', 'Prestada'
+        PERDIDA = 'Perdida', 'Perdida'
+        DADA_DE_BAJA = 'Dada de Baja', 'Dada de Baja'
+
+    class Estado(models.TextChoices):
+        EN_BODEGA = 'En Bodega', 'En Bodega'
+        PRESTADA = 'Prestada', 'Prestada'
+        PERDIDA = 'Perdida', 'Perdida'
+        DAÑADA = 'Dañada', 'Dañada'  # <-- AÑADIR ESTA LÍNEA
+        DADA_DE_BAJA = 'Dada de Baja', 'Dada de Baja'
+
+    # "Control de llaves por patente"
+    vehiculo = models.ForeignKey(Vehiculo, on_delete=models.PROTECT, related_name="llaves")
+    
+    codigo_interno = models.CharField(max_length=50, unique=True, help_text="Código único o ID del llavero físico.")
+    tipo = models.CharField(max_length=50, choices=Tipo.choices, default=Tipo.ORIGINAL)
+    estado = models.CharField(max_length=50, choices=Estado.choices, default=Estado.EN_BODEGA, db_index=True)
+    
+    # Este campo se actualiza automáticamente para saber quién la tiene
+    poseedor_actual = models.ForeignKey(
+        Usuario, 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True, 
+        related_name="llaves_en_posesion"
+    )
+    motivo_reporte = models.TextField(
+        "Motivo del Reporte", 
+        blank=True, 
+        null=True,
+        help_text="Razón por la cual la llave fue marcada como perdida o dañada."
+    )
+
+    def __str__(self):
+        return f"{self.get_tipo_display()} - {self.vehiculo.patente} (Cód: {self.codigo_interno})"
+
+    class Meta:
+        verbose_name = "Llave de Vehículo"
+        verbose_name_plural = "Inventario de Llaves"
+        ordering = ['vehiculo__patente', 'tipo']
+
+
+class PrestamoLlave(TimeStampedModel):
+    """
+    Representa el "Registro de préstamos temporales".
+    """
+    llave = models.ForeignKey(LlaveVehiculo, on_delete=models.PROTECT, related_name="prestamos")
+    usuario_retira = models.ForeignKey(Usuario, on_delete=models.PROTECT, related_name="prestamos_realizados")
+    
+    fecha_hora_retiro = models.DateTimeField(default=timezone.now)
+    fecha_hora_devolucion = models.DateTimeField(blank=True, null=True, db_index=True)
+    
+    observaciones_retiro = models.TextField(blank=True, null=True)
+    observaciones_devolucion = models.TextField(blank=True, null=True)
+
+    def __str__(self):
+        estado = "ACTIVO" if self.fecha_hora_devolucion is None else "DEVUELTO"
+        return f"Préstamo {self.llave.codigo_interno} a {self.usuario_retira.username} ({estado})"
+
+    class Meta:
+        verbose_name = "Préstamo de Llave"
+        verbose_name_plural = "Historial de Préstamos"
+        ordering = ['-fecha_hora_retiro']
+
+
+
+class LlaveHistorialEstado(TimeStampedModel):
+    """
+    Registra cada cambio de estado reportado (Dañada, Perdida)
+    y su eventual reversión.
+    """
+    llave = models.ForeignKey(LlaveVehiculo, on_delete=models.CASCADE, related_name="historial_estados")
+    usuario_reporta = models.ForeignKey(Usuario, on_delete=models.PROTECT, related_name="reportes_llave_realizados")
+
+    estado_anterior = models.CharField(max_length=50, blank=True, null=True)
+    estado_nuevo = models.CharField(max_length=50)
+    motivo = models.TextField(blank=True, null=True)
+    fecha = models.DateTimeField(default=timezone.now)
+
+    def __str__(self):
+        return f"{self.llave.codigo_interno}: {self.estado_anterior} -> {self.estado_nuevo}"
+
+    class Meta:
+        verbose_name = "Historial de Estado de Llave"
+        verbose_name_plural = "Historiales de Estados de Llave"
+        ordering = ['-fecha']
