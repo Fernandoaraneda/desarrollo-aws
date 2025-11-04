@@ -1,23 +1,19 @@
-// src/components/layout/MainLayout.jsx
-
 import React, { useState } from 'react';
 import { NavLink, useNavigate, Outlet } from 'react-router-dom';
 import { useUserStore } from '../../store/authStore.js';
 import styles from '../../css/mainlayout.module.css';
 import Notificaciones from './Notificaciones';
-// ✅ 1. Importamos el nuevo componente
+
 import AccordionMenu from './AccordionMenu'; 
 
-// ✅ 2. MODIFICAMOS LA ESTRUCTURA DE DATOS
 const navLinksByRole = {
   'Supervisor': [
-    // --- 3 Enlaces Principales ---
     { type: 'link', to: '/dashboard', label: 'Inicio', icon: 'fas fa-home' },
     { type: 'link', to: '/panel-supervisor', label: 'Panel de Citas', icon: 'fas fa-calendar-check' },
     { type: 'link', to: '/usuarios', label: 'Gestionar Usuarios', icon: 'fas fa-users-cog' },
     { type: 'link', to: '/vehiculos', label: 'Gestionar Vehículos', icon: 'fas fa-truck' },
   ],
-  // Los otros roles se mantienen igual (planos)
+
   'Chofer': [
     { to: '/dashboard', label: 'Mi Estado', icon: 'fas fa-road' },
     { to: '/agenda', label: 'Agendar Ingreso', icon: 'fas fa-calendar-plus' },
@@ -26,19 +22,21 @@ const navLinksByRole = {
   'Mecanico': [
     { to: '/dashboard', label: 'Tareas Asignadas', icon: 'fas fa-tasks' },
     { to: '/proximas-citas', label: 'Próximas Asignaciones', icon: 'fas fa-calendar-alt' },
-    { to: '/ordenes', label: 'Órdenes de Servicio', icon: 'fas fa-clipboard-list' }
+    { to: '/ordenes', label: 'Órdenes de Servicio', icon: 'fas fa-clipboard-list' },
+    { to: '/historial-mecanico', label: 'Mi Historial', icon: 'fas fa-history' }
   ],
   'Seguridad': [
       { to: '/panel-ingresos', label: 'Registrar Ingreso', icon: 'fas fa-door-open' },
       { to: '/panel-salidas', label: 'Registrar Salida', icon: 'fas fa-door-closed' },
+      { to: '/historial-seguridad', label: 'Historial Movimientos', icon: 'fas fa-history' },
   ],
   'Administrativo': [
-    // --- LISTA COMPLETA (COPIADA DEL SUPERVISOR ORIGINAL) ---
+
     { type: 'link', to: '/dashboard', label: 'Inicio', icon: 'fas fa-home' },
     { type: 'link', to: '/panel-supervisor', label: 'Panel de Citas', icon: 'fas fa-calendar-check' },
     { type: 'link', to: '/usuarios', label: 'Gestionar Usuarios', icon: 'fas fa-users-cog' },
     { type: 'link', to: '/vehiculos', label: 'Gestionar Vehículos', icon: 'fas fa-truck' },
-    // --- Acordeón 1: ---
+    // --- Acordeón 1: mecanicop ---
     { 
       type: 'accordion', 
       label: 'Gestión Mecanico', 
@@ -46,6 +44,7 @@ const navLinksByRole = {
       links: [
         { to: '/ordenes', label: 'Órdenes de Servicio', icon: 'fas fa-clipboard-list' },
         { to: '/proximas-citas', label: 'Asignaciones Mecánico', icon: 'fas fa-calendar-alt' },
+        { to: '/historial-mecanico', label: 'Mi Historial', icon: 'fas fa-history' }
       ]
     },
     // --- Acordeón 2: Seguridad ---
@@ -56,6 +55,7 @@ const navLinksByRole = {
       links: [
         { to: '/panel-ingresos', label: 'Panel de Ingresos', icon: 'fas fa-door-open' },
         { to: '/panel-salidas', label: 'Registrar Salida', icon: 'fas fa-door-closed' },
+        { to: '/historial-seguridad', label: 'Historial Movimientos', icon: 'fas fa-history' },
       ]
     },
     // --- Acordeón 3:  chofer ---
@@ -113,10 +113,10 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
 
       <nav className={styles.sidebarNav}>
         
-        {/* ✅ 3. ACTUALIZAMOS EL RENDERIZADO DE LINKS */}
+        
         {userLinks.map((item, index) => {
           
-          // Si es un acordeón (Supervisor)
+         
           if (item.type === 'accordion') {
             return (
               <AccordionMenu 
@@ -127,8 +127,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
             );
           }
 
-          // Si es un link normal (Supervisor) o si es otro rol (Chofer, Mecanico, etc.)
-          // (Los otros roles no tienen 'item.type', así que entran aquí)
+          
           return (
             <NavLink
               key={item.to || index} 
@@ -143,7 +142,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
 
         <hr style={{ borderColor: 'var(--border-color)', margin: '1rem' }} />
         
-        {/* Links comunes (Mi Perfil) */}
+    
         {commonLinks.map(link => (
           <NavLink
             key={link.to} to={link.to} onClick={handleLinkClick}
@@ -165,7 +164,6 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
 };
 
 
-// El componente MainLayout (export default) no cambia
 export default function MainLayout() {
   const { user } = useUserStore();
   const [isSidebarOpen, setSidebarOpen] = useState(false);

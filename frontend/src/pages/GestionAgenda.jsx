@@ -1,29 +1,24 @@
-// src/pages/GestionAgenda.jsx
-
 import React, { useState, useEffect, useMemo } from 'react';
 import apiClient from '/src/api/axios.js';
 import styles from '/src/css/gestionagenda.module.css';
 import { Calendar as CalendarIcon, User, Paperclip } from 'lucide-react';
 import { useUserStore } from '/src/store/authStore.js';
-
-// --- 👇 ¡AQUÍ ESTÁ EL ARREGLO 1! ---
-// Importamos el Modal de Alerta que faltaba
-import AlertModal from '/src/components/modals/AlertModal.jsx'; 
+import AlertModal from '/src/components/modals/AlertModal.jsx';
 
 export default function GestionAgenda() {
     const { user } = useUserStore();
-    
+
     // --- Estados Simplificados ---
     const [vehiculos, setVehiculos] = useState([]);
     // El formData NO incluye fecha_hora_programada
     const [formData, setFormData] = useState({ vehiculo: '', motivo_ingreso: '', solicita_grua: false });
     const [imagenFile, setImagenFile] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
-    
+
     // Estados para el Modal de Error
     const [error, setError] = useState(null);
     const [isAlertOpen, setIsAlertOpen] = useState(false);
-
+    const [successMessage, setSuccessMessage] = useState(null);
     // Carga inicial (Solo vehículos)
     useEffect(() => {
         const loadVehiculos = async () => {
@@ -52,6 +47,7 @@ export default function GestionAgenda() {
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError(null);
+        setSuccessMessage(null);
         setIsAlertOpen(false);
 
         // 1. Validar que los campos necesarios estén
@@ -80,13 +76,13 @@ export default function GestionAgenda() {
             await apiClient.post('/agendamientos/', dataParaEnviar, {
                 headers: { 'Content-Type': 'multipart/form-data' },
             });
-            
+
             // 4. Limpiar formulario y notificar éxito
             setFormData({ vehiculo: '', motivo_ingreso: '', solicita_grua: false });
-            setImagenFile(null); 
+            setImagenFile(null);
             if (e.target) e.target.reset(); // Resetea el input de archivo
-
-            alert("¡Solicitud de cita enviada! El supervisor la revisará y le asignará una hora a la brevedad.");
+            setSuccessMessage("¡Solicitud de cita enviada! El supervisor la revisará y le asignará una hora a la brevedad.");
+            setIsAlertOpen(true);
 
         } catch (err) {
             // 5. Manejar errores (ej: el validador de duplicados del Serializer)
@@ -98,17 +94,17 @@ export default function GestionAgenda() {
                 // Captura el error de 'validate' (non_field_errors)
                 errorMsg = errorData.non_field_errors?.[0] || Object.values(errorData)[0];
             }
-            
+
             setError(String(errorMsg)); // Asegurarnos que sea string
             setIsAlertOpen(true);
         }
     };
-    
+
     // Lógica de vehículos (correcta)
     const vehiculosDelUsuario = useMemo(() => {
         if (!user || !vehiculos.length) return [];
-        if (user.rol === 'Supervisor') {
-            return vehiculos; 
+        if (user.rol === 'Supervisor' || user.rol === 'Administrativo') {
+            return vehiculos;
         }
         return vehiculos.filter(v => v.chofer === user.id);
     }, [vehiculos, user]);
@@ -123,7 +119,7 @@ export default function GestionAgenda() {
     };
 
     if (isLoading) return <p>Cargando...</p>;
-    
+
     // --- Renderizado Simplificado ---
     return (
         <div className={styles.pageWrapper}>
@@ -136,7 +132,7 @@ export default function GestionAgenda() {
                     <h2>Crear Nueva Solicitud</h2>
                     {/* El 'onSubmit' ahora apunta a la función handleSubmit correcta */}
                     <form onSubmit={handleSubmit}>
-                        
+
                         {/* --- CAMPO DE FECHA Y HORA ELIMINADOS --- */}
 
                         <div className={styles.formField}>
@@ -152,16 +148,16 @@ export default function GestionAgenda() {
                         </div>
                         <div className={styles.formField}>
                             <label htmlFor="motivo_ingreso">Motivo del Ingreso</label>
-                            <textarea 
+                            <textarea
                                 name="motivo_ingreso" rows="4"
                                 placeholder="Ej: Falla en el motor, revisión de 100.000km, etc."
-                                value={formData.motivo_ingreso} 
+                                value={formData.motivo_ingreso}
                                 onChange={handleChange}
                                 required
                             ></textarea>
                             <div className={styles.formFieldCheckbox}>
-                                <input 
-                                    type="checkbox" 
+                                <input
+                                    type="checkbox"
                                     id="solicita_grua"
                                     name="solicita_grua"
                                     checked={formData.solicita_grua}
@@ -172,17 +168,17 @@ export default function GestionAgenda() {
                         </div>
                         <div className={styles.formField}>
                             <label htmlFor="imagen_averia"><Paperclip size={16} /> Adjuntar Imagen (Opcional)</label>
-                            <input 
-                                type="file" 
+                            <input
+                                type="file"
                                 id="imagen_averia"
                                 name="imagen_averia"
                                 accept="image/*"
                                 onChange={handleImageChange}
                             />
                         </div>
-                        
+
                         {/* Texto de error eliminado de aquí */}
-                        <button type="submit" className={styles.submitButton} style={{marginTop: '1rem'}}>Enviar Solicitud</button>
+                        <button type="submit" className={styles.submitButton} style={{ marginTop: '1rem' }}>Enviar Solicitud</button>
                     </form>
                 </div>
                 <div className={styles.infoCard}>
@@ -194,12 +190,17 @@ export default function GestionAgenda() {
             </div>
 
             {/* El Modal de Alerta ahora maneja todos los errores */}
-            <AlertModal 
+            <AlertModal
                 isOpen={isAlertOpen}
-                onClose={() => setIsAlertOpen(false)}
-                title="Aviso" // Título más genérico
-                message={error}
-                intent={error ? "danger" : "success"} // El intent cambia si es un error o no
+                // Al cerrar, limpiamos AMBOS mensajes
+                onClose={() => {
+                    setIsAlertOpen(false);
+                    setError(null);
+                    setSuccessMessage(null);
+                }}
+                title={error ? "Error" : "Éxito"} // Título dinámico
+                message={error || successMessage} // Muestra el mensaje que exista
+                intent={error ? "danger" : "success"} // El intent se basa en si hay un error
             />
         </div>
     );

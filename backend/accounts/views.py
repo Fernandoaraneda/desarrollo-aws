@@ -37,7 +37,10 @@ from .serializers import (
     OrdenSerializer,
     OrdenDocumentoSerializer,
     NotificacionSerializer,
-    LlaveVehiculoSerializer, PrestamoLlaveSerializer,LlaveHistorialEstadoSerializer
+    LlaveVehiculoSerializer, 
+    PrestamoLlaveSerializer,
+    LlaveHistorialEstadoSerializer,
+    HistorialSeguridadSerializer
 )
 
 User = get_user_model()
@@ -254,6 +257,16 @@ class UserRetrieveUpdateAPIView(generics.RetrieveUpdateAPIView):
     serializer_class = UserCreateUpdateSerializer
     permission_classes = [IsSupervisor]
     lookup_field = "id"
+    def get_serializer_class(self):
+        """
+        Usa un serializador diferente para LEER (GET) que para ESCRIBIR (PUT/PATCH).
+        """
+        if self.request.method in ['PUT', 'PATCH']:
+            # Al actualizar, usamos el serializador que acepta el 'rol' por texto.
+            return UserCreateUpdateSerializer
+        
+        # Al cargar (GET), usamos el serializador que SÍ muestra el 'rol'.
+        return UserSerializer
 
 
 class ChoferListView(generics.ListAPIView):
@@ -1270,13 +1283,45 @@ class PrestamoLlaveViewSet(viewsets.ReadOnlyModelViewSet):
         return Response(serializer.data, status=status.HTTP_200_OK)
     
 
+
 class LlaveHistorialEstadoViewSet(viewsets.ReadOnlyModelViewSet):
+        """
+        API para LEER el historial de reportes de llaves.
+        """
+        queryset = LlaveHistorialEstado.objects.all().select_related('llave__vehiculo', 'usuario_reporta')
+        serializer_class = LlaveHistorialEstadoSerializer
+        permission_classes = [IsControlLlaves]
+
+        filter_backends = [filters.SearchFilter]
+
+        search_fields = [
+            'llave__vehiculo__patente',
+            'usuario_reporta__username',
+            'usuario_reporta__first_name',
+            'usuario_reporta__last_name'
+        ]
+
+
+class HistorialSeguridadViewSet(viewsets.ReadOnlyModelViewSet):
     """
-    API para LEER el historial de reportes de llaves.
+    API de solo lectura para el historial de ingresos y salidas de Seguridad.
     """
-    queryset = LlaveHistorialEstado.objects.all().select_related('llave__vehiculo', 'usuario_reporta')
-    serializer_class = LlaveHistorialEstadoSerializer
-    permission_classes = [IsControlLlaves]
+    serializer_class = HistorialSeguridadSerializer
+    permission_classes = [IsSupervisorOrSeguridad]
 
     filter_backends = [filters.SearchFilter]
-    search_fields = ['llave__vehiculo__patente', 'usuario_reporta__username', 'usuario_reporta__first_name', 'usuario_reporta__last_name']
+
+    search_fields = [
+        'vehiculo__patente',
+        'agendamiento_origen__chofer_asociado__first_name',
+        'agendamiento_origen__chofer_asociado__last_name',
+        'vehiculo__chofer__first_name',
+        'vehiculo__chofer__last_name'
+    ]
+
+    def get_queryset(self):
+        return Orden.objects.all().select_related(
+            'vehiculo',
+            'agendamiento_origen__chofer_asociado',
+            'vehiculo__chofer'
+        ).order_by('-fecha_ingreso')

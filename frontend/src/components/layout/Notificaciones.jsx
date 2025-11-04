@@ -1,5 +1,3 @@
-// src/components/layout/Notificaciones.jsx
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import apiClient from '../../api/axios';
@@ -14,7 +12,7 @@ export default function Notificaciones() {
     const unreadCount = notificaciones.filter(n => !n.leida).length;
 
     useEffect(() => {
-        // Función para cargar notificaciones
+       
         const fetchNotificaciones = async () => {
             try {
                 const response = await apiClient.get('/notificaciones/');
@@ -24,19 +22,19 @@ export default function Notificaciones() {
             }
         };
 
-        fetchNotificaciones(); // Carga inicial
-        const interval = setInterval(fetchNotificaciones, 30000); // Carga cada 30 segundos
+        fetchNotificaciones();
+        const interval = setInterval(fetchNotificaciones, 30000); 
 
-        return () => clearInterval(interval); // Limpia el intervalo al desmontar
+        return () => clearInterval(interval);
     }, []);
 
     const handleToggle = async () => {
         setIsOpen(!isOpen);
-        // Si hay notificaciones sin leer y abrimos el panel, las marcamos como leídas
+       
         if (unreadCount > 0 && !isOpen) {
             try {
                 await apiClient.post('/notificaciones/marcar-como-leidas/');
-                // Actualizamos el estado local para que se vean como leídas al instante
+               
                 setNotificaciones(notificaciones.map(n => ({ ...n, leida: true })));
             } catch (error) {
                 console.error("Error al marcar notificaciones como leídas:", error);

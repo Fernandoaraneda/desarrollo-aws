@@ -7,8 +7,8 @@ from django.contrib.auth.models import Group
 from django.contrib.auth.password_validation import validate_password
 from django.db.models import Q
 from datetime import timedelta
-
-
+import re
+from datetime import datetime 
 
 # Importación de modelos locales
 from .models import Vehiculo, Agendamiento, Orden, OrdenHistorialEstado, OrdenDocumento, Notificacion, LlaveVehiculo, PrestamoLlave, LlaveHistorialEstado
@@ -16,6 +16,44 @@ from .models import Vehiculo, Agendamiento, Orden, OrdenHistorialEstado, OrdenDo
 
 User = get_user_model()
 
+def validar_rut_chileno(rut):
+    """
+    Valida y formatea un RUT chileno.
+    Devuelve (True, "RUT formateado") o (False, "Mensaje de Error").
+    """
+    try:
+        rut_limpio = str(rut).upper().replace(".", "").replace("-", "")
+        if not re.match(r"^\d{7,8}[0-9K]$", rut_limpio):
+            return False, "Formato de RUT inválido (ej: 12.345.678-9)."
+        
+        cuerpo = rut_limpio[:-1]
+        dv = rut_limpio[-1]
+        
+        suma = 0
+        multiplo = 2
+        for c in reversed(cuerpo):
+            suma += int(c) * multiplo
+            multiplo = multiplo + 1 if multiplo < 7 else 2
+        
+        dv_calculado = 11 - (suma % 11)
+        
+        if dv_calculado == 11:
+            dv_esperado = '0'
+        elif dv_calculado == 10:
+            dv_esperado = 'K'
+        else:
+            dv_esperado = str(dv_calculado)
+        
+        if dv == dv_esperado:
+            # Formatear el RUT (ej: 12.345.678-9)
+            cuerpo_int = int(cuerpo)
+            cuerpo_formateado = f"{cuerpo_int:,}".replace(",", ".")
+            return True, f"{cuerpo_formateado}-{dv}"
+        else:
+            return False, "RUT inválido (dígito verificador no coincide)."
+    except Exception:
+        return False, "Error al procesar el RUT."
+    
 
 # ======================================================================
 # 🔐 SERIALIZERS DE USUARIOS
@@ -64,7 +102,63 @@ class UserCreateUpdateSerializer(serializers.ModelSerializer):
         if value:
             validate_password(value)
         return value
+    def validate_rut(self, value):
+        """
+        Valida el RUT usando la función helper.
+        Si es válido, guarda el RUT formateado.
+        """
+        es_valido, rut_o_error = validar_rut_chileno(value)
+        if not es_valido:
+            raise serializers.ValidationError(rut_o_error)
+        
+        # Guardamos el RUT formateado (ej: 12.345.678-9)
+        # Esto coincide con los datos que mostraste de tu BD.
+        return rut_o_error
 
+    def validate_telefono(self, value):
+        """
+        Valida que el teléfono tenga 9 dígitos y (opcionalmente) comience con 9.
+        """
+        if not value: # Permite campos vacíos (null=True, blank=True)
+            return None
+            
+        # Limpiar cualquier caracter que no sea dígito
+        numeros = re.sub(r'\D', '', str(value))
+        
+        # Opcional: Si escriben +569... lo limpiamos a 9...
+        if len(numeros) == 11 and numeros.startswith('569'):
+            numeros = numeros[2:]
+        
+        if not re.match(r'^[9]\d{8}$', numeros):
+            raise serializers.ValidationError("El teléfono debe ser un número celular chileno válido (9 dígitos, ej: 912345678).")
+        
+        # Guardamos solo los 9 dígitos limpios
+        return numeros
+
+    def validate_first_name(self, value):
+        """
+        Valida que el nombre solo contenga letras, espacios y acentos.
+        """
+        if not value:
+             raise serializers.ValidationError("El nombre no puede estar vacío.")
+        # Regex permite letras, acentos, ñ, espacios y apóstrofes
+        if not re.match(r"^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s']+$", value):
+            raise serializers.ValidationError("El nombre solo debe contener letras y espacios.")
+        if len(value) > 50:
+            raise serializers.ValidationError("El nombre no debe exceder los 50 caracteres.")
+        return value
+
+    def validate_last_name(self, value):
+        """
+        Valida que el apellido solo contenga letras, espacios y acentos.
+        """
+        if not value:
+             raise serializers.ValidationError("El apellido no puede estar vacío.")
+        if not re.match(r"^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s']+$", value):
+            raise serializers.ValidationError("El apellido solo debe contener letras y espacios.")
+        if len(value) > 50:
+            raise serializers.ValidationError("El apellido no debe exceder los 50 caracteres.")
+        return value
     # -----------------------
     # Métodos CRUD
     # -----------------------
@@ -143,10 +237,6 @@ class ChangePasswordSerializer(serializers.Serializer):
 # ======================================================================
 
 class VehiculoSerializer(serializers.ModelSerializer):
-    """
-    Serializador para Vehículos.
-    Muestra el nombre del chofer asociado si existe.
-    """
     chofer_nombre = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
@@ -154,12 +244,84 @@ class VehiculoSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
     def get_chofer_nombre(self, obj):
-        """Devuelve el nombre completo del chofer o 'Sin asignar'."""
         if obj.chofer:
             return f"{obj.chofer.first_name} {obj.chofer.last_name}"
         return "Sin asignar"
 
+    # --- 👇 VALIDACIONES DE BACKEND CORREGIDAS ---
+    
+    def validate_patente(self, value):
+        patente_limpia = str(value).upper().replace(' ', '').replace('-', '')
+        patente_regex = r'(^[A-Z]{4}\d{2}$)|(^[A-Z]{2}\d{4}$)'
+        if not re.match(patente_regex, patente_limpia):
+            raise serializers.ValidationError("Formato de Patente inválido. Debe ser XX1111 o XXXX11.")
+        
+        if not self.instance:
+            if Vehiculo.objects.filter(patente=patente_limpia).exists():
+                raise serializers.ValidationError("Esta patente ya está registrada.")
+        return patente_limpia
 
+    def validate_anio(self, value):
+        ano_maximo = datetime.now().year + 1
+        ano_minimo = 1980
+        if not isinstance(value, int):
+             raise serializers.ValidationError("El año debe ser un número.")
+        if not (ano_minimo <= value <= ano_maximo):
+            raise serializers.ValidationError(f"El año debe estar entre {ano_minimo} y {ano_maximo}.")
+        return value
+
+    def validate_kilometraje(self, value):
+        if not isinstance(value, int) or value < 0:
+            raise serializers.ValidationError("El kilometraje debe ser un número positivo.")
+        return value
+
+    def validate_vin(self, value):
+        if not value: 
+            return value
+            
+        # --- 👇 CORRECCIÓN 2: Esta era la línea con el SyntaxError ---
+        # Se reemplaza la sintaxis JS: .replace(/[^A-HJ-NPR-Z0-9]/g, '')
+        # Por la sintaxis Python: re.sub(...)
+        vin_limpio = re.sub(r'[^A-HJ-NPR-Z0-9]', '', str(value).upper())
+        # --- FIN DE LA CORRECCIÓN ---
+        
+        if len(vin_limpio) != 17:
+             raise serializers.ValidationError("El VIN debe tener 17 caracteres alfanuméricos.")
+             
+        query = Vehiculo.objects.filter(vin=vin_limpio)
+        if self.instance:
+            query = query.exclude(pk=self.instance.pk)
+        
+        if query.exists():
+            raise serializers.ValidationError("Este VIN ya está registrado en otro vehículo.")
+            
+        return vin_limpio
+
+    # --- 👇 VALIDACIONES DE TEXTO MEJORADAS (PERMITEN NÚMEROS Y GUIONES) ---
+    
+    def _validate_texto_vehiculo(self, value, field_name="El campo"):
+        """Función helper interna para validar marca, modelo, color."""
+        if not value:
+            return value # Permite campos vacíos (como 'color')
+        # Permite letras, números, acentos, ñ, espacios, y guiones
+        if not re.match(r"^[a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\s'-]+$", str(value)):
+             raise serializers.ValidationError(f"{field_name} contiene caracteres inválidos.")
+        if len(str(value)) > 50:
+             raise serializers.ValidationError(f"{field_name} no debe exceder los 50 caracteres.")
+        return value
+
+    def validate_marca(self, value):
+        if not value:
+             raise serializers.ValidationError("La Marca no puede estar vacía.")
+        return self._validate_texto_vehiculo(value, "La Marca")
+
+    def validate_modelo(self, value):
+        if not value:
+             raise serializers.ValidationError("El Modelo no puede estar vacío.")
+        return self._validate_texto_vehiculo(value, "El Modelo")
+
+    def validate_color(self, value):
+        return self._validate_texto_vehiculo(value, "El Color")
 # ======================================================================
 # 📅 SERIALIZERS DE AGENDAMIENTOS
 # ======================================================================
@@ -417,3 +579,37 @@ class LlaveHistorialEstadoSerializer(serializers.ModelSerializer):
             'id', 'llave', 'llave_info', 'usuario_reporta', 'usuario_nombre',
             'estado_anterior', 'estado_nuevo', 'motivo', 'fecha'
         ]
+
+
+    # ======================================================================
+# 📦 SERIALIZER DE HISTORIAL DE SEGURIDAD
+# ======================================================================
+
+class HistorialSeguridadSerializer(serializers.ModelSerializer):
+    """
+    Serializer de solo lectura para el historial de ingresos y salidas
+    del panel de Seguridad.
+    """
+    vehiculo_patente = serializers.CharField(source='vehiculo.patente', read_only=True)
+    
+    # Copiamos la lógica para obtener el nombre del chofer de
+    # agendamiento O del vehículo
+    chofer_nombre = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Orden
+        fields = (
+            'id',
+            'vehiculo_patente',
+            'chofer_nombre',
+            'fecha_ingreso',      # <-- La hora de entrada
+            'fecha_entrega_real'  # <-- La hora de salida
+        )
+
+    def get_chofer_nombre(self, obj):
+        if obj.agendamiento_origen and obj.agendamiento_origen.chofer_asociado:
+            return obj.agendamiento_origen.chofer_asociado.get_full_name()
+        
+        if obj.vehiculo and obj.vehiculo.chofer:
+             return obj.vehiculo.chofer.get_full_name()
+        return "No asignado"

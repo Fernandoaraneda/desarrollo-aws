@@ -1,7 +1,11 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import apiClient from '/src/api/axios.js';
 import styles from '/src/css/panelingreso.module.css';
-import { LogIn, CalendarClock, Search } from 'lucide-react'; // ✅ CAMBIO: Se quitó LogOut
+import { LogIn, CalendarClock, Search } from 'lucide-react';
+import ConfirmModal from '/src/components/modals/ConfirmModal.jsx';
+import AlertModal from '/src/components/modals/AlertModal.jsx';
+
+
 
 export default function PanelIngresos() {
     const [agendamientos, setAgendamientos] = useState([]);
@@ -9,7 +13,14 @@ export default function PanelIngresos() {
     const [error, setError] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
 
-    // Filtrado por patente o chofer
+
+    const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+    const [isAlertOpen, setIsAlertOpen] = useState(false);
+    const [modalMessage, setModalMessage] = useState("");
+    const [modalIntent, setModalIntent] = useState("success");
+    const [agendamientoToProcess, setAgendamientoToProcess] = useState(null);
+
+
     const filteredAgendamientos = useMemo(() => {
         if (!searchTerm) return agendamientos;
         return agendamientos.filter(a =>
@@ -18,12 +29,12 @@ export default function PanelIngresos() {
         );
     }, [agendamientos, searchTerm]);
 
-    // Carga de citas confirmadas
+ 
     const fetchCitasPorIngresar = async () => {
         setIsLoading(true);
         setError(null);
         try {
-            // ✅ CAMBIO: Usamos la vista específica de seguridad que filtra por 'Confirmado' y por día.
+            
             const response = await apiClient.get('/agenda/seguridad/');
             setAgendamientos(response.data.results || response.data || []);
         } catch (err) {
@@ -38,35 +49,51 @@ export default function PanelIngresos() {
         fetchCitasPorIngresar();
     }, []);
 
-    // Registrar ingreso
-    const handleRegistrarIngreso = async (id) => {
-        // Usamos un modal custom en lugar de window.confirm si está disponible,
-        // pero mantenemos la lógica de confirmación.
-        if (!confirm("¿Está seguro de que desea registrar el ingreso de este vehículo? Esta acción creará una nueva orden de trabajo.")) {
-            return;
-        }
+
+    const handleRegistrarIngreso = (id) => {
+        setAgendamientoToProcess(id); 
+        setIsConfirmOpen(true);
+    };
+
+
+    const handleConfirmIngreso = async () => {
+        if (!agendamientoToProcess) return;
+
+        setIsConfirmOpen(false); 
 
         try {
-            await apiClient.post(`/agendamientos/${id}/registrar-ingreso/`);
-            alert("✅ Ingreso registrado con éxito. Se ha creado la orden de trabajo."); // Reemplazar 'alert' por un modal/toast si se prefiere
-            // ✅ SOLUCIÓN PROBLEMA 2: Al registrar, filtramos el agendamiento de la UI.
-            // Al recargar (F5), la API /agenda/seguridad/ ya no lo devolverá porque su estado cambió.
-            setAgendamientos(prev => prev.filter(a => a.id !== id));
+            await apiClient.post(`/agendamientos/${agendamientoToProcess}/registrar-ingreso/`);
+
+         
+            setModalMessage("✅ Ingreso registrado con éxito. Se ha creado la orden de trabajo.");
+            setModalIntent("success");
+            setIsAlertOpen(true);
+
+            
+            setAgendamientos(prev => prev.filter(a => a.id !== agendamientoToProcess));
+
         } catch (err) {
             const errorMsg = err.response?.data?.error || "Error al registrar el ingreso.";
-            alert(`Error: ${errorMsg}`); // Reemplazar 'alert'
+
+        
+            setModalMessage(errorMsg);
+            setModalIntent("danger");
+            setIsAlertOpen(true);
+        } finally {
+            setAgendamientoToProcess(null);
         }
     };
 
-    // ❌ CAMBIO: Se eliminó la función handleRegistrarSalida
+
 
     if (isLoading) return <p>Cargando citas por ingresar...</p>;
     if (error) return <p style={{ color: 'red' }}>{error}</p>;
 
     return (
+        <>
         <div className={styles.pageWrapper}>
             <header className={styles.header}>
-                {/* ✅ CAMBIO: Título actualizado */}
+           
                 <h1><LogIn size={32} /> Panel de Ingresos</h1>
                 <p>Vehículos con cita confirmada para hoy esperando ingreso.</p>
             </header>
@@ -106,14 +133,14 @@ export default function PanelIngresos() {
                                         <td>{a.mecanico_nombre}</td>
                                         <td>{a.motivo_ingreso}</td>
                                         <td>
-                                            {/* ✅ CAMBIO: Solo se deja el botón de Ingreso */}
+                                           
                                             <button
                                                 className={`${styles.actionButton} ${styles.ingresoButton}`}
                                                 onClick={() => handleRegistrarIngreso(a.id)}
                                             >
                                                 <LogIn size={16} /> Ingreso
                                             </button>
-                                            {/* ❌ CAMBIO: Botón de Salida eliminado */}
+                                      
                                         </td>
                                     </tr>
                                 ))
@@ -127,7 +154,26 @@ export default function PanelIngresos() {
                         </tbody>
                     </table>
                 </div>
-                     </div>
+            </div>
         </div>
+            <ConfirmModal
+                    isOpen={isConfirmOpen}
+                    onClose={() => setIsConfirmOpen(false)}
+                    onConfirm={handleConfirmIngreso}
+                    title="Confirmar Ingreso"
+                    message="¿Está seguro de que desea registrar el ingreso de este vehículo? Esta acción creará una nueva orden de trabajo."
+                    confirmButtonText="Sí, Registrar Ingreso"
+                    intent="success" 
+                />
+                
+                <AlertModal
+                    isOpen={isAlertOpen}
+                    onClose={() => setIsAlertOpen(false)}
+                    title={modalIntent === 'success' ? 'Éxito' : 'Error'}
+                    message={modalMessage}
+                    intent={modalIntent}
+                />
+                
+        </>
     );
 }

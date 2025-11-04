@@ -1,22 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import apiClient from '/src/api/axios.js';
-import styles from '/src/css/gestionllaves.module.css'; // Reutilizamos el mismo CSS
+import styles from '/src/css/gestionllaves.module.css';
 import { History, FileWarning, Search } from 'lucide-react';
-// Sub-componente para la tabla de Préstamos
+
 const HistorialPrestamos = ({ searchTerm }) => {
     const [prestamos, setPrestamos] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
         setIsLoading(true);
-        // La API ahora filtra por nosotros usando el 'searchTerm'
+        
         apiClient.get('/prestamos-llaves/', {
-            params: { search: searchTerm } // <-- ASÍ SE ENVÍA EL PARÁMETRO DE BÚSQUEDA
+            params: { search: searchTerm } 
         })
             .then(res => setPrestamos(res.data.results || res.data))
             .catch(err => console.error("Error cargando préstamos", err))
             .finally(() => setIsLoading(false));
-    }, [searchTerm]); // <-- Se ejecuta cada vez que 'searchTerm' cambia
+    }, [searchTerm]);
 
     if (isLoading) return <p className={styles.centeredMessage}>Cargando historial de préstamos...</p>;
 
@@ -56,7 +56,7 @@ const HistorialPrestamos = ({ searchTerm }) => {
     );
 };
 
-// Sub-componente para la tabla de Reportes (AHORA RECIBE 'searchTerm')
+
 const HistorialReportes = ({ searchTerm }) => {
     const [reportes, setReportes] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -64,12 +64,12 @@ const HistorialReportes = ({ searchTerm }) => {
     useEffect(() => {
         setIsLoading(true);
         apiClient.get('/llaves-historial-estado/', {
-            params: { search: searchTerm } // <-- ASÍ SE ENVÍA EL PARÁMETRO DE BÚSQUEDA
+            params: { search: searchTerm }
         })
             .then(res => setReportes(res.data.results || res.data))
             .catch(err => console.error("Error cargando reportes", err))
             .finally(() => setIsLoading(false));
-    }, [searchTerm]); // <-- Se ejecuta cada vez que 'searchTerm' cambia
+    }, [searchTerm]); 
 
     if (isLoading) return <p className={styles.centeredMessage}>Cargando historial de reportes...</p>;
 
@@ -111,14 +111,13 @@ const HistorialReportes = ({ searchTerm }) => {
     );
 };
 
-// Componente Principal
+
 export default function GestionLlavesHistorial() {
     
-    // --- ESTADO PARA LA BÚSQUEDA ---
+    
     const [searchTerm, setSearchTerm] = useState('');
     
-    // (Opcional: "Debounce" para no llamar a la API en cada tecla)
-    // (Por ahora, lo dejamos simple. Si se pone lento, añadimos debounce)
+
 
     return (
         <div className={styles.pageWrapper}>
@@ -126,7 +125,7 @@ export default function GestionLlavesHistorial() {
                 <h1><History size={32} /> Historial General de Llaves</h1>
             </header>
             
-            {/* --- BARRA DE BÚSQUEDA AÑADIDA --- */}
+           
             <div className={styles.tableCard} style={{ marginBottom: '2rem' }}>
                 <div className={styles.tableControls}>
                     <div className={styles.searchBox}>
@@ -141,7 +140,7 @@ export default function GestionLlavesHistorial() {
                 </div>
             </div>
             
-            {/* Pasa el 'searchTerm' a los componentes hijos */}
+           
             <HistorialPrestamos searchTerm={searchTerm} />
             <br />
             <HistorialReportes searchTerm={searchTerm} />

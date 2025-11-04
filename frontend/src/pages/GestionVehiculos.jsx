@@ -1,4 +1,3 @@
-// src/pages/GestionVehiculos.jsx
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -11,7 +10,7 @@ const LoadingSpinner = () => <div className={styles.centeredMessage}>Cargando...
 const ErrorMessage = ({ message }) => <div className={styles.centeredMessage} style={{ color: 'red' }}>{message}</div>;
 
 export default function GestionVehiculos() {
-    // ... (toda la lógica de estados y funciones se mantiene igual)
+    
     const [activeVehicles, setActiveVehicles] = useState([]);
     const [inactiveVehicles, setInactiveVehicles] = useState([]);
     const [view, setView] = useState('activos'); 
@@ -97,9 +96,9 @@ export default function GestionVehiculos() {
                     </button>
                 </header>
 
-                {/* 👇 CAMBIO PRINCIPAL: TODA LA LÓGICA DE LA TABLA ESTÁ DENTRO DE ESTE CONTENEDOR 👇 */}
+                
                 <div className={styles.tableCard}>
-                    {/* La cabecera con las pestañas y la búsqueda */}
+                    
                     <div className={styles.tableControls}>
                         <div className={styles.segmentedControl}>
                             <button 
@@ -126,7 +125,7 @@ export default function GestionVehiculos() {
                         </div>
                     </div>
 
-                    {/* La tabla en sí, visualmente conectada a la cabecera */}
+                    
                     <div className={styles.tableContainer}>
                         <table className={styles.table}>
                             <thead>
@@ -171,7 +170,7 @@ export default function GestionVehiculos() {
                         </table>
                     </div>
                     
-                    {/* La paginación, que ahora es el "pie de página" de la tarjeta */}
+                    
                     <div className={styles.pagination}>
                         <button onClick={handlePrevPage} disabled={currentPage === 1}>Anterior</button>
                         <span>Página {currentPage} de {totalPages || 1}</span>

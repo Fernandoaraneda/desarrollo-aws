@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom"; // <-- importamos useNavigate
+import { Link, useNavigate } from "react-router-dom"; 
 import apiClient from "../api/axios";
 import styles from "../css/csslogin.module.css";
 
@@ -9,7 +9,7 @@ export default function ResetPasswordPage() {
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  const navigate = useNavigate(); // <-- inicializamos navigate
+  const navigate = useNavigate(); 
 
   const handleReset = async (e) => {
     e.preventDefault();
@@ -67,11 +67,11 @@ export default function ResetPasswordPage() {
                   </span>
                 </span>
               </button>
-              {/* Botón de volver al inicio */}
+        
               <button
                 type="button"
                 className={styles.resetPasswordBtn}
-                onClick={() => navigate("/")} // <-- redirige al login
+                onClick={() => navigate("/")} 
                 style={{ marginTop: "1rem" }}
               >
                 Volver al inicio

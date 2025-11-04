@@ -1,5 +1,3 @@
-// src/pages/Login.jsx
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useUserStore } from "../store/authStore";
@@ -14,7 +12,7 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [showLogin, setShowLogin] = useState(false);
 
-  // Función para refrescar token
+
   const refreshToken = async () => {
     try {
       const res = await apiClient.post("/token/refresh/", {
@@ -24,7 +22,7 @@ export default function LoginPage() {
       apiClient.defaults.headers["Authorization"] = `Bearer ${res.data.access}`;
     } catch (err) {
       console.log("No se pudo refrescar el token", err);
-      // Redirigir al login si falla
+
       window.location.href = "/login";
     }
   };
@@ -41,17 +39,16 @@ export default function LoginPage() {
     try {
       const res = await apiClient.post("/login/", { username, password });
 
-      // Guardar tokens en localStorage
+
       localStorage.setItem("access_token", res.data.access);
       localStorage.setItem("refresh_token", res.data.refresh);
 
-      // Configurar Axios para usar el access token
+
       apiClient.defaults.headers["Authorization"] = `Bearer ${res.data.access}`;
 
-      // Opcional: refrescar token cada 25 minutos
+  
       setInterval(refreshToken, 25 * 60 * 1000);
 
-      // Guardar usuario en tu store
       setAuth({
         user: res.data.user,
         token: res.data.access,

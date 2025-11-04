@@ -1,12 +1,9 @@
-// src/components/dashboard/DashboardMecanico.jsx
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import apiClient from '../../api/axios.js';
 import styles from '../../css/mecanicodashboard.module.css';
 import { Wrench, Clock, CalendarCheck } from 'lucide-react';
 
-// Tarjeta de KPI
 const KpiCard = ({ title, value, icon }) => (
     <div className={styles.kpiCard}>
         <div className={styles.cardIcon}>{icon}</div>
@@ -17,7 +14,6 @@ const KpiCard = ({ title, value, icon }) => (
     </div>
 );
 
-// Tarjeta de Tarea (similar a la que ya tenías)
 const TaskCard = ({ orden }) => {
     const navigate = useNavigate();
     return (
@@ -45,7 +41,6 @@ export default function DashboardMecanico() {
     useEffect(() => {
         const fetchDashboardData = async () => {
             try {
-                // Llamamos a nuestro nuevo y eficiente endpoint
                 const response = await apiClient.get('/dashboard/mecanico/stats/');
                 setDashboardData(response.data);
             } catch (err) {
@@ -66,13 +61,12 @@ export default function DashboardMecanico() {
         <div className={styles.pageWrapper}>
             <h1 className={styles.mainTitle}>Mi Panel de Trabajo</h1>
             
-            {/* Sección de KPIs */}
+          
             <div className={styles.kpiGrid}>
                 <KpiCard title="Órdenes Activas" value={kpis.ordenesActivas} icon={<Wrench />} />
                 <KpiCard title="Próximas Asignaciones" value={kpis.proximasAsignaciones} icon={<CalendarCheck />} />
             </div>
 
-            {/* Sección de Tareas */}
             <h2 className={styles.sectionTitle}>Mis Tareas Actuales</h2>
             {tareas.length > 0 ? (
                 <div className={styles.tasksGrid}>

@@ -27,8 +27,8 @@ import ProximasCitas from './pages/ProximasCitas';
 import HistorialChofer from "./pages/HistorialChofer.jsx";
 import GestionLlaves from './pages/GestionLlaves.jsx';
 import GestionLlavesHistorial from './pages/GestionLlavesHistorial';
-
-
+import HistorialMecanico from './pages/HistorialMecanico.jsx';
+import HistorialSeguridad from './pages/HistorialSeguridad.jsx';
 
 
 function App() {
@@ -162,6 +162,23 @@ function App() {
                     <GestionLlavesHistorial />
                 </ProtectedRoute>
             }
+        />
+
+        <Route 
+            path="/historial-mecanico" 
+            element={
+                <ProtectedRoute roles={['Mecanico', 'Supervisor', 'Administrativo']}> 
+                    <HistorialMecanico />
+                </ProtectedRoute>
+            } 
+        />
+        <Route 
+            path="/historial-seguridad" 
+            element={
+                <ProtectedRoute roles={['Seguridad', 'Supervisor', 'Administrativo']}> 
+                    <HistorialSeguridad />
+                </ProtectedRoute>
+            } 
         />
 
       </Route>

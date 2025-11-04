@@ -1,8 +1,6 @@
-// src/pages/ProximasCitas.jsx
-
 import React, { useState, useEffect } from 'react';
 import apiClient from '../api/axios.js';
-import styles from '../css/gestionagenda.module.css'; // Reutilizamos los estilos existentes
+import styles from '../css/gestionagenda.module.css'; 
 import { CalendarClock } from 'lucide-react';
 
 export default function ProximasCitas() {
@@ -13,7 +11,6 @@ export default function ProximasCitas() {
     useEffect(() => {
         const fetchProximasCitas = async () => {
             try {
-                // 1. Llamamos al nuevo endpoint que crearemos en el backend
                 const response = await apiClient.get('/mecanico/proximas-citas/');
                 setProximasCitas(response.data.results || response.data || []);
             } catch (err) {
@@ -56,7 +53,7 @@ export default function ProximasCitas() {
                                         <td>{cita.chofer_nombre}</td>
                                         <td>{cita.motivo_ingreso}</td>
                                         <td>
-                                            {/* Mostramos una alerta visual si se requiere grúa */}
+                                         
                                             {cita.solicita_grua ? 
                                                 <span style={{ color: '#f97316', fontWeight: 'bold' }}>⚠️ Requiere Grúa</span> 
                                                 : '---'

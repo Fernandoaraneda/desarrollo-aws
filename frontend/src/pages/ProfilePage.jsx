@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import apiClient from '../api/axios.js';
-import styles from '../css/profilepage.module.css'; // ¡Importamos nuestro nuevo CSS!
+import styles from '../css/profilepage.module.css'; 
 
-// Importamos iconos de Lucide para un look más moderno
+
 import { UserCircle2, KeyRound, Save, XCircle, Loader2 } from 'lucide-react';
 
-// Pequeño componente para el spinner de carga
+
 const LoadingSpinner = () => (
   <div className={styles.loadingSpinner}>
     <Loader2 className="animate-spin" size={32} />
@@ -78,7 +78,7 @@ export default function ProfilePage() {
         <h1>Mi Perfil</h1>
       </header>
       
-      {/* Sección de Datos del Usuario */}
+    
       {userProfile && (
         <section className={styles.card}>
           <h2 className={styles.cardTitle}>
@@ -94,7 +94,6 @@ export default function ProfilePage() {
         </section>
       )}
 
-      {/* Sección para Cambiar Contraseña */}
       <section className={styles.card}>
         <h2 className={styles.cardTitle}>
           <KeyRound size={24} />

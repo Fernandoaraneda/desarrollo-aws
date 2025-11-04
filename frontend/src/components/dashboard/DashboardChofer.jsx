@@ -1,5 +1,3 @@
-// src/components/dashboard/DashboardChofer.jsx
-
 import React, { useState, useEffect } from 'react';
 import apiClient from '../../api/axios.js';
 import styles from '../../css/dashboardchofer.module.css';
@@ -39,9 +37,8 @@ export default function DashboardChofer() {
     useEffect(() => {
         const fetchOrdenes = async () => {
             try {
-                // El backend ya filtra por el chofer logueado
+                
                 const response = await apiClient.get('/ordenes/');
-                // Filtramos en el frontend solo las que no están finalizadas
                 const activas = (response.data.results || response.data).filter(o => o.estado !== 'Finalizado');
                 setOrdenesActivas(activas);
             } catch (err) {

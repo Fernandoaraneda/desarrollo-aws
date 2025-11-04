@@ -1,22 +1,19 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import apiClient from '/src/api/axios.js';
-import styles from '/src/css/gestionllaves.module.css'; // Usa el CSS que creamos
+import styles from '/src/css/gestionllaves.module.css'; 
 import { Key, Search, User, Check, AlertTriangle, Info, RotateCcw } from 'lucide-react';
-
-// --- ¡IMPORTAMOS TUS MODALES! ---
 import AlertModal from '/src/components/modals/AlertModal.jsx';
 import ConfirmModal from '/src/components/modals/ConfirmModal.jsx';
 
-// --- Sub-componente Modal 1: Prestar/Recibir (Modificado) ---
+
 const ModalAccionLlave = ({ accion, llave, usuarios, onClose, onConfirm, onAlert }) => {
     const [usuarioId, setUsuarioId] = useState('');
     const [observaciones, setObservaciones] = useState('');
 
     const handleSubmit = () => {
         if (accion === 'prestar' && !usuarioId) {
-            // --- ¡CORREGIDO! ---
-            // Antes: alert("Debe seleccionar un usuario.");
-            onAlert("Debe seleccionar un usuario."); // Llama al AlertModal
+
+            onAlert("Debe seleccionar un usuario."); 
             return;
         }
         onConfirm(accion, llave, { 
@@ -42,7 +39,7 @@ const ModalAccionLlave = ({ accion, llave, usuarios, onClose, onConfirm, onAlert
                         <label htmlFor="usuario_id">Prestar a:</label>
                         <select
                             id="usuario_id"
-                            className={styles.modalSelect} // Asegúrate que este estilo exista en gestionllaves.module.css
+                            className={styles.modalSelect} 
                             value={usuarioId}
                             onChange={(e) => setUsuarioId(e.target.value)}
                         >
@@ -60,7 +57,7 @@ const ModalAccionLlave = ({ accion, llave, usuarios, onClose, onConfirm, onAlert
                     <label htmlFor="observaciones">Observaciones ({accion === 'prestar' ? 'Retiro' : 'Devolución'}):</label>
                     <textarea
                         id="observaciones"
-                        className={styles.modalTextarea} // Asegúrate que este estilo exista
+                        className={styles.modalTextarea} 
                         rows="3"
                         value={observaciones}
                         onChange={(e) => setObservaciones(e.target.value)}
@@ -76,7 +73,7 @@ const ModalAccionLlave = ({ accion, llave, usuarios, onClose, onConfirm, onAlert
     );
 };
 
-// --- Sub-componente Modal 2: Reportar/Ver (Modificado) ---
+
 const ModalReporte = ({ llave, onClose, onConfirmReporte, onConfirmRevertir, onAlert }) => {
     
     const isReportada = llave.estado === 'Perdida' || llave.estado === 'Dañada';
@@ -85,18 +82,15 @@ const ModalReporte = ({ llave, onClose, onConfirmReporte, onConfirmRevertir, onA
 
     const handleSubmitReporte = () => {
         if (!motivo) {
-            // --- ¡CORREGIDO! ---
-            // Antes: alert("Debe ingresar un motivo para el reporte.");
-            onAlert("Debe ingresar un motivo para el reporte."); // Llama al AlertModal
+ 
+            onAlert("Debe ingresar un motivo para el reporte."); 
             return;
         }
         onConfirmReporte(llave, { estado: tipoReporte, motivo: motivo });
     };
 
     const handleRevertirClick = () => {
-        // --- ¡CORREGIDO! ---
-        // Antes: window.confirm(...)
-        // Ahora, llamamos al modal de confirmación
+  
         onConfirmRevertir();
     }
 
@@ -134,7 +128,7 @@ const ModalReporte = ({ llave, onClose, onConfirmReporte, onConfirmRevertir, onA
                             <label htmlFor="tipoReporte">Tipo de Reporte:</label>
                             <select
                                 id="tipoReporte"
-                                className={styles.modalSelect} // Asegúrate que este estilo exista
+                                className={styles.modalSelect} 
                                 value={tipoReporte}
                                 onChange={(e) => setTipoReporte(e.target.value)}
                             >
@@ -146,7 +140,7 @@ const ModalReporte = ({ llave, onClose, onConfirmReporte, onConfirmRevertir, onA
                             <label htmlFor="motivo">Motivo (Obligatorio):</label>
                             <textarea
                                 id="motivo"
-                                className={styles.modalTextarea} // Asegúrate que este estilo exista
+                                className={styles.modalTextarea}
                                 rows="3"
                                 value={motivo}
                                 onChange={(e) => setMotivo(e.target.value)}
@@ -175,11 +169,11 @@ export default function GestionLlaves() {
     const [error, setError] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
 
-    // Estados para controlar CADA modal
+
     const [modalAccion, setModalAccion] = useState({ isOpen: false, accion: null, llave: null });
     const [modalReporte, setModalReporte] = useState({ isOpen: false, llave: null });
     
-    // --- NUEVOS ESTADOS PARA MODALES DE ALERTA Y CONFIRMACIÓN ---
+  
     const [alertModal, setAlertModal] = useState({ isOpen: false, message: "" });
     const [confirmModal, setConfirmModal] = useState({ 
         isOpen: false, 
@@ -188,10 +182,9 @@ export default function GestionLlaves() {
         onConfirm: () => {} 
     });
 
-    // Carga de datos inicial
+ 
     const fetchData = async () => {
-        // (No es necesario recargar usuarios cada vez, pero lo mantenemos simple)
-        // (Si setIsLoading(true) es molesto, ponlo solo en el catch/finally)
+
         try {
             const [llavesRes, usersRes] = await Promise.all([
                 apiClient.get('/llaves/'),
@@ -210,7 +203,7 @@ export default function GestionLlaves() {
         fetchData();
     }, []);
 
-    // Filtrado de llaves
+  
     const filteredLlaves = useMemo(() => {
         return llaves.filter(llave =>
             llave.vehiculo_patente.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -219,7 +212,7 @@ export default function GestionLlaves() {
         );
     }, [llaves, searchTerm]);
 
-    // --- FUNCIONES PARA CONTROLAR LOS NUEVOS MODALES ---
+   
     const showAlert = (message) => setAlertModal({ isOpen: true, message });
     const closeAlert = () => setAlertModal({ isOpen: false, message: "" });
 
@@ -229,7 +222,7 @@ export default function GestionLlaves() {
     const closeConfirm = () => setConfirmModal({ isOpen: false, title: "", message: "", onConfirm: () => {} });
 
 
-    // Lógica de Modales Principales
+  
     const abrirModalAccion = (accion, llave) => {
         setModalAccion({ isOpen: true, accion, llave });
     };
@@ -240,19 +233,19 @@ export default function GestionLlaves() {
     };
     const cerrarModalReporte = () => setModalReporte({ isOpen: false, llave: null });
 
-    // --- MANEJADORES DE API (Actualizados con 'showAlert') ---
+   
 
     const handleConfirmarAccion = async (accion, llave, data) => {
         try {
             if (accion === 'prestar') {
-                // Llama a la acción de la LLAVE
+               
                 await apiClient.post(`/llaves/${llave.id}/registrar-retiro/`, {
                     usuario_id: data.usuario_id,
                     observaciones: data.observaciones
                 });
             } 
             else if (accion === 'recibir') {
-                // Llama a la OTRA acción de la LLAVE
+            
                 await apiClient.post(`/llaves/${llave.id}/registrar-devolucion/`, {
                     observaciones: data.observaciones
                 });
@@ -273,51 +266,49 @@ export default function GestionLlaves() {
             fetchData();
             cerrarModalReporte();
         } catch (err) {
-            // --- ¡CORREGIDO! ---
+        
             showAlert("Error: " + (err.response?.data?.error || "No se pudo reportar la llave."));
         }
     };
 
-    // --- Lógica de Revertir (Ahora en 2 pasos) ---
-    
-    // 1. Esta función AHORA SÓLO MUESTRA EL MODAL DE CONFIRMACIÓN
+ 
     const handleConfirmRevertir = () => {
-        const llave = modalReporte.llave; // Obtiene la llave del modal de reporte
+        const llave = modalReporte.llave;
         
         showConfirm(
             "Confirmar Reversión",
             `¿Está seguro de que desea revertir el reporte de la llave ${llave.codigo_interno}? La llave volverá a estar "En Bodega" y disponible para préstamos.`,
             () => { 
-                // 2. Esta es la función que SÍ se ejecuta al confirmar
+                
                 doRevertirReporte(llave);
             }
         );
     };
 
-    // 3. Esta es la lógica de API que se llama DESPUÉS de confirmar
+   
     const doRevertirReporte = async (llave) => {
         try {
             await apiClient.post(`/llaves/${llave.id}/revertir-reporte/`);
             fetchData();
-            cerrarModalReporte(); // Cierra el modal de "Reporte"
-            closeConfirm(); // Cierra el modal de "Confirmación"
+            cerrarModalReporte(); 
+            closeConfirm(); 
         } catch (err) {
-            // --- ¡CORREGIDO! ---
+     
             showAlert("Error: " + (err.response?.data?.error || "No se pudo revertir el reporte."));
         }
     };
 
-    // --- RENDERIZADO ---
+
     if (isLoading) return <div className={styles.centeredMessage}>Cargando...</div>;
     if (error) return <div className={styles.centeredMessage} style={{ color: 'red' }}>{error}</div>;
 
     const getEstadoStyle = (estado) => {
         switch (estado) {
-            case 'En Bodega': return { backgroundColor: '#16a34a' }; // Verde
-            case 'Prestada': return { backgroundColor: '#0284c7' }; // Azul
-            case 'Dañada': return { backgroundColor: '#f97316' }; // Naranja
-            case 'Perdida': return { backgroundColor: '#b91c1c' }; // Rojo
-            default: return { backgroundColor: '#555' }; // Gris
+            case 'En Bodega': return { backgroundColor: '#16a34a' }; 
+            case 'Prestada': return { backgroundColor: '#0284c7' }; 
+            case 'Dañada': return { backgroundColor: '#f97316' }; 
+            case 'Perdida': return { backgroundColor: '#b91c1c' }; 
+            default: return { backgroundColor: '#555' }; 
         }
     };
 
@@ -422,9 +413,7 @@ export default function GestionLlaves() {
                 </div>
             </div>
 
-            {/* --- RENDERIZADO DE TODOS LOS MODALES --- */}
-
-            {/* Modal de Acciones: Prestar / Recibir */}
+          
             {modalAccion.isOpen && (
                 <ModalAccionLlave
                     accion={modalAccion.accion}
@@ -432,22 +421,22 @@ export default function GestionLlaves() {
                     usuarios={usuarios}
                     onClose={cerrarModalAccion}
                     onConfirm={handleConfirmarAccion}
-                    onAlert={showAlert} // <-- Pasa la función de alerta
+                    onAlert={showAlert} 
                 />
             )}
             
-            {/* Modal de Reporte: Ver / Crear Reporte */}
+            
             {modalReporte.isOpen && (
                 <ModalReporte
                     llave={modalReporte.llave}
                     onClose={cerrarModalReporte}
                     onConfirmReporte={handleConfirmarReporte}
-                    onConfirmRevertir={handleConfirmRevertir} // <-- Pasa la función que abre el ConfirmModal
-                    onAlert={showAlert} // <-- Pasa la función de alerta
+                    onConfirmRevertir={handleConfirmRevertir}
+                    onAlert={showAlert} 
                 />
             )}
 
-            {/* Modal de Alerta (para errores) */}
+          
             <AlertModal 
                 isOpen={alertModal.isOpen}
                 onClose={closeAlert}
@@ -456,7 +445,7 @@ export default function GestionLlaves() {
                 intent="danger"
             />
 
-            {/* Modal de Confirmación (para revertir) */}
+           
             <ConfirmModal 
                 isOpen={confirmModal.isOpen}
                 onClose={closeConfirm}
@@ -464,7 +453,7 @@ export default function GestionLlaves() {
                 title={confirmModal.title}
                 message={confirmModal.message}
                 confirmButtonText="Sí, Revertir"
-                intent="success" // Le damos un intent "success" (verde)
+                intent="success" 
             />
         </>
     );

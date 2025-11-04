@@ -2,7 +2,6 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import apiClient from '../api/axios.js';
 import styles from '../css/gestionusuarios.module.css';
-// 👇 1. Se importa el icono de búsqueda
 import { UserPlus, Edit, Trash2, CheckCircle, Search } from 'lucide-react';
 import ConfirmModal from '../components/modals/ConfirmModal.jsx';
 
@@ -17,8 +16,6 @@ export default function GestionUsuarios() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalProps, setModalProps] = useState({});
   const [userToProcess, setUserToProcess] = useState(null);
-
-  // 👇 2. Se añade el estado para el término de búsqueda
   const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
@@ -35,7 +32,7 @@ export default function GestionUsuarios() {
     fetchUsers();
   }, []);
 
-  // 👇 3. Se añade la lógica de filtrado eficiente
+
   const filteredUsers = useMemo(() => {
     return users.filter(user =>
       (user.username?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
@@ -97,7 +94,7 @@ export default function GestionUsuarios() {
           </button>
         </header>
 
-        {/* 👇 4. Se añade la barra de búsqueda a la interfaz */}
+       
         <div className={styles.controls}>
           <div className={styles.searchBox}>
             <Search size={20} className={styles.searchIcon} />
@@ -110,7 +107,7 @@ export default function GestionUsuarios() {
           </div>
         </div>
 
-        {/* 👇 5. Se itera sobre la lista FILTRADA y se muestra un mensaje si no hay resultados */}
+        
         <div className={styles.userList}>
           {filteredUsers.length > 0 ? (
             filteredUsers.map(user => (

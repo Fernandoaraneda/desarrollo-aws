@@ -140,9 +140,9 @@ export default function DetalleOrden() {
     if (isLoading) return <p className={styles.loading}>Cargando detalle de la orden...</p>;
     if (error && !orden) return <p className={styles.error}>{error}</p>;
 
-    const puedeModificar = user.rol === 'Supervisor' || user.rol === 'Mecanico';
-    const esSupervisor = user.rol === 'Supervisor';
-
+    const isFinalizada = orden?.estado === 'Finalizado';
+    const tienePrivilegiosAdmin = (user.rol === 'Supervisor' || user.rol === 'Administrativo');
+    const puedeModificar = (tienePrivilegiosAdmin || user.rol === 'Mecanico') && !isFinalizada;
     return (
         <div className={styles.pageWrapper}>
             <header className={styles.header}>
@@ -262,7 +262,7 @@ export default function DetalleOrden() {
 
                     <div className={styles.infoCard}>
                         <h3><User /> Asignación</h3>
-                        {esSupervisor ? (
+                        {tienePrivilegiosAdmin && !isFinalizada ? ( 
                             <select
                                 value={orden?.usuario_asignado || ''}
                                 onChange={handleAssignMecanico}

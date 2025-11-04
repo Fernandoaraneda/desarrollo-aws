@@ -1,17 +1,16 @@
-// src/pages/GestionOrdenes.jsx
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import apiClient from '../api/axios.js';
-import styles from '../css/gestionordenes.module.css'; // Usaremos un nuevo CSS para el modal
+import styles from '../css/gestionordenes.module.css'; 
 import { Wrench, Eye, Edit } from 'lucide-react';
 
-// --- Componente Modal para cambiar el estado ---
+
 const ModalCambiarEstado = ({ orden, onClose, onSave }) => {
     const [nuevoEstado, setNuevoEstado] = useState(orden.estado);
     const [motivo, setMotivo] = useState('');
 
-    // Estos son los estados definidos en tu modelo de Django `Orden.Estado`
+    
     const estadosPosibles = [
         'Ingresado',
         'En Diagnostico',
@@ -26,8 +25,8 @@ const ModalCambiarEstado = ({ orden, onClose, onSave }) => {
                 estado: nuevoEstado,
                 motivo: motivo,
             });
-            onSave(orden.id, nuevoEstado); // Llama a la función onSave para actualizar el estado en la tabla
-            onClose(); // Cierra el modal
+            onSave(orden.id, nuevoEstado); 
+            onClose(); 
         } catch (error) {
             console.error("Error al cambiar el estado", error);
             alert("No se pudo actualizar el estado. Inténtalo de nuevo.");
@@ -67,7 +66,7 @@ const ModalCambiarEstado = ({ orden, onClose, onSave }) => {
 };
 
 
-// --- Componente Principal de la Página ---
+
 export default function GestionOrdenes() {
     const [ordenes, setOrdenes] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -79,7 +78,13 @@ export default function GestionOrdenes() {
         const fetchOrdenes = async () => {
             try {
                 const response = await apiClient.get('/ordenes/');
-                setOrdenes(response.data.results || response.data || []);
+                const todasLasOrdenes = response.data.results || response.data || [];
+                const ordenesActivas = todasLasOrdenes.filter(
+                    orden => orden.estado !== 'Finalizado'
+                );
+                setOrdenes(ordenesActivas); 
+               
+
             } catch (err) {
                 setError("No se pudieron cargar las órdenes de servicio.");
             } finally {
@@ -90,7 +95,7 @@ export default function GestionOrdenes() {
     }, []);
 
     const handleEstadoActualizado = (ordenId, nuevoEstado) => {
-        // Actualiza la lista de órdenes localmente para reflejar el cambio al instante
+     
         setOrdenes(prevOrdenes =>
             prevOrdenes.map(o =>
                 o.id === ordenId ? { ...o, estado: nuevoEstado } : o
@@ -153,7 +158,7 @@ export default function GestionOrdenes() {
                 </div>
             </div>
 
-            {/* Renderiza el modal si hay una orden seleccionada */}
+         
             {ordenSeleccionada && (
                 <ModalCambiarEstado 
                     orden={ordenSeleccionada} 

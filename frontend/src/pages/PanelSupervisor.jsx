@@ -1,10 +1,8 @@
-// src/pages/PanelSupervisor.jsx
-
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import apiClient from '/src/api/axios.js';
-import styles from '/src/css/gestionagenda.module.css'; // Reutilizamos este CSS
-import { Check, Edit, CalendarCheck } from 'lucide-react'; // Importamos 'Edit'
+import styles from '/src/css/gestionagenda.module.css'; 
+import { Check, Edit, CalendarCheck } from 'lucide-react'; 
 
 export default function PanelSupervisor() {
     const [agendamientos, setAgendamientos] = useState([]);
@@ -15,7 +13,7 @@ export default function PanelSupervisor() {
     useEffect(() => {
         const loadAgendamientos = async () => {
             try {
-                // Traemos TODOS los agendamientos que no estén finalizados o cancelados
+                
                 const res = await apiClient.get('/agendamientos/?estado__ne=Finalizado&estado__ne=Cancelado');
                 setAgendamientos(res.data.results || res.data || []);
             } catch (err) {
@@ -27,7 +25,7 @@ export default function PanelSupervisor() {
         loadAgendamientos();
     }, []);
 
-    // --- 👇 AQUÍ SEPARAMOS LAS LISTAS ---
+ 
     const { citasPorConfirmar, citasConfirmadas } = useMemo(() => {
         const porConfirmar = agendamientos.filter(a => a.estado === 'Programado');
         const confirmadas = agendamientos.filter(a => a.estado === 'Confirmado');
@@ -43,7 +41,6 @@ export default function PanelSupervisor() {
                 <h1><CalendarCheck size={32} /> Panel de Citas</h1>
             </header>
 
-            {/* --- LISTA 1: SOLICITUDES PENDIENTES --- */}
             <div className={styles.tableCard}>
                 <h2 className={styles.tableTitle}>Solicitudes Pendientes (Por Asignar)</h2>
                 <div className={styles.tableContainer}>
@@ -90,7 +87,7 @@ export default function PanelSupervisor() {
                 </div>
             </div>
 
-            {/* --- LISTA 2: CITAS YA CONFIRMADAS (TU NUEVA IDEA) --- */}
+    
             <div className={styles.tableCard} style={{marginTop: '2rem'}}>
                 <h2 className={styles.tableTitle}>Próximas Citas Confirmadas</h2>
                 <div className={styles.tableContainer}>
@@ -113,9 +110,9 @@ export default function PanelSupervisor() {
                                         <td>{a.chofer_nombre}</td>
                                         <td>{a.mecanico_nombre}</td>
                                         <td>
-                                            {/* Este botón va a la MISMA página, que ahora es "Editar" */}
+                                            
                                             <button 
-                                                className={`${styles.actionButton} ${styles.editButton}`} // (Asumo que tienes un estilo .editButton)
+                                                className={`${styles.actionButton} ${styles.editButton}`} 
                                                 onClick={() => navigate(`/agenda/confirmar/${a.id}`)}
                                             >
                                                 <Edit size={16} /> Editar Cita

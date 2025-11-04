@@ -8,7 +8,7 @@ import { Wrench, Clock, AlertTriangle } from 'lucide-react';
 // Tarjeta individual para cada tarea/orden
 const TaskCard = ({ orden }) => {
     const navigate = useNavigate();
-    
+
     // Objeto para mapear estados a colores y textos
     const statusInfo = {
         'En Diagnostico': { style: styles.diagnostico, icon: <Clock size={16} /> },
@@ -39,7 +39,7 @@ const TaskCard = ({ orden }) => {
     );
 };
 
-// Componente principal que muestra la lista de tareas
+
 export default function MecanicoTaskList() {
     const { user } = useUserStore();
     const [assignedTasks, setAssignedTasks] = useState([]);
@@ -52,8 +52,7 @@ export default function MecanicoTaskList() {
         const fetchTasks = async () => {
             try {
                 const response = await apiClient.get('/ordenes/');
-                // Filtramos las órdenes para mostrar solo las asignadas al usuario actual y que no estén finalizadas
-                const tasks = response.data.filter(orden => 
+                const tasks = response.data.filter(orden =>
                     orden.usuario_asignado === user.id && orden.estado !== 'Finalizado'
                 );
                 setAssignedTasks(tasks);

@@ -1,35 +1,34 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import apiClient from '../api/axios.js';
 import styles from '../css/gestionagenda.module.css';
 import { History, Eye } from 'lucide-react';
 
-export default function HistorialChofer() {
+export default function HistorialMecanico() {
     const [ordenes, setOrdenes] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
     const navigate = useNavigate();
 
     useEffect(() => {
-        const fetchHistorial = async () => {
+        const fetchHistorialMecanico = async () => {
             try {
-            
                 const response = await apiClient.get('/ordenes/');
-                const todasLasOrdenes = response.data.results || response.data || [];
-                
-                const finalizadas = todasLasOrdenes.filter(o => o.estado === 'Finalizado');
-              
+                const todasMisOrdenes = response.data.results || response.data || [];
+
+                const finalizadas = todasMisOrdenes.filter(o => o.estado === 'Finalizado');
+
                 finalizadas.sort((a, b) => new Date(b.fecha_entrega_real) - new Date(a.fecha_entrega_real));
 
                 setOrdenes(finalizadas);
             } catch (err) {
-                setError("No se pudo cargar tu historial de servicios.");
+                setError("No se pudo cargar tu historial de trabajos.");
             } finally {
                 setIsLoading(false);
             }
         };
 
-        fetchHistorial();
+        fetchHistorialMecanico();
     }, []);
 
     if (isLoading) return <p>Cargando historial...</p>;
@@ -38,8 +37,8 @@ export default function HistorialChofer() {
     return (
         <div className={styles.pageWrapper}>
             <header className={styles.header}>
-                <h1><History size={32} /> Mi Historial de Servicios</h1>
-                <p>Aquí puedes ver todas las reparaciones y mantenimientos completados de tus vehículos.</p>
+                <h1><History size={32} /> Mi Historial de Trabajos</h1>
+                <p>Aquí puedes ver todas las órdenes de servicio que has completado.</p>
             </header>
             <div className={styles.tableCard}>
                 <div className={styles.tableContainer}>

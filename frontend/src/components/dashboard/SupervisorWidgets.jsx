@@ -124,7 +124,6 @@ export default function SupervisorWidgets() {
     document.body.removeChild(link);
   };
 
-  // ✅ Renderizado de estados (SIN CAMBIOS)
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center p-8">
@@ -160,7 +159,7 @@ export default function SupervisorWidgets() {
     );
   }
 
-  // --- ✅ 2. 'alertas' EXTRAÍDO DE LOS DATOS ---
+
   const { kpis, ordenesPorEstado, ordenesUltimaSemana, ordenesRecientes, alertas } = data;
   const pendientesAprobacion = alertas?.pendientesAprobacion || 0;
 
@@ -168,12 +167,12 @@ export default function SupervisorWidgets() {
   return (
     <div className="w-full">
 
-      {/* --- ✅ 3. NUEVO CONTENEDOR 'topRowContainer' --- */}
+
       <div className={styles.topRowContainer}>
 
-        {/* --- ✅ 4. NUEVO WIDGET DE ALERTAS AÑADIDO --- */}
+
         <div className={styles.alertWidget}>
-          <Bell /> {/* Ícono importado */}
+          <Bell />
           <div>
             <p>
               Tienes <strong>{pendientesAprobacion}</strong> agendamiento(s)
@@ -183,14 +182,13 @@ export default function SupervisorWidgets() {
           </div>
         </div>
 
-        {/* --- 5. TU BARRA DE CONTROLES (AHORA DENTRO DEL WRAPPER) --- */}
         <div className={styles.controlsToolbar}>
           <button
             onClick={handleManualRefresh}
             disabled={isRefreshing}
             className={`flex items-center gap-2 px-3 py-2 rounded text-sm transition-colors ${isRefreshing
-                ? 'bg-green-500 text-white cursor-not-allowed'
-                : 'bg-blue-500 hover:bg-blue-600 text-white'
+              ? 'bg-green-500 text-white cursor-not-allowed'
+              : 'bg-blue-500 hover:bg-blue-600 text-white'
               }`}
             title="Actualizar datos"
           >
@@ -206,7 +204,7 @@ export default function SupervisorWidgets() {
             📥 Descargar CSV
           </button>
 
-          <label> {/* El CSS Module se encargará de estilizar esto */}
+          <label>
             <input
               type="checkbox"
               checked={autoRefresh}
@@ -217,18 +215,15 @@ export default function SupervisorWidgets() {
           </label>
 
           {lastUpdated && (
-            <span> {/* El CSS Module se encargará de estilizar esto */}
+            <span>
               Última actualización: {lastUpdated.toLocaleTimeString()}
             </span>
           )}
         </div>
       </div>
-      {/* --- FIN DEL 'topRowContainer' --- */}
 
-
-      {/* --- EL RESTO DE TU DASHBOARD (SIN CAMBIOS) --- */}
       <div className={styles.dashboardGrid}>
-        {/* Fila de KPIs */}
+
         <KpiCard
           title="Vehículos en Taller"
           value={kpis?.vehiculosEnTaller || 0}
@@ -254,7 +249,7 @@ export default function SupervisorWidgets() {
           color="#8b5cf6"
         />
 
-        {/* Gráfico de Órdenes por Estado */}
+
         <div className={`${styles.card} ${styles.largeCard}`}>
           <h3 className={styles.chartTitle}>Carga de Trabajo Actual</h3>
           <ResponsiveContainer width="100%" height={250}>
@@ -269,7 +264,7 @@ export default function SupervisorWidgets() {
           </ResponsiveContainer>
         </div>
 
-        {/* Gráfico de Flujo de Ingresos */}
+
         <div className={`${styles.card} ${styles.largeCard}`}>
           <h3 className={styles.chartTitle}>Ingresos en la Última Semana</h3>
           <ResponsiveContainer width="100%" height={250}>
@@ -284,7 +279,7 @@ export default function SupervisorWidgets() {
           </ResponsiveContainer>
         </div>
 
-        {/* Tabla de Órdenes Recientes */}
+
         <div className={`${styles.card} ${styles.fullWidthCard}`}>
           <h3 className={styles.chartTitle}>Órdenes de Servicio Recientes</h3>
           <div className={styles.tableContainer}>
