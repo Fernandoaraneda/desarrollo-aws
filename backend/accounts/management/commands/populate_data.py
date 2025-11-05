@@ -141,7 +141,7 @@ class Command(BaseCommand):
 
             if created:
                 vehiculos_creados_count += 1
-                # Si el vehículo es nuevo, creamos sus llaves
+          
                 try:
                     LlaveVehiculo.objects.get_or_create(
                         vehiculo=vehiculo,
