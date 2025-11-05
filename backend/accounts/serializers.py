@@ -248,8 +248,7 @@ class VehiculoSerializer(serializers.ModelSerializer):
             return f"{obj.chofer.first_name} {obj.chofer.last_name}"
         return "Sin asignar"
 
-    # --- 👇 VALIDACIONES DE BACKEND CORREGIDAS ---
-    
+
     def validate_patente(self, value):
         patente_limpia = str(value).upper().replace(' ', '').replace('-', '')
         patente_regex = r'(^[A-Z]{4}\d{2}$)|(^[A-Z]{2}\d{4}$)'
@@ -278,12 +277,9 @@ class VehiculoSerializer(serializers.ModelSerializer):
     def validate_vin(self, value):
         if not value: 
             return value
-            
-        # --- 👇 CORRECCIÓN 2: Esta era la línea con el SyntaxError ---
-        # Se reemplaza la sintaxis JS: .replace(/[^A-HJ-NPR-Z0-9]/g, '')
-        # Por la sintaxis Python: re.sub(...)
+
         vin_limpio = re.sub(r'[^A-HJ-NPR-Z0-9]', '', str(value).upper())
-        # --- FIN DE LA CORRECCIÓN ---
+      
         
         if len(vin_limpio) != 17:
              raise serializers.ValidationError("El VIN debe tener 17 caracteres alfanuméricos.")
@@ -297,8 +293,6 @@ class VehiculoSerializer(serializers.ModelSerializer):
             
         return vin_limpio
 
-    # --- 👇 VALIDACIONES DE TEXTO MEJORADAS (PERMITEN NÚMEROS Y GUIONES) ---
-    
     def _validate_texto_vehiculo(self, value, field_name="El campo"):
         """Función helper interna para validar marca, modelo, color."""
         if not value:
@@ -592,8 +586,7 @@ class HistorialSeguridadSerializer(serializers.ModelSerializer):
     """
     vehiculo_patente = serializers.CharField(source='vehiculo.patente', read_only=True)
     
-    # Copiamos la lógica para obtener el nombre del chofer de
-    # agendamiento O del vehículo
+
     chofer_nombre = serializers.SerializerMethodField()
 
     class Meta:
@@ -602,8 +595,8 @@ class HistorialSeguridadSerializer(serializers.ModelSerializer):
             'id',
             'vehiculo_patente',
             'chofer_nombre',
-            'fecha_ingreso',      # <-- La hora de entrada
-            'fecha_entrega_real'  # <-- La hora de salida
+            'fecha_ingreso',      
+            'fecha_entrega_real'  
         )
 
     def get_chofer_nombre(self, obj):

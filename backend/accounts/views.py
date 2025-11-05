@@ -1196,12 +1196,11 @@ class LlaveVehiculoViewSet(viewsets.ModelViewSet):
             motivo=motivo
         )
 
-        # (Opcional: notificar al Supervisor)
+    
         
         serializer = self.get_serializer(llave)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-    # --- AÑADE ESTA NUEVA ACCIÓN (después de 'historial') ---
     @action(detail=True, methods=['post'], url_path='revertir-reporte')
     @transaction.atomic
     def revertir_reporte(self, request, pk=None):
