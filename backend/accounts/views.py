@@ -45,7 +45,7 @@ from .serializers import (
 
 User = get_user_model()
 
-# ... (después de las importaciones)
+
 
 def enviar_correo_notificacion(usuario, subject, message_body):
     """
@@ -57,8 +57,6 @@ def enviar_correo_notificacion(usuario, subject, message_body):
         return
 
     # 2. ***** CONFIGURACIÓN DE PRUEBA *****
-    #    Forzamos que TODOS los correos se envíen a tu email de prueba.
-    #    En producción, deberías cambiar esto a 'usuario.email'.
     recipient_email = 'fer.araneda@duocuc.cl'
     print(f"Enviando correo de prueba a: {recipient_email} (Usuario real: {usuario.email})")
     
@@ -74,22 +72,19 @@ def enviar_correo_notificacion(usuario, subject, message_body):
         html_message = render_to_string('emails/notificacion_base.html', context)
         # 5. Crear una versión de texto plano como fallback
         plain_message = strip_tags(html_message)
-        # 6. Obtener el email remitente desde settings
-        from_email = settings.EMAIL_HOST_USER
-
+        
         # 7. Enviar el correo
         send_mail(
             subject,
             plain_message,
-            from_email,
+            None,  # <--- Django usará DEFAULT_FROM_EMAIL automáticamente
             [recipient_email], # La lista de destinatarios
             html_message=html_message,
-            fail_silently=False # Poner en True en producción para que no falle la app si el email falla
+            fail_silently=False 
         )
         print(f"Correo enviado exitosamente a {recipient_email}")
 
     except Exception as e:
-        # Imprime el error en la consola del backend para debugging
         print(f"ERROR al enviar correo a {recipient_email}: {e}")
 
 
@@ -168,7 +163,7 @@ class PasswordResetRequestView(generics.GenericAPIView):
         send_mail(
             "Restablecer contraseña para Taller PepsiCo",
             f"Hola {user.first_name},\n\nUsa este enlace para restablecer tu contraseña: {reset_link}\n\nSi no solicitaste esto, ignora este mensaje.",
-            "noreply@pepsico-taller.com",
+            None,
             [email],
             fail_silently=False,
         )

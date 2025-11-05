@@ -30,7 +30,7 @@ export default function HistorialSeguridad() {
 
         const timerId = setTimeout(() => {
             fetchHistorial();
-        }, 300);r
+        }, 300);
 
         return () => clearTimeout(timerId); 
     }, [searchTerm]);
