@@ -1,4 +1,40 @@
 /* src/css/ConfirmarAsignarCita.module.css (VERSIÓN LIMPIA) */
+/* --- INICIO DE REGLAS RESPONSIVAS --- */
+
+/* Para tablets (hasta 768px) */
+@media (max-width: 768px) {
+  .pageWrapper {
+    /* Hacemos que la tarjeta ocupe más pantalla */
+    margin: 1rem;
+    padding: 0;
+  }
+  .formCard {
+    padding: 1.5rem;
+  }
+}
+
+/* Para móviles (hasta 640px) */
+@media (max-width: 640px) {
+  .formCard {
+    padding: 1rem;
+  }
+  .formHeader h1 {
+    font-size: 1.5rem;
+  }
+
+  /* ESTA ES LA REGLA PARA LOS BOTONES */
+  .formActions {
+    flex-direction: column;
+    align-items: stretch;  
+    gap: 0.75rem;          
+  }
+
+  .submitButton,
+  .cancelButton {
+    width: 100%; /* Asegura que ocupen todo el ancho */
+  }
+}
+
 
 /* --- Estructura General de la Página --- */
 .pageWrapper {

@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import apiClient from '/src/api/axios.js';
-import styles from '/src/css/gestionvehiculos.module.css';
+import styles from '../css/gestionvehiculos.module.css';
 import { Car, Plus, Edit, Trash2, Search, CheckCircle } from 'lucide-react';
 import ConfirmModal from '/src/components/modals/ConfirmModal.jsx';
 

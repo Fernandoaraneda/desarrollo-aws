@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import apiClient from '/src/api/axios.js';
-import styles from '/src/css/ConfirmarAsignarCita.module.css';
+import styles from '../css/ConfirmarAsignarCita.module.css';
 import { CalendarCheck, User, Wrench, Image as ImageIcon, Clock, Trash2 } from 'lucide-react';
 import AlertModal from '/src/components/modals/AlertModal.jsx';
 import ConfirmModal from '/src/components/modals/ConfirmModal.jsx';

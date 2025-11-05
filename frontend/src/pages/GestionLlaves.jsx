@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import apiClient from '/src/api/axios.js';
-import styles from '/src/css/gestionllaves.module.css'; 
+import styles from '../css/gestionllaves.module.css'; 
 import { Key, Search, User, Check, AlertTriangle, Info, RotateCcw } from 'lucide-react';
 import AlertModal from '/src/components/modals/AlertModal.jsx';
 import ConfirmModal from '/src/components/modals/ConfirmModal.jsx';

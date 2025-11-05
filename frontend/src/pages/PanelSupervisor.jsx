@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import apiClient from '/src/api/axios.js';
-import styles from '/src/css/gestionagenda.module.css'; 
+import styles from '../css/gestionagenda.module.css'; 
 import { Check, Edit, CalendarCheck } from 'lucide-react'; 
 
 export default function PanelSupervisor() {

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import apiClient from '/src/api/axios.js';
-import styles from '/src/css/gestionagenda.module.css';
+import styles from '../css/gestionagenda.module.css';
 import { Calendar as CalendarIcon, User, Paperclip } from 'lucide-react';
 import { useUserStore } from '/src/store/authStore.js';
 import AlertModal from '/src/components/modals/AlertModal.jsx';

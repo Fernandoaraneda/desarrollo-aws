@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import apiClient from '/src/api/axios.js';
-import styles from '/src/css/gestionllaves.module.css'; 
+import styles from '../css/gestionllaves.module.css'; 
 import { History, Search, Clock, LogIn, LogOut } from 'lucide-react';
 
 export default function HistorialSeguridad() {

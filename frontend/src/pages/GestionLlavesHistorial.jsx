@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import apiClient from '/src/api/axios.js';
-import styles from '/src/css/gestionllaves.module.css';
+import styles from '../css/gestionllaves.module.css';
 import { History, FileWarning, Search } from 'lucide-react';
 
 const HistorialPrestamos = ({ searchTerm }) => {

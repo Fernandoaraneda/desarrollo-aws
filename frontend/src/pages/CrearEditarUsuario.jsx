@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import apiClient from '/src/api/axios.js';
-import styles from '/src/css/creareditarusuario.module.css';
+import styles from '../css/creareditarusuario.module.css';
 
 
 /**

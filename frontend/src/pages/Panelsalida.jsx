@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import apiClient from '/src/api/axios.js';
-import styles from '/src/css/Panelsalida.module.css';
+import styles from '../css/Panelsalida.module.css';
 import { LogOut, Search } from 'lucide-react';
 import ConfirmModal from '/src/components/modals/ConfirmModal.jsx';
 import AlertModal from '/src/components/modals/AlertModal.jsx';

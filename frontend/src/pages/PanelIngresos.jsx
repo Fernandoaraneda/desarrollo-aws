@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import apiClient from '/src/api/axios.js';
-import styles from '/src/css/panelingreso.module.css';
+import styles from '../css/panelingreso.module.css';
 import { LogIn, CalendarClock, Search } from 'lucide-react';
 import ConfirmModal from '/src/components/modals/ConfirmModal.jsx';
 import AlertModal from '/src/components/modals/AlertModal.jsx';
