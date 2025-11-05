@@ -1,5 +1,3 @@
-// src/pages/DetalleOrden.jsx
-
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import apiClient from '../api/axios.js';
@@ -11,26 +9,22 @@ export default function DetalleOrden() {
     const { id } = useParams();
     const { user } = useUserStore();
 
-    // --- Estados Principales ---
     const [orden, setOrden] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
-    
-    // --- Estados para Formularios Interactivos ---
+
     const [mecanicos, setMecanicos] = useState([]);
     const [diagnostico, setDiagnostico] = useState('');
-    
-    // --- Estados para Subida de Archivos ---
+
     const [archivo, setArchivo] = useState(null);
     const [descripcionArchivo, setDescripcionArchivo] = useState('');
     const [tipoArchivo, setTipoArchivo] = useState('Foto');
     const [isUploading, setIsUploading] = useState(false);
 
-    // --- Carga de Datos Inicial ---
     useEffect(() => {
         const fetchAllData = async () => {
             try {
-                // Ahora cargamos la orden y la lista de mecánicos al mismo tiempo
+               
                 const [ordenRes, mecanicosRes] = await Promise.all([
                     apiClient.get(`/ordenes/${id}/`),
                     apiClient.get('/mecanicos/')
@@ -38,8 +32,7 @@ export default function DetalleOrden() {
 
                 setOrden(ordenRes.data);
                 setMecanicos(mecanicosRes.data);
-                
-                // Inicializamos el textarea del diagnóstico con los datos de la orden
+              
                 setDiagnostico(ordenRes.data.diagnostico_tecnico || '');
 
             } catch (err) {
@@ -50,15 +43,14 @@ export default function DetalleOrden() {
         };
         fetchAllData();
     }, [id]);
-    
-    // --- MANEJADORES DE ACCIONES ---
+
 
     const handleSaveDiagnostico = async () => {
         try {
             const response = await apiClient.patch(`/ordenes/${id}/`, {
                 diagnostico_tecnico: diagnostico
             });
-            setOrden(response.data); // Actualiza la orden con la respuesta
+            setOrden(response.data); 
             alert('Diagnóstico guardado con éxito.');
         } catch {
             alert('Error al guardar el diagnóstico.');
@@ -95,12 +87,12 @@ export default function DetalleOrden() {
             const response = await apiClient.post(`/ordenes/${id}/subir-documento/`, formData, {
                 headers: { 'Content-Type': 'multipart/form-data' },
             });
-            // Añade el nuevo documento a la lista sin recargar la página
+            
             setOrden(prevOrden => ({
                 ...prevOrden,
                 documentos: [...prevOrden.documentos, response.data]
             }));
-            // Limpia el formulario
+            
             setArchivo(null);
             setDescripcionArchivo('');
             e.target.reset();
@@ -114,11 +106,10 @@ export default function DetalleOrden() {
 
     const handlePausar = async () => {
         const motivoPausa = prompt("Motivo de la pausa (opcional):", "Esperando repuestos");
-        if (motivoPausa === null) return; // El usuario presionó cancelar
-
+        if (motivoPausa === null) return; 
         try {
             const response = await apiClient.post(`/ordenes/${id}/pausar/`, { motivo: motivoPausa });
-            setOrden(response.data); // Actualiza toda la orden con el nuevo estado 'Pausado'
+            setOrden(response.data);
             alert("El trabajo ha sido pausado.");
         } catch (error) {
             alert("Error al pausar el trabajo.");
@@ -128,14 +119,12 @@ export default function DetalleOrden() {
     const handleReanudar = async () => {
         try {
             const response = await apiClient.post(`/ordenes/${id}/reanudar/`);
-            setOrden(response.data); // Actualiza toda la orden con el nuevo estado 'En Proceso'
+            setOrden(response.data); 
             alert("El trabajo ha sido reanudado.");
         } catch (error) {
             alert("Error al reanudar el trabajo.");
         }
     };
-
-    // --- RENDERIZADO ---
 
     if (isLoading) return <p className={styles.loading}>Cargando detalle de la orden...</p>;
     if (error && !orden) return <p className={styles.error}>{error}</p>;
@@ -151,7 +140,7 @@ export default function DetalleOrden() {
             </header>
 
             <div className={styles.gridContainer}>
-                {/* Columna Principal */}
+                
                 <div className={styles.mainContent}>
                     {orden?.imagen_averia_url && (
                         <div className={styles.infoCard}>
@@ -230,7 +219,6 @@ export default function DetalleOrden() {
                     )}
                 </div>
 
-                {/* Columna Lateral (Sidebar) */}
                 <aside className={styles.sidebar}>
                     <div className={`${styles.infoCard} ${styles.statusCard}`}>
                         <h3><Tag /> Estado y Acciones</h3>

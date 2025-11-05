@@ -36,15 +36,14 @@ function App() {
 
   return (
     <Routes>
-      {/* --- RUTAS PÚBLICAS (visibles sin iniciar sesión) --- */}
+    
       <Route
         path="/"
         element={user ? <Navigate to="/dashboard" replace /> : <Login />}
       />
       <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/set-new-password" element={<SetNewPassword />} />
-      
-      {/* --- RUTAS PRIVADAS / PROTEGIDAS --- */}
+    
       <Route element={<MainLayout />}>
         
         <Route path="/dashboard" element={
@@ -58,7 +57,7 @@ function App() {
           </ProtectedRoute>
         } />
         
-        {/* Gestión de Usuarios (Solo Supervisor) */}
+        
         <Route path="/usuarios" element={
           <ProtectedRoute roles={['Supervisor','Administrativo']}>
             <GestionUsuarios />
@@ -75,7 +74,7 @@ function App() {
           </ProtectedRoute>
         } />
         
-        {/* Gestión de Vehículos (Solo Supervisor) */}
+       
         <Route path="/vehiculos" element={
           <ProtectedRoute roles={['Supervisor','Administrativo']}>
             <GestionVehiculos />
@@ -183,8 +182,7 @@ function App() {
 
       </Route>
 
-      
-      {/* Ruta "Catch-all" para cualquier otra URL */}
+   
       <Route path="*" element={<Navigate to={user ? "/dashboard" : "/"} replace />} />
 
     </Routes>

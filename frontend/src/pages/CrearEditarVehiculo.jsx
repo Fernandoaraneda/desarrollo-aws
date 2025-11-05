@@ -3,42 +3,28 @@ import { useParams, useNavigate } from 'react-router-dom';
 import apiClient from '/src/api/axios.js';
 import styles from '/src/css/creareditarvehiculo.module.css';
 
-// --- Constantes para validación ---
-// Permite modelos hasta el próximo año (ej: 2026 si estamos en 2025)
+
 const ANO_MAXIMO = new Date().getFullYear() + 1; 
-const ANO_MINIMO = 1980; // Un año razonable para un vehículo de flota
+const ANO_MINIMO = 1980; 
 
-// --- Funciones Helper de Formato (usadas al escribir) ---
-
-/**
- * Formatea la patente en tiempo real.
- * Solo permite letras (A-Z) y números (0-9).
- * Convierte a mayúsculas y limita a 6 caracteres.
- * (Válido para formatos BBCC12 y BB1234)
- */
 const formatPatente = (value) => {
   return value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6);
 };
 
-/**
- * Formatea campos de texto (Marca, Modelo, Color).
- * Solo permite letras, acentos, 'ñ' y espacios.
- * Limita a 50 caracteres.
- */
+
 const formatTextoVehiculo = (value) => {
-  // Permite letras, números, espacios, guiones, acentos y 'ñ'
   return value.replace(/[^a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\s-]/g, '').slice(0, 50);
 };
 
 const formatNumero = (value) => {
-  return value.replace(/\D/g, ''); // \D = "no dígito"
+  return value.replace(/\D/g, '');
 };
 
 const formatVIN = (value) => {
   return value.toUpperCase().replace(/[^A-HJ-NPR-Z0-9]/g, '').slice(0, 17);
 };
 
-// --- Componente Principal ---
+
 
 export default function CrearEditarVehiculo() {
   const { patente } = useParams();
@@ -59,15 +45,15 @@ export default function CrearEditarVehiculo() {
   const [isLoading, setIsLoading] = useState(isEditMode);
   const [error, setError] = useState(null);
 
-  // ... (Tu useEffect de Cargar datos del vehículo se mantiene igual) ...
+ 
   useEffect(() => {
     if (isEditMode) {
-      setIsLoading(true); // Asegurarse de mostrar carga
+      setIsLoading(true);
       apiClient.get(`/vehiculos/${patente}/`)
         .then(res => {
           setVehiculoData({
             ...res.data,
-            // Aseguramos que los valores nulos se muestren como strings vacíos
+            
             chofer: res.data.chofer || '',
             anio: res.data.anio || '',
             kilometraje: res.data.kilometraje || '',
@@ -84,28 +70,23 @@ export default function CrearEditarVehiculo() {
     }
   }, [patente, isEditMode]);
 
-  // ... (Tu useEffect de Cargar choferes se mantiene igual) ...
+ 
   useEffect(() => {
     apiClient.get('/choferes/')
       .then(res => {
-        setChoferes(res.data.results || res.data); // Ajustado para paginación si existe
+        setChoferes(res.data.results || res.data); 
       })
       .catch(() => {
-        // No sobreescribir el error principal si ya existe
+       
         setError(prev => prev || 'No se pudieron cargar los choferes disponibles.');
       });
   }, []);
 
   
-  /**
-   * --- ✅ HandleChange MODIFICADO ---
-   * Ahora usa las funciones de formato en tiempo real.
-   */
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     let finalValue = value;
-
-    // Aplicar formato según el campo
     switch (name) {
       case 'patente':
         finalValue = formatPatente(value);
@@ -135,10 +116,10 @@ export default function CrearEditarVehiculo() {
     e.preventDefault();
     setError(null);
 
-    // --- 1. Validaciones de Formato y Lógica ---
+    
     const { anio, kilometraje, patente: patenteValue, vin } = vehiculoData;
     
-    // Regex para patentes chilenas: (XX1111 o XXXX11)
+   
     const patenteRegex = /(^[A-Z]{4}\d{2}$)|(^[A-Z]{2}\d{4}$)/;
     if (!patenteRegex.test(patenteValue)) {
       setError("Formato de Patente inválido. Debe ser XX1111 o XXXX11.");
@@ -161,16 +142,16 @@ export default function CrearEditarVehiculo() {
         return;
     }
     
-    // --- 2. Preparar datos para enviar ---
+   
     const dataParaEnviar = {
         ...vehiculoData,
         anio: anioNum,
         kilometraje: parseInt(kilometraje, 10),
-        // Convertir '' (Sin asignar) de nuevo a 'null' para el backend
+      
         chofer: vehiculoData.chofer || null, 
     };
 
-    // --- 3. Lógica de Envío (sin cambios) ---
+ 
     try {
       if (isEditMode) {
         await apiClient.put(`/vehiculos/${patente}/`, dataParaEnviar);
@@ -205,7 +186,7 @@ export default function CrearEditarVehiculo() {
         <form onSubmit={handleSubmit}>
           <div className={styles.formGrid}>
             
-            {/* --- 👇 Campos de Input Actualizados --- */}
+      
             
             <div className={styles.formField}>
               <label htmlFor="patente">Patente</label>
@@ -217,7 +198,7 @@ export default function CrearEditarVehiculo() {
                 onChange={handleChange} 
                 required 
                 disabled={isEditMode}
-                maxLength={6} // Límite visual
+                maxLength={6}
                 placeholder="BBCC12 o BB1234"
               />
             </div>
@@ -250,27 +231,27 @@ export default function CrearEditarVehiculo() {
             <div className={styles.formField}>
               <label htmlFor="anio">Año</label>
               <input 
-                type="text" // Cambiado a text para permitir el formateo
+                type="text" 
                 name="anio" 
                 id="anio" 
                 value={vehiculoData.anio} 
                 onChange={handleChange} 
                 required 
                 disabled={isEditMode}
-                maxLength={4} // Límite visual
+                maxLength={4} 
                 placeholder={`Ej: ${new Date().getFullYear()}`}
               />
             </div>
             <div className={styles.formField}>
               <label htmlFor="kilometraje">Kilometraje</label>
               <input 
-                type="text" // Cambiado a text para permitir el formateo
+                type="text" 
                 name="kilometraje" 
                 id="kilometraje" 
                 value={vehiculoData.kilometraje} 
                 onChange={handleChange} 
                 required 
-                maxLength={7} // Límite visual
+                maxLength={7}
                 placeholder="Ej: 150000"
               />
             </div>
@@ -294,12 +275,11 @@ export default function CrearEditarVehiculo() {
                 value={vehiculoData.vin} 
                 onChange={handleChange}
                 disabled={isEditMode}
-                maxLength={17} // Límite visual
+                maxLength={17} 
                 placeholder="17 caracteres alfanuméricos"
               />
             </div>
             
-            {/* --- Fin de Campos Actualizados --- */}
             
             <div className={styles.formField}>
               <label htmlFor="chofer">Chofer a cargo</label>

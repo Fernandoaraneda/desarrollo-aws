@@ -3,12 +3,10 @@ import { useParams, useNavigate } from 'react-router-dom';
 import apiClient from '/src/api/axios.js';
 import styles from '/src/css/creareditarusuario.module.css';
 
-// --- 👇 Funciones Helper para validación y formato ---
 
 /**
- * 1. Calcula el Dígito Verificador de un RUT chileno.
- * @param {string} rutCuerpo - El cuerpo del RUT (solo números).
- * @returns {string} El dígito verificador ('0'-'9' o 'K').
+ * @param {string} rutCuerpo 
+ * @returns {string} 
  */
 const calcularDV = (rutCuerpo) => {
   let suma = 0;
@@ -24,9 +22,7 @@ const calcularDV = (rutCuerpo) => {
   return `${dvCalculado}`;
 };
 
-/**
- * 2. Formatea un RUT limpio (ej: 123456789) a formato "12.345.678-9".
- */
+
 const formatearRut = (rut) => {
   const rutLimpio = rut.replace(/[^0-9kK]/gi, '');
   if (rutLimpio.length < 2) return rutLimpio;
@@ -39,9 +35,7 @@ const formatearRut = (rut) => {
   return `${cuerpoFormateado}-${dv}`;
 };
 
-/**
- * 3. Valida un RUT (compara el DV ingresado con el DV calculado).
- */
+
 const validarRut = (rut) => {
   const rutLimpio = rut.replace(/[^0-9kK]/gi, '');
   if (rutLimpio.length < 2) return false;
@@ -52,25 +46,17 @@ const validarRut = (rut) => {
   return calcularDV(cuerpo) === dv;
 };
 
-// --- Fin Funciones RUT ---
 
-/**
- * Limita el teléfono a 9 dígitos numéricos.
- */
 const formatTelefono = (value) => {
-  return value.replace(/\D/g, '').slice(0, 9); // Solo números, max 9
+  return value.replace(/\D/g, '').slice(0, 9);
 };
 
-/**
- * Bloquea cualquier caracter que no sea letra, espacio o acento.
- * Limita a 20 caracteres.
- */
+
 const formatTexto = (value) => {
   return value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s']/g, '').slice(0, 20);
 };
 
 
-// --- Componente Principal ---
 
 export default function CrearEditarUsuario() {
   const { id } = useParams();
@@ -90,8 +76,8 @@ export default function CrearEditarUsuario() {
   });
   
   const [isLoading, setIsLoading] = useState(isEditMode);
-  const [error, setError] = useState(null); // Errores generales del formulario
-  const [rutError, setRutError] = useState(''); // Error específico del RUT
+  const [error, setError] = useState(null);
+  const [rutError, setRutError] = useState(''); 
 
   useEffect(() => {
     if (isEditMode) {
@@ -113,20 +99,18 @@ export default function CrearEditarUsuario() {
     }
   }, [id, isEditMode]);
 
-  /**
-   * Maneja los cambios MIENTRAS SE ESCRIBE
-   */
+
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     
     let finalValue = type === 'checkbox' ? checked : value;
 
-    // Aplicar formatos en tiempo real
+    
     switch(name) {
       case 'rut':
-        // Mientras escribe, solo limpiamos y limitamos a 9 chars (12345678K)
+      
         finalValue = value.replace(/[^0-9kK]/gi, '').slice(0, 9);
-        // Si el RUT cambia, limpiamos el error
+       
         setRutError(''); 
         break;
       case 'telefono':
@@ -144,28 +128,26 @@ export default function CrearEditarUsuario() {
     }));
   };
 
-  /**
-   * Maneja la validación y formato del RUT AL SALIR del campo
-   */
+ 
   const handleRutBlur = (e) => {
     const rutLimpio = e.target.value;
     
     if (rutLimpio.length < 2) {
-      // No hacer nada si está vacío o incompleto
+      
       return; 
     }
 
     if (validarRut(rutLimpio)) {
-      // Si es válido, lo formateamos y actualizamos el estado
+      
       setRutError('');
       setUserData(prev => ({
         ...prev,
         rut: formatearRut(rutLimpio)
       }));
     } else {
-      // Si es inválido, mostramos un error
+     
       setRutError('El RUT es inválido (Dígito Verificador no coincide).');
-      // No formateamos, dejamos el valor "malo" para que el usuario lo vea
+  
     }
   };
 
@@ -173,18 +155,17 @@ export default function CrearEditarUsuario() {
     e.preventDefault();
     setError(null);
 
-    // 1. Re-validar el RUT antes de enviar
+   
     if (rutError) {
       setError("Por favor, corrige el RUT antes de guardar.");
       return;
     }
     
-    // Si el usuario no salió del campo RUT, lo validamos ahora
+    
     let rutFinal = userData.rut;
     if (!userData.rut.includes('-')) {
       if (validarRut(userData.rut)) {
         rutFinal = formatearRut(userData.rut);
-        // Actualizamos el estado por si acaso, aunque no se vea
         setUserData(prev => ({ ...prev, rut: rutFinal }));
       } else {
         setRutError('El RUT es inválido.');
@@ -193,13 +174,13 @@ export default function CrearEditarUsuario() {
       }
     }
 
-    // 2. Validar Teléfono
+   
     if (userData.telefono && userData.telefono.length !== 9) {
       setError("El teléfono debe tener 9 dígitos.");
       return;
     }
 
-    // 3. Preparar datos para enviar (el RUT ya está formateado)
+    
     const dataParaEnviar = { ...userData, rut: rutFinal };
 
     try {
@@ -210,7 +191,7 @@ export default function CrearEditarUsuario() {
       }
       navigate('/usuarios');
     } catch (err) {
-      // (Manejo de errores del backend sin cambios...)
+      
       if (err.response && err.response.data) {
         const errorData = err.response.data;
         if (typeof errorData === 'object') {
@@ -250,7 +231,7 @@ export default function CrearEditarUsuario() {
               <input type="email" name="email" id="email" value={userData.email} onChange={handleChange} required />
             </div>
 
-            {/* --- 👇 CAMPOS CON VALIDACIÓN EN TIEMPO REAL --- */}
+            
             <div className={styles.formField}>
               <label htmlFor="first_name">Nombre</label>
               <input 
@@ -259,7 +240,7 @@ export default function CrearEditarUsuario() {
                 id="first_name" 
                 value={userData.first_name} 
                 onChange={handleChange} 
-                maxLength={20} // Límite visual a 20
+                maxLength={20}
               />
             </div>
             <div className={styles.formField}>
@@ -270,11 +251,11 @@ export default function CrearEditarUsuario() {
                 id="last_name" 
                 value={userData.last_name} 
                 onChange={handleChange} 
-                maxLength={20} // Límite visual a 20
+                maxLength={20} 
               />
             </div>
 
-            {/* --- 👇 CAMPO DE RUT CON onBlur --- */}
+            
             <div className={styles.formField}>
               <label htmlFor="rut">RUT</label>
               <input 
@@ -282,14 +263,14 @@ export default function CrearEditarUsuario() {
                 name="rut" 
                 id="rut" 
                 value={userData.rut} 
-                onChange={handleChange}  // Limpia y limita a 9 (ej: 12345678k)
-                onBlur={handleRutBlur}    // Formatea y valida al salir
+                onChange={handleChange} 
+                onBlur={handleRutBlur}  
                 required 
                 placeholder="Ej: 123456789 (sin puntos ni guion)"
-                maxLength={isEditMode || userData.rut.includes('-') ? 12 : 9} // Longitud dinámica
+                maxLength={isEditMode || userData.rut.includes('-') ? 12 : 9} 
                 disabled={isEditMode}
               />
-              {/* Mostramos el error de RUT específico */}
+              
               {rutError && <p className={styles.fieldError}>{rutError}</p>}
             </div>
             
@@ -302,11 +283,10 @@ export default function CrearEditarUsuario() {
                 value={userData.telefono} 
                 onChange={handleChange} 
                 placeholder="Ej: 912345678"
-                maxLength={9} // Límite visual a 9
+                maxLength={9} 
               />
             </div>
-            
-            {/* --- FIN CAMPOS MODIFICADOS --- */}
+          
             
             {!isEditMode && (
               <div className={`${styles.formField} ${styles.fullWidth}`}>
@@ -331,7 +311,7 @@ export default function CrearEditarUsuario() {
             </div>
           </div>
           
-          {/* Error general del formulario */}
+         
           {error && <p style={{ color: 'red', marginTop: '1rem', fontWeight: 'bold' }}>{error}</p>}
           
           <div className={styles.formActions}>

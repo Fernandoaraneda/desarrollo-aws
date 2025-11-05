@@ -8,18 +8,17 @@ import AlertModal from '/src/components/modals/AlertModal.jsx';
 export default function GestionAgenda() {
     const { user } = useUserStore();
 
-    // --- Estados Simplificados ---
+
     const [vehiculos, setVehiculos] = useState([]);
-    // El formData NO incluye fecha_hora_programada
+
     const [formData, setFormData] = useState({ vehiculo: '', motivo_ingreso: '', solicita_grua: false });
     const [imagenFile, setImagenFile] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
 
-    // Estados para el Modal de Error
     const [error, setError] = useState(null);
     const [isAlertOpen, setIsAlertOpen] = useState(false);
     const [successMessage, setSuccessMessage] = useState(null);
-    // Carga inicial (Solo vehículos)
+
     useEffect(() => {
         const loadVehiculos = async () => {
             setIsLoading(true);
@@ -34,73 +33,64 @@ export default function GestionAgenda() {
             }
         };
         loadVehiculos();
-    }, []); // <- Se ejecuta solo una vez
+    }, []);
 
-    // --- ARREGLO 2: Lógica de 'fetchCapacidad' y 'availableSlots' ELIMINADA ---
-    // (Ya no hay código aquí, no se usa 'selectedDate')
 
     const handleImageChange = (e) => {
         setImagenFile(e.target.files[0]);
     };
 
-    // --- ARREGLO 3: handleSubmit CORREGIDO (estaba faltando en tu archivo) ---
+ 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError(null);
         setSuccessMessage(null);
         setIsAlertOpen(false);
 
-        // 1. Validar que los campos necesarios estén
         if (!formData.vehiculo || !formData.motivo_ingreso) {
             setError("Por favor, complete el vehículo y el motivo.");
             setIsAlertOpen(true);
             return;
         }
 
-        // 2. Construir el FormData para enviar
         const dataParaEnviar = new FormData();
         dataParaEnviar.append('vehiculo', formData.vehiculo);
         dataParaEnviar.append('motivo_ingreso', formData.motivo_ingreso);
         dataParaEnviar.append('solicita_grua', formData.solicita_grua || false);
-        dataParaEnviar.append('duracion_estimada_minutos', 60); // Valor fijo
-
-        // NO enviamos 'fecha_hora_programada'. El backend la guardará como NULO.
-        // (Asegúrate de haber hecho la migración de 'null=True' en el models.py)
-
+        dataParaEnviar.append('duracion_estimada_minutos', 60); 
         if (imagenFile) {
             dataParaEnviar.append('imagen_averia', imagenFile);
         }
 
-        // 3. Enviar a la API
+    
         try {
             await apiClient.post('/agendamientos/', dataParaEnviar, {
                 headers: { 'Content-Type': 'multipart/form-data' },
             });
 
-            // 4. Limpiar formulario y notificar éxito
+       
             setFormData({ vehiculo: '', motivo_ingreso: '', solicita_grua: false });
             setImagenFile(null);
-            if (e.target) e.target.reset(); // Resetea el input de archivo
+            if (e.target) e.target.reset();
             setSuccessMessage("¡Solicitud de cita enviada! El supervisor la revisará y le asignará una hora a la brevedad.");
             setIsAlertOpen(true);
 
         } catch (err) {
-            // 5. Manejar errores (ej: el validador de duplicados del Serializer)
+         
             const errorData = err.response?.data;
             let errorMsg = "Error al enviar la solicitud.";
             if (typeof errorData === 'string') {
                 errorMsg = errorData;
             } else if (errorData && typeof errorData === 'object') {
-                // Captura el error de 'validate' (non_field_errors)
+ 
                 errorMsg = errorData.non_field_errors?.[0] || Object.values(errorData)[0];
             }
 
-            setError(String(errorMsg)); // Asegurarnos que sea string
+            setError(String(errorMsg)); 
             setIsAlertOpen(true);
         }
     };
 
-    // Lógica de vehículos (correcta)
     const vehiculosDelUsuario = useMemo(() => {
         if (!user || !vehiculos.length) return [];
         if (user.rol === 'Supervisor' || user.rol === 'Administrativo') {
@@ -109,7 +99,7 @@ export default function GestionAgenda() {
         return vehiculos.filter(v => v.chofer === user.id);
     }, [vehiculos, user]);
 
-    // Lógica de 'handleChange' (correcta)
+  
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
         setFormData(prev => ({
@@ -120,7 +110,7 @@ export default function GestionAgenda() {
 
     if (isLoading) return <p>Cargando...</p>;
 
-    // --- Renderizado Simplificado ---
+
     return (
         <div className={styles.pageWrapper}>
             <header className={styles.header}>
@@ -130,10 +120,8 @@ export default function GestionAgenda() {
             <div className={styles.contentGrid}>
                 <div className={styles.formCard}>
                     <h2>Crear Nueva Solicitud</h2>
-                    {/* El 'onSubmit' ahora apunta a la función handleSubmit correcta */}
+              
                     <form onSubmit={handleSubmit}>
-
-                        {/* --- CAMPO DE FECHA Y HORA ELIMINADOS --- */}
 
                         <div className={styles.formField}>
                             <label htmlFor="vehiculo">Vehículo</label>
@@ -177,7 +165,6 @@ export default function GestionAgenda() {
                             />
                         </div>
 
-                        {/* Texto de error eliminado de aquí */}
                         <button type="submit" className={styles.submitButton} style={{ marginTop: '1rem' }}>Enviar Solicitud</button>
                     </form>
                 </div>
@@ -189,18 +176,18 @@ export default function GestionAgenda() {
                 </div>
             </div>
 
-            {/* El Modal de Alerta ahora maneja todos los errores */}
+         
             <AlertModal
                 isOpen={isAlertOpen}
-                // Al cerrar, limpiamos AMBOS mensajes
+                
                 onClose={() => {
                     setIsAlertOpen(false);
                     setError(null);
                     setSuccessMessage(null);
                 }}
-                title={error ? "Error" : "Éxito"} // Título dinámico
-                message={error || successMessage} // Muestra el mensaje que exista
-                intent={error ? "danger" : "success"} // El intent se basa en si hay un error
+                title={error ? "Error" : "Éxito"}
+                message={error || successMessage}
+                intent={error ? "danger" : "success"} 
             />
         </div>
     );

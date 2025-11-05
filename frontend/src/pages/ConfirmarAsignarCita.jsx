@@ -1,5 +1,3 @@
-// src/pages/ConfirmarAsignarCita.jsx
-
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import apiClient from '/src/api/axios.js';
@@ -9,13 +7,13 @@ import AlertModal from '/src/components/modals/AlertModal.jsx';
 import ConfirmModal from '/src/components/modals/ConfirmModal.jsx';
 
 import DatePicker, { registerLocale } from "react-datepicker";
-import { es } from "date-fns/locale/es"; // Importa el idioma
-import "react-datepicker/dist/react-datepicker.css"; // Importa el CSS base del calendario
+import { es } from "date-fns/locale/es";
+import "react-datepicker/dist/react-datepicker.css"; 
 
-// --- 👇 CAMBIO 2: Registrar el idioma español ---
+
 registerLocale("es", es);
 
-// (El resto de tus constantes HORA_INICIO, etc. se mantienen)
+
 const HORA_INICIO = 9;
 const HORA_FIN = 19;
 const DURACION_CITA_MINUTOS = 60;
@@ -24,7 +22,7 @@ export default function ConfirmarAsignarCita() {
     const { id } = useParams();
     const navigate = useNavigate();
 
-    // (Estados principales - sin cambios)
+    
     const [agendamiento, setAgendamiento] = useState(null);
     const [mecanicos, setMecanicos] = useState([]);
 
@@ -33,7 +31,6 @@ export default function ConfirmarAsignarCita() {
     const [selectedMecanicoId, setSelectedMecanicoId] = useState('');
     const [selectedSlot, setSelectedSlot] = useState('');
 
-    // (El resto de tus estados se mantienen)
     const [agendaMecanico, setAgendaMecanico] = useState([]);
     const [isLoadingAgenda, setIsLoadingAgenda] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
@@ -44,7 +41,7 @@ export default function ConfirmarAsignarCita() {
     const [motivoCambio, setMotivoCambio] = useState('');
     const [fechaOriginal, setFechaOriginal] = useState(null);
 
-    // 1. Carga inicial (Cita y lista de Mecánicos)
+ 
     useEffect(() => {
         const loadData = async () => {
             try {
@@ -58,7 +55,7 @@ export default function ConfirmarAsignarCita() {
 
                 if (agendamientoRes.data.fecha_hora_programada) {
                     const fecha = new Date(agendamientoRes.data.fecha_hora_programada);
-                    // --- 👇 CAMBIO 4: Guardamos un objeto Date ---
+                    
                     setSelectedDate(fecha);
                     setFechaOriginal(fecha.toISOString());
                 } else {
@@ -75,14 +72,14 @@ export default function ConfirmarAsignarCita() {
         loadData();
     }, [id]);
 
-    // 2. Carga la agenda OCUPADA del mecánico
+  
     useEffect(() => {
         if (!selectedMecanicoId || !selectedDate) {
             setAgendaMecanico([]);
             return;
         }
 
-        // --- 👇 CAMBIO 5: Formateamos la fecha (objeto) a string para la API ---
+      
         const fechaParaAPI = selectedDate.toISOString().split('T')[0];
 
         const fetchAgendaMecanico = async () => {
@@ -90,7 +87,7 @@ export default function ConfirmarAsignarCita() {
             try {
                 const response = await apiClient.get(
                     `/mecanicos/${selectedMecanicoId}/agenda/`,
-                    { params: { fecha: fechaParaAPI } } // Usamos el string formateado
+                    { params: { fecha: fechaParaAPI } } 
                 );
                 setAgendaMecanico(response.data.results || response.data || []);
             } catch (err) {
@@ -102,12 +99,12 @@ export default function ConfirmarAsignarCita() {
         };
 
         fetchAgendaMecanico();
-    }, [selectedMecanicoId, selectedDate]); // <- Se actualiza con ambos
+    }, [selectedMecanicoId, selectedDate]); 
 
-    // 3. Calcula los slots DISPONIBLES
+
     const availableSlots = useMemo(() => {
         const slots = [];
-        // Usamos el string de la fecha para construir los slots
+        
         const fechaString = selectedDate.toISOString().split('T')[0];
         const dayStart = new Date(`${fechaString}T${String(HORA_INICIO).padStart(2, '0')}:00:00`);
         const dayEnd = new Date(`${fechaString}T${String(HORA_FIN).padStart(2, '0')}:00:00`);
@@ -133,7 +130,7 @@ export default function ConfirmarAsignarCita() {
         return available;
     }, [selectedDate, agendaMecanico]);
 
-    // 4. Envía el formulario (Sin cambios)
+  
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError(null);
@@ -167,26 +164,25 @@ export default function ConfirmarAsignarCita() {
         }
     };
     const handleOpenCancelModal = () => {
-        setError(null); // Limpia errores antiguos
+        setError(null); 
         setSuccessMessage(null);
         setIsConfirmCancelOpen(true);
     };
 
-    // 2. Esta función se ejecuta SÓLO si el usuario confirma en el modal
+    
     const handleDoCancel = async () => {
-        setIsConfirmCancelOpen(false); // Cierra el modal de confirmación
+        setIsConfirmCancelOpen(false); 
 
         try {
-            // Llama al endpoint 'cancelar' que ya existe en tu backend
+            
             await apiClient.post(`/agendamientos/${id}/cancelar/`);
 
-            // Muestra tu modal de éxito (el mismo que usamos antes)
             setSuccessMessage("La cita ha sido cancelada exitosamente.");
             setIsAlertOpen(true);
-            // La lógica del AlertModal se encargará de navegar a /panel-supervisor
+           
 
         } catch (err) {
-            // Muestra tu modal de error
+         
             const errorMsg = err.response?.data?.error || "No se pudo cancelar la cita.";
             setError(errorMsg);
             setIsAlertOpen(true);
@@ -202,7 +198,7 @@ export default function ConfirmarAsignarCita() {
         <div className={styles.pageWrapper}>
             <div className={styles.formCard}>
 
-                {/* (Tu JSX de .formHeader y .infoSection se mantiene igual) */}
+             
                 <div className={styles.formHeader}>
                     <h1><CalendarCheck /> Confirmar y Asignar Cita</h1>
                     <p>Revisa los detalles de la solicitud y asigna un cupo.</p>
@@ -225,7 +221,7 @@ export default function ConfirmarAsignarCita() {
                             <img
                                 src={agendamiento.imagen_averia}
                                 alt="Avería reportada"
-                                className={styles.fullWidthImage} // Usamos el estilo que ya existe
+                                className={styles.fullWidthImage} 
                             />
                         </a>
                     </div>
@@ -236,27 +232,27 @@ export default function ConfirmarAsignarCita() {
                     <hr className={styles.divider} />
                     <h4><CalendarCheck size={16} /> Asignación de Cupo</h4>
 
-                    {/* --- 👇 CAMBIO 5: Reemplazar el <input> feo por el <DatePicker> bonito --- */}
+                   
                     <div className={styles.formField}>
                         <label htmlFor="selectedDate"><strong>1. Seleccione la Fecha</strong></label>
-                        {/* Usamos un div 'wrapper' para que el CSS lo tome bien */}
+                       
                         <div className={styles.datePickerWrapper}>
                             <DatePicker
                                 id="selectedDate"
-                                selected={selectedDate} // El estado (objeto Date)
+                                selected={selectedDate} 
                                 onChange={(date) => {
                                     setSelectedDate(date);
-                                    setSelectedSlot(''); // Resetea la hora al cambiar de día
+                                    setSelectedSlot(''); 
                                 }}
-                                locale="es" // En español
-                                dateFormat="dd-MM-yyyy" // Formato
-                                minDate={new Date()} // No se pueden elegir días pasados
-                                className={styles.dateInput} // Reutiliza tu estilo de input
+                                locale="es" 
+                                dateFormat="dd-MM-yyyy" 
+                                minDate={new Date()} 
+                                className={styles.dateInput}
                                 required
                             />
                         </div>
                     </div>
-                    {/* --- Fin del reemplazo --- */}
+                 
 
 
                     <div className={styles.formField}>
@@ -270,7 +266,7 @@ export default function ConfirmarAsignarCita() {
                             }}
                             required
                         >
-                            {/* ... (opciones de mecánico) ... */}
+                           
                             <option value="">-- Seleccione un mecánico --</option>
                             {mecanicos.map(m => (
                                 <option key={m.id} value={m.id}>{m.first_name} {m.last_name}</option>
@@ -287,7 +283,7 @@ export default function ConfirmarAsignarCita() {
                             required
                             disabled={!selectedMecanicoId || isLoadingAgenda}
                         >
-                            {/* ... (opciones de hora) ... */}
+                       
                             <option value="">-- {
                                 isLoadingAgenda ? "Cargando horas..." :
                                     !selectedMecanicoId ? "Seleccione un mecánico primero" :
@@ -306,10 +302,10 @@ export default function ConfirmarAsignarCita() {
                         </select>
                     </div>
 
-                    {/* (El resto de tu formulario, motivo, alerta de grúa y botones se mantiene igual) */}
+                    
                     {fechaOriginal && selectedSlot && selectedSlot !== fechaOriginal && (
                         <div className={styles.formField}>
-                            {/* ... (textarea de motivo) ... */}
+                            
                             <label htmlFor="motivoCambio"><strong>Motivo del Reagendamiento (Obligatorio)</strong></label>
                             <textarea
                                 id="motivoCambio"
@@ -332,9 +328,9 @@ export default function ConfirmarAsignarCita() {
                         <button type="button" className={styles.cancelButton} onClick={() => navigate('/panel-supervisor')}>Volver</button>
                         <button
                             type="button"
-                            className={styles.cancelButton} // Reutilizamos el estilo
-                            style={{ backgroundColor: '#dc2626', color: 'white' }} // Lo hacemos rojo
-                            onClick={handleOpenCancelModal} // Llama a la función del paso 3
+                            className={styles.cancelButton} 
+                            style={{ backgroundColor: '#dc2626', color: 'white' }}
+                            onClick={handleOpenCancelModal} 
                         >
                             <Trash2 size={16} /> Cancelar Cita
                         </button>
@@ -367,7 +363,7 @@ export default function ConfirmarAsignarCita() {
                 title="Confirmar Cancelación"
                 message={`¿Estás seguro de que quieres cancelar esta cita? Esta acción marcará la cita como 'Cancelado' y no se podrá revertir.`}
                 confirmButtonText="Sí, Cancelar Cita"
-                intent="danger" // Para que el botón de confirmar sea rojo
+                intent="danger"
             />
         </div>
     );
