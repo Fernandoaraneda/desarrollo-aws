@@ -3,7 +3,7 @@ from pathlib import Path
 from decouple import config
 from datetime import timedelta
 import dj_database_url
-
+from dotenv import load_dotenv
 # -----------------------------
 # BASE DIR
 # -----------------------------
@@ -22,6 +22,11 @@ ALLOWED_HOSTS = config(
     "ALLOWED_HOSTS",
     default="127.0.0.1,localhost"
 ).split(",")
+
+# Render define esta variable automáticamente en producción
+RENDER_EXTERNAL_HOSTNAME = config('RENDER_EXTERNAL_HOSTNAME', default=None)
+if RENDER_EXTERNAL_HOSTNAME:
+    ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
 
 # -----------------------------
 # INSTALLED APPS
@@ -87,37 +92,22 @@ TEMPLATES = [
 # Usa DATABASE_URL en ambos entornos
 # .env.local -> mysql://root:pass@127.0.0.1:3306/mi_db_local
 # .env.production -> mysql://root:pass@host:puerto/railway
-if DEBUG:
-    # MODO DESARROLLO (tu PC)
-    # Sigue usando tu variable DATABASE_URL de tu archivo .env local
-    # Ejemplo .env: DATABASE_URL=mysql://root:tu_pass_local@127.0.0.1:3306/capstone_db_local
-    DATABASES = {
-        "default": dj_database_url.config(
-            default=config("DATABASE_URL"),
-            conn_max_age=600,
-        )
-    }
-else:
-    # MODO PRODUCCIÓN (Render)
-    # Usa las variables de entorno separadas que configuraremos 
-    # en el panel de Render.
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.mysql',
-            'HOST': config('DB_HOST'),
-            'PORT': config('DB_PORT', cast=int), # Asegúrate de castear a entero
-            'USER': config('DB_USER'),
-            'PASSWORD': config('DB_PASSWORD'),
-            'NAME': config('DB_NAME'),
-            'OPTIONS': {
-                # Esta es la parte clave para forzar el SSL que SkySQL requiere
-                'ssl': {
-                    # Render tiene los certificados CA en esta ruta estándar
-                    'ca': '/etc/ssl/certs/ca-certificates.crt',
-                }
-            }
-        }
-    }
+DATABASES = {  # <--- ¡
+    'default': dj_database_url.config(
+        # config('DATABASE_URL') leerá la variable de tu archivo .env
+        # o, si no existe, buscará en las variables de entorno del sistema (como en Render)
+        default=config('DATABASE_URL'),
+        conn_max_age=600,
+        # Importante: Le decimos que use el motor de PostgreSQL
+        # si la URL no lo especifica (aunque la de Render sí lo hará)
+        engine='django.db.backends.postgresql' 
+    )
+}
+
+# Opcional: Si quieres forzar SSL en producción (Render lo maneja bien,
+# pero es una buena práctica si tu DB estuviera en otro proveedor)
+if not DEBUG:
+    DATABASES['default']['OPTIONS'] = {'sslmode': 'require'}
 
 # -----------------------------
 # PASSWORD VALIDATION
