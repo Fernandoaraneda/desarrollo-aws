@@ -307,14 +307,14 @@ class OrdenPausa(TimeStampedModel):
         ordering = ['-inicio']
 
 class OrdenDocumento(models.Model):
-    TIPOS = [('Foto', 'Foto'), ('Informe', 'Informe'), ('PDF', 'PDF'), ('Otro', 'Otro')]
+    tipo = models.CharField(max_length=50, blank=True, null=True)
     orden = models.ForeignKey(Orden, on_delete=models.CASCADE, related_name='documentos')
-    tipo = models.CharField(max_length=50, choices=TIPOS)
+    
     descripcion = models.CharField(max_length=255, blank=True)
     archivo = models.FileField(upload_to='ordenes_documentos/%Y/%m/')
     fecha = models.DateTimeField(auto_now_add=True)
     subido_por = models.ForeignKey(Usuario, on_delete=models.PROTECT)
-
+    estado_en_carga = models.CharField("Estado al Cargar", max_length=50, blank=True, null=True, db_index=True)
     def __str__(self):
         return f"{self.get_tipo_display()} para Orden #{self.orden.id}"
 

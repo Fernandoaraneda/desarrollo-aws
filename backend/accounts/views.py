@@ -25,7 +25,7 @@ from django.utils.html import strip_tags
 from django.conf import settings
 from decouple import config
 from rest_framework import filters
-
+import os
 
 # accounts/views.py (Línea 26 - CORREGIDA)
 from .models import Orden, Agendamiento, Vehiculo, OrdenHistorialEstado, OrdenPausa, OrdenDocumento, Notificacion,LlaveVehiculo, PrestamoLlave, LlaveHistorialEstado
@@ -677,6 +677,8 @@ class AgendamientoViewSet(viewsets.ModelViewSet):
 
 
 class OrdenViewSet(viewsets.ModelViewSet):
+
+    
     serializer_class = OrdenSerializer
     permission_classes = [IsAuthenticated]
 
@@ -801,12 +803,24 @@ class OrdenViewSet(viewsets.ModelViewSet):
     def subir_documento(self, request, pk=None):
         """Sube un documento o foto asociado a una orden."""
         orden = self.get_object()
+        archivo = request.data.get('archivo')
+        if not archivo:
+            return Response({'error': 'No se envió ningún archivo.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Obtener la extensión del archivo, ej: ".pdf" o ".jpg"
+        file_name, file_extension = os.path.splitext(archivo.name)
+        tipo_detectado = file_extension.lower() # Guarda la extensión
         
         # Usamos un serializer específico para la subida de archivos
         serializer = OrdenDocumentoSerializer(data=request.data, context={'request': request})
         if serializer.is_valid():
             # Asignamos la orden y el usuario antes de guardar
-            serializer.save(orden=orden, subido_por=request.user)
+            serializer.save(
+                orden=orden, 
+                subido_por=request.user,
+                estado_en_carga=orden.estado,
+                tipo=tipo_detectado
+            )
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 

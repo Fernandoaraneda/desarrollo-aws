@@ -371,8 +371,8 @@ class OrdenDocumentoSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = OrdenDocumento
-        fields = ['id', 'tipo', 'descripcion', 'archivo', 'archivo_url', 'fecha', 'subido_por_nombre']
-        read_only_fields = ['subido_por_nombre', 'fecha', 'archivo_url']
+        fields = ['id', 'tipo', 'descripcion', 'archivo', 'archivo_url', 'fecha', 'subido_por_nombre', 'estado_en_carga']
+        read_only_fields = ['subido_por_nombre', 'fecha', 'archivo_url', 'estado_en_carga']
 
     def get_archivo_url(self, obj):
         """Devuelve la URL absoluta del archivo (si existe)."""
