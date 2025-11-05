@@ -23,8 +23,10 @@ from django.core.mail import send_mail
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
 from django.conf import settings
-
+from decouple import config
 from rest_framework import filters
+
+
 # accounts/views.py (Línea 26 - CORREGIDA)
 from .models import Orden, Agendamiento, Vehiculo, OrdenHistorialEstado, OrdenPausa, OrdenDocumento, Notificacion,LlaveVehiculo, PrestamoLlave, LlaveHistorialEstado
 from .serializers import (
@@ -156,7 +158,7 @@ class PasswordResetRequestView(generics.GenericAPIView):
 
         token = default_token_generator.make_token(user)
         uid = urlsafe_base64_encode(force_bytes(user.pk))
-        frontend = getattr(settings, "FRONTEND_URL", "http://localhost:5173")
+        frontend = config("FRONTEND_URL", default="http://localhost:5173")
         reset_link = f"{frontend.rstrip('/')}/set-new-password?uid={uid}&token={token}"
 
         # En producción: mover esto a una task asíncrona (Celery, RQ...)
