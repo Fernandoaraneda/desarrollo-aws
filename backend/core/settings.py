@@ -12,8 +12,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # -----------------------------
 # SECRET KEY y DEBUG
 # -----------------------------
-SECRET_KEY = config("SECRET_KEY", default="dev-secret")
-DEBUG = config("DEBUG", default=True, cast=bool)
+SECRET_KEY = config("SECRET_KEY")
+DEBUG = config("DEBUG", default=False, cast=bool)
 
 # -----------------------------
 # ALLOWED HOSTS
