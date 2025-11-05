@@ -161,8 +161,7 @@ class Command(BaseCommand):
         self.stdout.write(self.style.SUCCESS(f"{vehiculos_creados_count} vehículos nuevos creados, {vehiculos_actualizados_count} vehículos existentes verificados."))
 
         
-        # --- 4. Crear Productos y Servicios (Catálogo) ---
-        # Esta lógica ya era correcta y no crea duplicados
+   
         Producto.objects.get_or_create(sku='ACE-10W40', defaults={'nombre': 'Aceite Motor 10W40', 'precio_venta': 12500, 'stock': 50})
         Producto.objects.get_or_create(sku='FIL-AIRE-01', defaults={'nombre': 'Filtro de Aire Motor', 'precio_venta': 8990, 'stock': 30})
         Servicio.objects.get_or_create(nombre='Cambio de Aceite', defaults={'precio_base': 25000})
