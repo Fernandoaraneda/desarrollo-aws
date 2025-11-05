@@ -165,10 +165,7 @@ AUTH_USER_MODEL = "accounts.Usuario"
 # -----------------------------
 # EMAIL
 # -----------------------------
-EMAIL_BACKEND = config(
-    "EMAIL_BACKEND",
-    default="django.core.mail.backends.console.EmailBackend"
-)
+
 
 # -----------------------------
 # CORS   CORS_ALLOW_ALL_ORIGINS = config("CORS_ALLOW_ALL_ORIGINS", default=True, cast=bool)
