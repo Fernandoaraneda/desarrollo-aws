@@ -8,30 +8,36 @@
   --accent-color: #38bdf8;
   --accent-color-hover: #0ea5e9;
   --border-color: #374151;
-  --sidebar-width: 260px; /* Ancho de la sidebar en escritorio */
-  --header-height: 64px;  /* Altura del header */
+  --sidebar-width: 260px;
+  --header-height: 64px;
 }
 
 /* --- Estructura Principal (Layout) --- */
 .layoutWrapper {
   display: flex;
   background-color: var(--bg-content);
-  min-height: 100vh;
+  min-height: 100dvh; /* Usamos dvh para altura dinámica */
 }
 
 /* --- Barra Lateral (Sidebar) --- */
 .sidebar {
   width: var(--sidebar-width);
   background-color: var(--bg-sidebar);
-  height: 100vh;
-  position: fixed; /* 👈 La fijamos a la pantalla */
+  position: fixed;
   top: 0;
   left: 0;
   display: flex;
   flex-direction: column;
-  z-index: 1000; /* 👈 Se asegura que esté por encima de todo */
-  transition: transform 0.3s ease; /* 👈 Animación para móvil */
-  height: 100vh
+  z-index: 1000;
+  transition: transform 0.3s ease;
+  
+  /* LA SOLUCIÓN CLAVE:
+    Usamos 100dvh (Dynamic Viewport Height) en lugar de 100vh.
+    Esto se ajusta si la barra de direcciones del móvil aparece o desaparece.
+    El 'fallback' 100vh es para navegadores más antiguos.
+  */
+  height: 100vh; /* Fallback */
+  height: 100dvh; /* Solución para móviles */
 }
 
 .sidebarBrand {
@@ -44,19 +50,20 @@
   font-weight: 700;
   text-decoration: none;
   border-bottom: 1px solid var(--border-color);
-  flex-shrink: 0; /* Evita que se encoja */
-  
+  flex-shrink: 0; /* No se encoje */
 }
 
 .sidebarBrand i {
   margin-right: 12px;
 }
 
+/* ESTA ES LA PARTE IMPORTANTE PARA EL SCROLL */
 .sidebarNav {
-  flex-grow: 1;
+  flex-grow: 1; /* Ocupa todo el espacio vertical disponible */
   padding: 1rem 0;
-  overflow-y: auto; /* Scroll si hay muchos enlaces */
+  overflow-y: auto; /* Permite scroll vertical SI el contenido es más alto */
   overflow-x: hidden;
+  -webkit-overflow-scrolling: touch; /* Mejora el scroll en iOS */
 }
 
 .navLink {
@@ -83,10 +90,11 @@
   font-weight: 600;
 }
 
+/* EL BOTÓN DE LOGOUT */
 .sidebarFooter {
   padding: 1rem;
   border-top: 1px solid var(--border-color);
-  flex-shrink: 0;
+  flex-shrink: 0; /* No se encoje (se queda abajo) */
 }
 .logoutButton {
   display: flex;
@@ -113,7 +121,6 @@
   display: flex;
   flex-direction: column;
   overflow-y: auto;
-  /* 👈 Dejamos espacio para la sidebar en escritorio */
   margin-left: var(--sidebar-width);
   transition: margin-left 0.3s ease;
 }
@@ -123,18 +130,12 @@
   background-color: var(--bg-header);
   display: flex;
   align-items: center;
-  /* 👈 Espacio entre el botón y la info de usuario */
   justify-content: space-between;
   padding: 0 1.5rem;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-  position: sticky; /* 👈 Se pega arriba al hacer scroll */
+  position: sticky;
   top: 0;
   z-index: 500;
-}
-
-.userInfo {
-  color: var(--text-primary);
-  font-weight: 500;
 }
 
 .mainContent {
@@ -148,7 +149,6 @@
  ============================================
 */
 
-/* Botón de Hamburguesa (Oculto en escritorio) */
 .hamburgerButton {
   display: none;
   background: none;
@@ -159,11 +159,10 @@
   z-index: 1;
 }
 
-/* Fondo oscuro (Oculto en escritorio) */
 .overlay {
   display: none;
   position: fixed;
-  inset: 0; /* Abarca toda la pantalla (top, left, right, bottom: 0) */
+  inset: 0;
   background-color: rgba(0, 0, 0, 0.6);
   z-index: 999;
   opacity: 0;
@@ -174,110 +173,100 @@
   opacity: 1;
 }
 
-/* Media Query para pantallas de 768px o menos (móviles y tablets) */
 @media (max-width: 768px) {
   .sidebar {
-    /* Ocultamos la sidebar fuera de la pantalla */
     transform: translateX(-100%);
   }
   .sidebar.isOpen {
-    /* La mostramos cuando tenga la clase 'isOpen' */
     transform: translateX(0);
     box-shadow: 5px 0 15px rgba(0,0,0,0.2);
   }
-
   .contentWrapper {
-    /* El contenido ocupa todo el ancho, ya no hay margen */
     margin-left: 0;
   }
-
   .hamburgerButton {
-    /* Mostramos el botón de hamburguesa */
     display: block;
   }
-
   .header {
     justify-content: space-between;
   }
-
   .userInfo {
-    /* Ocultamos el texto y dejamos solo el nombre para ahorrar espacio */
     font-size: 0.9rem;
   }
 }
 
-/* --- NUEVOS ESTILOS PARA EL ACORDEÓN --- */
+/* --- ESTILOS PARA EL ACORDEÓN --- */
 
 .accordionItem {
-  overflow: hidden; /* Asegura que el contenido no se desborde al cerrar */
+  overflow: hidden;
 }
 
-/* Estilo del botón principal del acordeón */
 .accordionButton {
-  position: relative; /* Para posicionar la flecha */
+  position: relative;
   width: 100%;
-  justify-content: flex-start; /* Alinea el contenido a la izquierda */
+  justify-content: flex-start;
 }
 
-/* Icono de flecha (derecha/abajo) */
 .accordionIcon {
   position: absolute;
-  right: 1.25rem; /* Posiciona la flecha a la derecha */
+  right: 1.25rem;
   font-size: 0.8rem;
   transition: transform 0.2s ease-in-out;
 }
 
 .accordionIcon.isOpen {
-  transform: rotate(90deg); /* Gira la flecha 90 grados */
+  transform: rotate(90deg);
 }
 
-/* Contenedor de los sub-enlaces */
 .accordionContent {
   max-height: 0;
   overflow: hidden;
-  transition: max-height 0.3s cubic-bezier(0, 1, 0, 1); /* Transición suave de cierre */
-  background-color: rgba(0, 0, 0, 0.1); /* Fondo ligeramente más oscuro */
+  transition: max-height 0.3s cubic-bezier(0, 1, 0, 1);
+  background-color: rgba(0, 0, 0, 0.1);
 }
 
 .accordionContent.isOpen {
-  /* Altura máxima suficiente para mostrar varios enlaces */
   max-height: 500px; 
-  transition: max-height 0.5s ease-in-out; /* Transición suave de apertura */
+  transition: max-height 0.5s ease-in-out;
 }
 
-/* Estilo de los sub-enlaces */
 .subLink {
-  padding-left: 2.5rem; /* Indentación para mostrar jerarquía */
+  padding-left: 2.5rem;
   font-size: 0.9rem;
-  color: #ffffff; /* <-- CAMBIO AQUÍ: Forzamos el color a blanco */
+  color: #ffffff;
 }
 
 .subLink:hover {
   background-color: var(--primary-color-dark); /* Color de hover */
 }
 
-/* Estilo del sub-enlace activo */
 .subLink.activeLink {
   background-color: var(--primary-color);
   color: #fff;
   font-weight: 600;
 }
 
-
-
+/* --- ESTILOS PARA EL HEADER DERECHO --- */
 .headerRight {
   display: flex;
   align-items: center;
   width: 100%;
-  justify-content: space-between; /* separa el texto y la campana */
+  justify-content: space-between;
 }
 
 .userInfo {
   font-size: 0.9rem;
+  color: var(--text-primary);
+  font-weight: 500;
+  /* Añadido para evitar que el texto se rompa */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding-right: 1rem; /* Espacio para la campana */
 }
 
-/* Este contenedor empuja la campana totalmente a la derecha */
 .notificationContainer {
   margin-left: auto;
   position: relative;
+  flex-shrink: 0; /* Evita que la campana se encoja */
 }
