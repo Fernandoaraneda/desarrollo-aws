@@ -1,4 +1,4 @@
-# accounts/views.py (versión limpia y corregida)
+
 
 from datetime import datetime, timedelta
 from django.conf import settings
