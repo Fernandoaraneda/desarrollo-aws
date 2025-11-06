@@ -3,7 +3,7 @@ from pathlib import Path
 from decouple import config
 from datetime import timedelta
 import dj_database_url
-from dotenv import load_dotenv
+
 # -----------------------------
 # BASE DIR
 # -----------------------------
@@ -52,7 +52,6 @@ INSTALLED_APPS = [
 # -----------------------------
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -93,27 +92,26 @@ TEMPLATES = [
 # Usa DATABASE_URL en ambos entornos
 # .env.local -> mysql://root:pass@127.0.0.1:3306/mi_db_local
 # .env.production -> mysql://root:pass@host:puerto/railway
-DATABASES = {  # <--- ¡
+DATABASES = {
     'default': dj_database_url.config(
-        # config('DATABASE_URL') leerá la variable de tu archivo .env
-        # o, si no existe, buscará en las variables de entorno del sistema (como en Render)
-        default=config('DATABASE_URL'),
-        conn_max_age=600,
-        # Importante: Le decimos que use el motor de PostgreSQL
-        # si la URL no lo especifica (aunque la de Render sí lo hará)
-        engine='django.db.backends.postgresql' 
+         # config('DATABASE_URL') leerá la variable de tu archivo .env
+         # (ej: "mysql://...") o de Render (ej: "postgres://...")
+         default=config('DATABASE_URL'),
+         conn_max_age=600
+         # ¡Listo! Sin 'engine' forzado.
     )
 }
 
-# Opcional: Si quieres forzar SSL en producción (Render lo maneja bien,
-# pero es una buena práctica si tu DB estuviera en otro proveedor)
+
+# Este bloque ESTÁ BIEN.
+# Solo se ejecutará en producción (en Render),
+# donde SÍ estás usando Postgres.
 if not DEBUG:
     DATABASES['default']['OPTIONS'] = {'sslmode': 'require'}
-
 # -----------------------------
 # PASSWORD VALIDATION
 # -----------------------------
-AUTH_PASSWORD_VALIDATORS = [
+AUTH_PASSWORD_VALIDATORS = [    
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
     {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
     {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator'},

@@ -41,6 +41,9 @@ npm list --depth=0 > frontend-deps.txt
 ## Instalar React Router (para manejo de rutas en React): ##
 
 
+npm install react-router-dom
+
+npm install react-datepicker date-fns
 
 
 
