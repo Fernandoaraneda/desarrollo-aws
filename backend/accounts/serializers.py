@@ -6,12 +6,14 @@ from django.contrib.auth import get_user_model, authenticate
 from django.contrib.auth.models import Group
 from django.contrib.auth.password_validation import validate_password
 from django.db.models import Q
-from datetime import timedelta
+from datetime import timedelta, datetime
 import re
-from datetime import datetime 
 
-# Importación de modelos locales
-from .models import Vehiculo, Agendamiento, Orden, OrdenHistorialEstado, OrdenDocumento, Notificacion, LlaveVehiculo, PrestamoLlave, LlaveHistorialEstado
+# Modelos locales
+from .models import (
+    Vehiculo, Agendamiento, Orden, OrdenHistorialEstado, OrdenDocumento, 
+    Notificacion, Producto, OrdenItem, LlaveVehiculo, PrestamoLlave, LlaveHistorialEstado
+)
 
 
 User = get_user_model()
@@ -391,7 +393,40 @@ class OrdenHistorialEstadoSerializer(serializers.ModelSerializer):
     class Meta:
         model = OrdenHistorialEstado
         fields = ['id', 'estado', 'fecha', 'usuario', 'usuario_nombre', 'motivo']
+class ProductoSerializer(serializers.ModelSerializer):
+    """
+    Serializer para el modelo Producto (Repuesto).
+    """
+    class Meta:
+        model = Producto
+        fields = ['sku', 'nombre', 'descripcion', 'marca', 'precio_venta', 'stock']
 
+
+class OrdenItemSerializer(serializers.ModelSerializer):
+    """
+    Serializer para los Items de la Orden (Repuestos o Servicios).
+    """
+    # Usamos 'source' para leer la info del producto, no solo el SKU
+    producto_info = ProductoSerializer(source='producto', read_only=True)
+    servicio_info = serializers.StringRelatedField(source='servicio', read_only=True)
+    
+    solicitado_por_nombre = serializers.CharField(source='solicitado_por.get_full_name', read_only=True, default='')
+    gestionado_por_nombre = serializers.CharField(source='gestionado_por.get_full_name', read_only=True, default='')
+
+    class Meta:
+        model = OrdenItem
+        fields = [
+            'id', 'orden', 'producto', 'producto_info', 'servicio', 'servicio_info', 
+            'cantidad', 'precio_unitario', 'estado_repuesto', 
+            'solicitado_por_nombre', 'gestionado_por_nombre', 'motivo_gestion', 'fecha_gestion'
+        ]
+        # Hacemos que 'producto' y 'servicio' sean write_only en el serializer base
+        # El usuario enviará el ID, pero recibirá el objeto 'producto_info' anidado
+        extra_kwargs = {
+            'producto': {'write_only': True, 'required': False, 'allow_null': True},
+            'servicio': {'write_only': True, 'required': False, 'allow_null': True},
+            'precio_unitario': {'required': False, 'allow_null': True},
+        }
 
 class OrdenSerializer(serializers.ModelSerializer):
     """
@@ -406,7 +441,7 @@ class OrdenSerializer(serializers.ModelSerializer):
     asignado_a = serializers.CharField(source='usuario_asignado.get_full_name', read_only=True, default='No asignado')
     historial_estados = OrdenHistorialEstadoSerializer(many=True, read_only=True)
     documentos = OrdenDocumentoSerializer(many=True, read_only=True)
-
+    items = OrdenItemSerializer(many=True, read_only=True)
     imagen_averia_url = serializers.ImageField(source='agendamiento_origen.imagen_averia', read_only=True, allow_null=True)
     hora_agendada = serializers.DateTimeField(source='agendamiento_origen.fecha_hora_programada', read_only=True, allow_null=True)
 
@@ -417,7 +452,7 @@ class OrdenSerializer(serializers.ModelSerializer):
             'fecha_ingreso', 'fecha_entrega_estimada', 'fecha_entrega_real',
             'estado', 'descripcion_falla', 'diagnostico_tecnico',
             'usuario_asignado', 'asignado_a',
-            'historial_estados', 'imagen_averia_url', 'hora_agendada', 'documentos'
+            'historial_estados', 'imagen_averia_url', 'hora_agendada', 'documentos','items'
         ]
         extra_kwargs = {
             'vehiculo': {'queryset': Vehiculo.activos.all()}
@@ -606,3 +641,4 @@ class HistorialSeguridadSerializer(serializers.ModelSerializer):
         if obj.vehiculo and obj.vehiculo.chofer:
              return obj.vehiculo.chofer.get_full_name()
         return "No asignado"
+    

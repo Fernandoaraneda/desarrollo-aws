@@ -17,6 +17,8 @@ Windows: venv\Scripts\activate
 ## Descargar Librerias mas rapido
 pip install -r requirements.txt
 
+pip install whitenoise
+
 ## Aplicar migraciones:##
 
 python manage.py migrate

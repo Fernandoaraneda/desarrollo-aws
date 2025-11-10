@@ -2,56 +2,61 @@ from datetime import datetime, timedelta
 from django.conf import settings
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
-from django.utils.timezone import now, make_aware
+from django.utils.timezone import now, make_aware, timezone
+from django.utils import timezone
 from django.contrib.auth import get_user_model
 from django.contrib.auth.tokens import default_token_generator
+from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 from django.core.mail import send_mail
-from django.contrib.auth.password_validation import validate_password
 from django.db import transaction
-from django.utils import timezone
-from rest_framework import status, generics, permissions, viewsets
+from django.db.models import Count, Avg, F, DateField, Q
+from django.db.models.functions import TruncDay
+from django.template.loader import render_to_string
+from django.utils.html import strip_tags
+from decouple import config
+from rest_framework import status, generics, permissions, viewsets, filters
 from rest_framework.decorators import api_view, permission_classes, action
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
-from django.db.models import Count, Avg, F, DateField, Q
-from django.db.models.functions import TruncDay
-from django.core.mail import send_mail
-from django.template.loader import render_to_string
-from django.utils.html import strip_tags
-from django.conf import settings
-from decouple import config
-from rest_framework import filters
+from django.shortcuts import get_object_or_404
+from rest_framework.views import APIView
 import os
-
-
+# Models
 from .models import (
-    Orden,
-    Agendamiento,
-    Vehiculo,
-    OrdenHistorialEstado,
-    OrdenPausa,
-    OrdenDocumento,
-    Notificacion,
-    LlaveVehiculo,
-    PrestamoLlave,
+    Producto, 
+    OrdenItem, 
+    Notificacion, 
+    Orden, 
+    Agendamiento, 
+    Vehiculo, 
+    OrdenHistorialEstado, 
+    OrdenPausa, 
+    OrdenDocumento, 
+    LlaveVehiculo, 
+    PrestamoLlave, 
     LlaveHistorialEstado,
 )
+
+# Serializers
 from .serializers import (
-    LoginSerializer,
+    ProductoSerializer, 
+    OrdenItemSerializer, 
+    NotificacionSerializer,
+    OrdenSerializer, 
+    AgendamientoSerializer,
+    OrdenDocumentoSerializer,
+    VehiculoSerializer, 
+    LoginSerializer, 
     UserSerializer,
     ChangePasswordSerializer,
     UserCreateUpdateSerializer,
-    VehiculoSerializer,
-    AgendamientoSerializer,
-    OrdenSerializer,
-    OrdenDocumentoSerializer,
-    NotificacionSerializer,
-    LlaveVehiculoSerializer,
-    PrestamoLlaveSerializer,
+    LlaveVehiculoSerializer, 
+    PrestamoLlaveSerializer, 
     LlaveHistorialEstadoSerializer,
     HistorialSeguridadSerializer,
+    OrdenSalidaListSerializer,
 )
 
 User = get_user_model()
@@ -80,17 +85,16 @@ def enviar_correo_notificacion(usuario, subject, message_body):
     }
 
     try:
-        # 4. Renderizar la plantilla HTML
+     
         html_message = render_to_string("emails/notificacion_base.html", context)
-        # 5. Crear una versión de texto plano como fallback
+   
         plain_message = strip_tags(html_message)
 
-        # 7. Enviar el correo
         send_mail(
             subject,
             plain_message,
-            None,  # <--- Django usará DEFAULT_FROM_EMAIL automáticamente
-            [recipient_email],  # La lista de destinatarios
+            None,  
+            [recipient_email],  
             html_message=html_message,
             fail_silently=False,
         )
@@ -164,7 +168,19 @@ class IsSupervisorOrControlLlaves(permissions.BasePermission):
                 name__in=["Supervisor", "Control Llaves", "Administrativo"]
             ).exists()
         )
-
+    
+class IsRepuestos(permissions.BasePermission):
+    """
+    Permiso para el rol de Repuestos o Supervisor.
+    """
+    def has_permission(self, request, view):
+        return bool(
+            request.user
+            and request.user.is_authenticated
+            and request.user.groups.filter(
+                name__in=["Repuestos", "Supervisor", "Administrativo"]
+            ).exists()
+        )
 
 # --------------------
 # Autenticación y perfil
@@ -215,7 +231,6 @@ class PasswordResetRequestView(generics.GenericAPIView):
         frontend = config("FRONTEND_URL", default="http://localhost:5173")
         reset_link = f"{frontend.rstrip('/')}/set-new-password?uid={uid}&token={token}"
 
-        # En producción: mover esto a una task asíncrona (Celery, RQ...)
         send_mail(
             "Restablecer contraseña para Taller PepsiCo",
             f"Hola {user.first_name},\n\nUsa este enlace para restablecer tu contraseña: {reset_link}\n\nSi no solicitaste esto, ignora este mensaje.",
@@ -356,44 +371,26 @@ class ChoferListView(generics.ListAPIView):
 
 
 # --------------------
-# Dashboard supervisor (versión segura)
+# Dashboard supervisor
 # --------------------
 dias_semana = {0: "Lun", 1: "Mar", 2: "Mié", 3: "Jue", 4: "Vie", 5: "Sáb", 6: "Dom"}
 
-# backend/accounts/views.py
-# (Asegúrate de que estas importaciones estén al principio de tu archivo)
-from datetime import datetime, timedelta
-from django.utils import timezone
-from django.utils.timezone import now, make_aware
-from django.db.models import Count, Avg, F, DateField
-from django.db.models.functions import TruncDay
-from rest_framework.decorators import api_view, permission_classes
-from rest_framework.response import Response
-from rest_framework import status
-from .models import Orden, Agendamiento  # <-- ¡ASEGÚRATE DE IMPORTAR AGENDAMIENTO!
 
 
-# ... (El resto de tus vistas como LoginView, VehiculoViewSet, etc.) ...
-
-
-# --- ESTA ES LA FUNCIÓN MODIFICADA ---
 @api_view(["GET"])
 @permission_classes([IsSupervisor])
 def supervisor_dashboard_stats(request):
     today = now().date()
-    start_of_month_dt = make_aware(
+    start_of_month_dt = timezone.make_aware(
         datetime.combine(today.replace(day=1), datetime.min.time())
     )
     start_of_week = today - timedelta(days=today.weekday())
-    start_of_week_dt = make_aware(datetime.combine(start_of_week, datetime.min.time()))
+    start_of_week_dt = timezone.make_aware(datetime.combine(start_of_week, datetime.min.time()))
 
-    # --- ✅ 1. CONSULTA CORREGIDA ---
-    # Cambiamos 'PENDIENTE' por 'Agendamiento.Estado.PROGRAMADO'
-    # para que coincida con tu models.py
     pendientes_aprobacion = Agendamiento.objects.filter(
         estado=Agendamiento.Estado.PROGRAMADO
     ).count()
-    # --- FIN DE LA CORRECCIÓN ---
+   
 
     # Vehículos en taller (fallback si no existe manager 'activas')
     try:
@@ -410,7 +407,7 @@ def supervisor_dashboard_stats(request):
         )
 
     # Agendamientos para HOY (usamos CONFIRMADO para alinearnos con SeguridadAgendaView)
-    start_today = make_aware(datetime.combine(today, datetime.min.time()))
+    start_today = timezone.make_aware(datetime.combine(today, datetime.min.time()))
     end_today = start_today + timedelta(days=1)
     agendamientos_hoy = Agendamiento.objects.filter(
         estado=Agendamiento.Estado.CONFIRMADO,  # Correcto
@@ -472,7 +469,7 @@ def supervisor_dashboard_stats(request):
                 break
         ordenes_ultima_semana.append({"dia": dia_nombre, "creadas": cre})
 
-    # Órdenes recientes
+   
     ordenes_recientes = list(
         Orden.objects.select_related("vehiculo", "usuario_asignado")
         .order_by("-fecha_ingreso")[:10]
@@ -502,7 +499,6 @@ def supervisor_dashboard_stats(request):
             }
         )
 
-    # --- ✅ 2. DATO AÑADIDO A LA RESPUESTA ---
     response_data = {
         "kpis": {
             "vehiculosEnTaller": vehiculos_en_taller,
@@ -511,7 +507,7 @@ def supervisor_dashboard_stats(request):
             "tiempoPromedioRep": tiempo_promedio_str,
         },
         "alertas": {
-            "pendientesAprobacion": pendientes_aprobacion,  # <-- Este dato ahora será correcto
+            "pendientesAprobacion": pendientes_aprobacion,  
         },
         "ordenesPorEstado": ordenes_por_estado,
         "ordenesUltimaSemana": ordenes_ultima_semana,
@@ -546,31 +542,29 @@ class VehiculoViewSet(viewsets.ModelViewSet):
         Se ejecuta después de crear un Vehículo.
         Automatiza la creación de sus llaves por defecto.
         """
-        # 1. Guarda el vehículo primero (esto nos da el objeto 'vehiculo')
+      
         vehiculo = serializer.save()
 
-        # 2. Ahora, crea las llaves asociadas (como sugeriste)
         try:
-            # Llave 1: La Original
+            
             LlaveVehiculo.objects.get_or_create(
                 vehiculo=vehiculo,
                 tipo=LlaveVehiculo.Tipo.ORIGINAL,
                 defaults={
-                    "codigo_interno": f"{vehiculo.patente}-ORI"  # ej: ABCD12-ORI
+                    "codigo_interno": f"{vehiculo.patente}-ORI" 
                 },
             )
 
-            # Llave 2: El Duplicado (Copia)
+          
             LlaveVehiculo.objects.get_or_create(
                 vehiculo=vehiculo,
                 tipo=LlaveVehiculo.Tipo.DUPLICADO,
                 defaults={
-                    "codigo_interno": f"{vehiculo.patente}-DUP"  # ej: ABCD12-DUP
+                    "codigo_interno": f"{vehiculo.patente}-DUP" 
                 },
             )
         except Exception as e:
-            # Si algo falla aquí, no queremos que la creación del vehículo se detenga
-            # solo lo reportamos en la consola del backend.
+         
             print(
                 f"ERROR: No se pudieron crear llaves automáticas para {vehiculo.patente}: {e}"
             )
@@ -660,11 +654,10 @@ class AgendamientoViewSet(viewsets.ModelViewSet):
                 enviar_correo_notificacion(supervisor, subject, mensaje)
 
         except Exception as e:
-            # Es importante que la creación de la cita no falle si la notificación falla.
-            # Imprimimos el error en la consola del backend para debugging.
+      
             print(f"ERROR al notificar al supervisor sobre nueva cita: {e}")
 
-    # accounts/views.py
+
 
     @action(
         detail=True,
@@ -675,12 +668,11 @@ class AgendamientoViewSet(viewsets.ModelViewSet):
     def confirmar_y_asignar(self, request, pk=None):
         agendamiento = self.get_object()
 
-        # 1. OBTENER DATOS (SIN chofer_id)
+   
         mecanico_id_raw = request.data.get("mecanico_id")
         fecha_hora_asignada_str = request.data.get("fecha_hora_asignada")
         motivo_cambio = request.data.get("motivo_reagendamiento", None)
 
-        # 2. VALIDAR MECÁNICO
         try:
             mecanico_id = int(mecanico_id_raw)
             mecanico = User.objects.get(id=mecanico_id, groups__name="Mecanico")
@@ -690,12 +682,12 @@ class AgendamientoViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_404_NOT_FOUND,
             )
 
-        # 3. VALIDAR FECHA Y HORA
+
         fecha_a_validar = None
         hubo_cambio_fecha = False
 
         if not fecha_hora_asignada_str:
-            # --- 👇 ARREGLO DEL SYNTAX ERROR ---
+        
             return Response(
                 {"error": "Debe seleccionar una fecha y hora."},
                 status=status.HTTP_400_BAD_REQUEST,
@@ -934,17 +926,14 @@ class OrdenViewSet(viewsets.ModelViewSet):
 
         with transaction.atomic():
             orden.estado = nuevo_estado
-            # --- LÍNEA PROBLEMÁTICA ELIMINADA ---
-            # if nuevo_estado == Orden.Estado.FINALIZADO:
-            #     orden.fecha_entrega_real = timezone.now()
-            # --------------------------------------
+           
             orden.save()
             OrdenHistorialEstado.objects.create(
                 orden=orden, estado=nuevo_estado, usuario=request.user, motivo=motivo
             )
 
             try:
-                # 1. Encontrar al chofer asociado a esta orden
+            
                 chofer_a_notificar = None
                 if (
                     orden.agendamiento_origen
@@ -953,11 +942,11 @@ class OrdenViewSet(viewsets.ModelViewSet):
                     chofer_a_notificar = orden.agendamiento_origen.chofer_asociado
                 elif (
                     orden.vehiculo and orden.vehiculo.chofer
-                ):  # Fallback si no hay agendamiento
+                ):  #
                     chofer_a_notificar = orden.vehiculo.chofer
 
                 if chofer_a_notificar:
-                    # 2. Definir mensajes claros para cada estado
+                   
                     mensajes = {
                         "En Diagnostico": "está siendo diagnosticado por un mecánico.",
                         "En Proceso": "ha entrado en proceso de reparación.",
@@ -965,7 +954,7 @@ class OrdenViewSet(viewsets.ModelViewSet):
                         "Finalizado": "¡está listo! El trabajo en su vehículo ha finalizado.",
                     }
 
-                    # 3. Crear la notificación
+        
                     mensaje_chofer = mensajes.get(nuevo_estado)
                     if mensaje_chofer:
                         Notificacion.objects.create(
@@ -976,14 +965,14 @@ class OrdenViewSet(viewsets.ModelViewSet):
                         subject_chofer_estado = (
                             f"Actualización Orden #{orden.id}: {orden.vehiculo.patente}"
                         )
-                        # Re-construimos el mensaje completo para el email
+                     
                         mensaje_email = f"Actualización: Su vehículo {orden.vehiculo.patente} {mensaje_chofer}"
                         enviar_correo_notificacion(
                             chofer_a_notificar, subject_chofer_estado, mensaje_email
                         )
 
             except Exception as e:
-                # Si falla la notificación, no detenemos la operación
+            
                 print(f"Error al crear notificación de cambio de estado: {e}")
 
         return Response(self.get_serializer(orden).data, status=status.HTTP_200_OK)
@@ -1082,7 +1071,7 @@ class SeguridadAgendaView(generics.ListAPIView):
     permission_classes = [IsSupervisorOrSeguridad]
 
     def get_queryset(self):
-        today = now().date()
+        today = timezone.now().date()
         start = make_aware(datetime.combine(today, datetime.min.time()))
         end = start + timedelta(days=1)
         return Agendamiento.objects.filter(
@@ -1162,23 +1151,6 @@ def mecanico_dashboard_stats(request):
     return Response(data, status=status.HTTP_200_OK)
 
 
-# accounts/views.py
-from django.shortcuts import get_object_or_404
-from django.utils import timezone
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework import status
-from rest_framework.permissions import IsAuthenticated
-
-# ^ Asumo que usas esto. Si tienes permisos por roles (ej. IsSeguridad), ¡mejor!
-
-from .models import Orden, Agendamiento, Orden  # Importa tus modelos
-from .serializers import OrdenSalidaListSerializer  # Importa el nuevo serializer
-
-# ... (Aquí van tus otras vistas: LoginView, RegisterView, etc.) ...
-
-# --- AÑADE ESTAS DOS NUEVAS VISTAS ---
-
 
 class OrdenesPendientesSalidaView(APIView):
     """
@@ -1187,29 +1159,26 @@ class OrdenesPendientesSalidaView(APIView):
     fecha de entrega real (es decir, no han salido del taller).
     """
 
-    # permission_classes = [IsAuthenticated, TuPermisoDeSeguridadOSupervisor]
 
     def get(self, request, *args, **kwargs):
         try:
-            # 1. Filtramos las órdenes:
-            #    - Estado sea FINALIZADO
-            #    - fecha_entrega_real esté VACÍA (isnull=True)
+
             ordenes_listas = (
                 Orden.objects.filter(
                     estado=Orden.Estado.FINALIZADO, fecha_entrega_real__isnull=True
                 )
-                .select_related(  # Optimizamos la consulta
+                .select_related( 
                     "vehiculo",
                     "agendamiento_origen__chofer_asociado",
                     "usuario_asignado",
                 )
                 .order_by("fecha_ingreso")
-            )  # Opcional: ordenar por la más antigua
+            )  
 
-            # 2. Serializamos los datos
+
             serializer = OrdenSalidaListSerializer(ordenes_listas, many=True)
 
-            # 3. Devolvemos la lista a React
+     
             return Response(serializer.data, status=status.HTTP_200_OK)
 
         except Exception as e:
@@ -1225,7 +1194,7 @@ class RegistrarSalidaView(APIView):
     Recibe el ID (pk) de la Orden en la URL.
     """
 
-    # permission_classes = [IsAuthenticated, TuPermisoDeSeguridadOSupervisor]
+
 
     def post(self, request, pk, *args, **kwargs):
         try:
@@ -1247,18 +1216,14 @@ class RegistrarSalidaView(APIView):
                     status=status.HTTP_400_BAD_REQUEST,
                 )
 
-            # 3. --- ¡LA LÓGICA CLAVE! ---
-            #    Establecemos la fecha de salida a "AHORA"
             orden.fecha_entrega_real = timezone.now()
 
-            # 4. (Opcional pero recomendado)
-            #    Si quieres, puedes pasar el Agendamiento original a 'Finalizado'
             if orden.agendamiento_origen:
                 if orden.agendamiento_origen.estado != Agendamiento.Estado.FINALIZADO:
                     orden.agendamiento_origen.estado = Agendamiento.Estado.FINALIZADO
                     orden.agendamiento_origen.save()
 
-            # 5. Guardamos la orden
+ 
             orden.save()
 
             return Response(
@@ -1274,16 +1239,6 @@ class RegistrarSalidaView(APIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
-
-from django.utils import timezone
-from datetime import datetime, timedelta
-from django.db.models import Q
-from rest_framework.response import Response  # ¡Importante!
-from django.utils.timezone import make_aware  #
-from django.utils import timezone
-from datetime import datetime
-
-
 class MecanicoAgendaView(generics.ListAPIView):
     serializer_class = AgendamientoSerializer
     permission_classes = [IsSupervisor]
@@ -1298,7 +1253,7 @@ class MecanicoAgendaView(generics.ListAPIView):
             estado__in=[Agendamiento.Estado.CONFIRMADO, Agendamiento.Estado.EN_TALLER],
         )
 
-        # --- 👇 INICIO DEL ARREGLO ---
+ 
         fecha_str = self.request.query_params.get("fecha")
         if fecha_str:
             try:
@@ -1306,7 +1261,6 @@ class MecanicoAgendaView(generics.ListAPIView):
 
                 current_tz = timezone.get_current_timezone()
 
-                # Esta es la forma MODERNA de hacerlo (con tzinfo)
                 start_of_day = datetime.combine(
                     fecha, datetime.min.time(), tzinfo=current_tz
                 )
@@ -1314,33 +1268,17 @@ class MecanicoAgendaView(generics.ListAPIView):
                     fecha, datetime.max.time(), tzinfo=current_tz
                 )
 
-                # Filtramos el queryset por ese rango de día
                 queryset = queryset.filter(
                     fecha_hora_programada__gte=start_of_day,
                     fecha_hora_programada__lte=end_of_day,
                 )
             except ValueError:
-                pass  # Ignora la fecha si el formato es incorrecto
-        # --- 👆 FIN DEL ARREGLO ---
+                pass 
 
         return queryset.order_by("fecha_hora_programada")
 
 
-# accounts/views.py
 
-# --- 👇 AÑADE ESTAS IMPORTACIONES AL PRINCIPIO DEL ARCHIVO ---
-from rest_framework import viewsets, permissions, status
-from rest_framework.decorators import action
-from .models import Notificacion
-from .serializers import NotificacionSerializer
-
-# --- (Asegúrate de no duplicar importaciones si ya existen) ---
-
-
-# ... (El resto de tus vistas como AgendamientoViewSet, OrdenViewSet, etc.) ...
-
-
-# --- 👇 AÑADE ESTA VISTA NUEVA (al final del archivo está bien) ---
 class NotificacionViewSet(viewsets.ModelViewSet):
     """
     API para leer, crear y marcar notificaciones como leídas.
@@ -1362,8 +1300,138 @@ class NotificacionViewSet(viewsets.ModelViewSet):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
+class ProductoViewSet(viewsets.ModelViewSet):
+    """
+    API para buscar productos (repuestos) y ver stock.
+    Usado por Mecánicos y Repuestos.
+    """
+    queryset = Producto.objects.all()
+    serializer_class = ProductoSerializer
+    permission_classes = [IsAuthenticated] # Abierto a todos los logueados
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['nombre', 'sku', 'marca']
+    lookup_field = 'sku'
+
+class OrdenItemViewSet(viewsets.ModelViewSet):
+    """
+    API para gestionar los items (repuestos) de una orden.
+    """
+    queryset = OrdenItem.objects.all()
+    serializer_class = OrdenItemSerializer
+    permission_classes = [IsAuthenticated] # Permisos más granulares por acción
+
+    def get_queryset(self):
+        """
+        Filtra para que cada rol vea lo que le corresponde.
+        """
+        user = self.request.user
+        if user.groups.filter(name__in=["Supervisor", "Administrativo", "Repuestos"]).exists():
+            return OrdenItem.objects.all()
+        if user.groups.filter(name="Mecanico").exists():
+            return OrdenItem.objects.filter(solicitado_por=user)
+        # Choferes u otros no deberían ver esto directamente
+        return OrdenItem.objects.none()
+
+    def get_permissions(self):
+        """Permisos por acción"""
+        if self.action in ['aprobar_repuesto', 'rechazar_repuesto', 'list_pendientes']:
+            self.permission_classes = [IsRepuestos]
+        elif self.action in ['create', 'list', 'retrieve']:
+            self.permission_classes = [IsSupervisorOrMecanico]
+        return super().get_permissions()
+
+    def perform_create(self, serializer):
+        """
+        _Asigna al mecánico que solicita y notifica a Repuestos._
+        """
+        item = serializer.save(solicitado_por=self.request.user)
+        
+        # Si es un producto, notificar a Repuestos
+        if item.producto:
+            try:
+                usuarios_repuestos = User.objects.filter(groups__name__in=["Repuestos", "Supervisor"], is_active=True)
+                mecanico_nombre = self.request.user.first_name or self.request.user.username
+                mensaje = (
+                    f"El mecánico {mecanico_nombre} solicitó {item.cantidad}x {item.producto.nombre} "
+                    f"para la Orden #{item.orden.id}."
+                )
+                subject = f"Nueva Solicitud de Repuesto: Orden #{item.orden.id}"
+
+                for user_rep in usuarios_repuestos:
+                    Notificacion.objects.create(usuario=user_rep, mensaje=mensaje, link="/panel-repuestos") # Link a la nueva página de repuestos
+                    enviar_correo_notificacion(user_rep, subject, mensaje) # Opcional si quieres email
+            except Exception as e:
+                print(f"ERROR al notificar a Repuestos: {e}")
+
+    @action(detail=False, methods=['get'], url_path='pendientes')
+    def list_pendientes(self, request):
+        """
+_Endpoint para que el rol Repuestos vea solo lo pendiente._
+"""
+        pendientes = OrdenItem.objects.filter(
+            producto__isnull=False, 
+            estado_repuesto=OrdenItem.EstadoRepuesto.PENDIENTE
+        ).select_related('orden', 'producto', 'solicitado_por')
+        
+        serializer = self.get_serializer(pendientes, many=True)
+        return Response(serializer.data)
+
+    @action(detail=True, methods=['post'], url_path='gestionar-repuesto')
+    def gestionar_repuesto(self, request, pk=None):
+        """
+        _Endpoint para que Repuestos APRUEBE o RECHACE._
+        """
+        item = self.get_object()
+        accion = request.data.get("accion") # "aprobar" o "rechazar"
+        motivo = request.data.get("motivo", "")
+
+        if not accion or accion not in ['aprobar', 'rechazar']:
+            return Response({"error": "Acción no válida."}, status=status.HTTP_400_BAD_REQUEST)
+            
+        if item.estado_repuesto != OrdenItem.EstadoRepuesto.PENDIENTE:
+            return Response({"error": "Esta solicitud ya fue gestionada."}, status=status.HTTP_400_BAD_REQUEST)
+        
+        with transaction.atomic():
+            if accion == "aprobar":
+                if item.producto.stock < item.cantidad:
+                    return Response({"error": f"Stock insuficiente. Solo quedan {item.producto.stock}."}, status=status.HTTP_400_BAD_REQUEST)
+                
+                # Descontar stock
+                item.producto.stock = F('stock') - item.cantidad
+                item.producto.save()
+                item.producto.refresh_from_db()
+                
+                # Actualizar item
+                item.estado_repuesto = OrdenItem.EstadoRepuesto.APROBADO
+                item.gestionado_por = request.user
+                item.fecha_gestion = timezone.now()
+                item.save()
+                item.refresh_from_db()
+                
+                # Notificar al mecánico
+                subject_mec = f"Repuesto Aprobado: Orden #{item.orden.id}"
+                mensaje_mec = f"Su solicitud de {item.cantidad}x {item.producto.nombre} fue APROBADA."
+                Notificacion.objects.create(usuario=item.solicitado_por, mensaje=mensaje_mec, link=f"/ordenes/{item.orden.id}")
+                enviar_correo_notificacion(item.solicitado_por, subject_mec, mensaje_mec)
+
+            elif accion == "rechazar":
+                item.estado_repuesto = OrdenItem.EstadoRepuesto.RECHAZADO
+                item.gestionado_por = request.user
+                item.fecha_gestion = timezone.now()
+                item.motivo_gestion = motivo or "Sin stock. Solicitado a proveedor (3 días aprox.)"
+                item.save()
+                item.refresh_from_db()
+                
+                # Notificar al mecánico
+                subject_mec = f"Repuesto Rechazado: Orden #{item.orden.id}"
+                mensaje_mec = f"Su solicitud de {item.cantidad}x {item.producto.nombre} fue RECHAZADA. Motivo: {item.motivo_gestion}"
+                Notificacion.objects.create(usuario=item.solicitado_por, mensaje=mensaje_mec, link=f"/ordenes/{item.orden.id}")
+                enviar_correo_notificacion(item.solicitado_por, subject_mec, mensaje_mec)
+
+        return Response(self.get_serializer(item).data, status=status.HTTP_200_OK)
+
 # ======================================================================
-# 🔑 API DE GESTIÓN DE LLAVES (NUEVO)
+# 🔑 API DE GESTIÓN DE LLAVES
 # ======================================================================
 
 
@@ -1384,10 +1452,10 @@ class LlaveVehiculoViewSet(viewsets.ModelViewSet):
         Cierra un préstamo activo (RECIBIR LLAVE).
         El 'pk' aquí es el ID de la *LlaveVehiculo*.
         """
-        llave = self.get_object()  # <-- Usa self.get_object() que es más seguro.
+        llave = self.get_object()  
 
         try:
-            # Buscamos el préstamo ACTIVO (sin fecha de devolución) para esta llave
+      
             prestamo = PrestamoLlave.objects.get(
                 llave=llave, fecha_hora_devolucion__isnull=True
             )
@@ -1397,7 +1465,7 @@ class LlaveVehiculoViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_404_NOT_FOUND,
             )
 
-        # 1. Cerramos el préstamo
+      
         prestamo.fecha_hora_devolucion = timezone.now()
         prestamo.observaciones_devolucion = request.data.get("observaciones", "")
         prestamo.save()
@@ -1415,7 +1483,7 @@ class LlaveVehiculoViewSet(viewsets.ModelViewSet):
         """
         Crea un nuevo préstamo (PRESTAR LLAVE). El 'pk' es el ID de la Llave.
         """
-        llave = self.get_object()  # Obtiene la llave
+        llave = self.get_object() 
         usuario_id = request.data.get("usuario_id")
         observaciones = request.data.get("observaciones", "")
 
@@ -1433,17 +1501,17 @@ class LlaveVehiculoViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_404_NOT_FOUND,
             )
 
-        # 1. Creamos el nuevo registro de préstamo
+      
         prestamo = PrestamoLlave.objects.create(
             llave=llave, usuario_retira=usuario, observaciones_retiro=observaciones
         )
 
-        # 2. Actualizamos el estado y poseedor de la llave
+   
         llave.estado = LlaveVehiculo.Estado.PRESTADA
         llave.poseedor_actual = usuario
         llave.save()
 
-        # Devolvemos la llave actualizada
+     
         serializer = self.get_serializer(llave)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
@@ -1520,7 +1588,7 @@ class LlaveVehiculoViewSet(viewsets.ModelViewSet):
         llave.motivo_reporte = None  # Limpiamos el motivo
         llave.save()
 
-        # --- ¡NUEVA LÓGICA DE HISTORIAL! ---
+  
         LlaveHistorialEstado.objects.create(
             llave=llave,
             usuario_reporta=request.user,
@@ -1553,8 +1621,7 @@ class PrestamoLlaveViewSet(viewsets.ReadOnlyModelViewSet):
     )
     serializer_class = PrestamoLlaveSerializer
     permission_classes = [IsControlLlaves]
-    # La acción 'registrar-retiro' se mueve a LlaveVehiculoViewSet
-    # para que esté centrada en la "llave"
+
 
     filter_backends = [filters.SearchFilter]
     search_fields = [
@@ -1572,7 +1639,7 @@ class PrestamoLlaveViewSet(viewsets.ReadOnlyModelViewSet):
         El 'pk' aquí es el ID de la *LlaveVehiculo* para encontrar el préstamo activo.
         """
         try:
-            # Buscamos el préstamo ACTIVO (sin fecha de devolución) para esta llave
+            
             prestamo = PrestamoLlave.objects.get(
                 llave_id=pk, fecha_hora_devolucion__isnull=True
             )
@@ -1582,12 +1649,11 @@ class PrestamoLlaveViewSet(viewsets.ReadOnlyModelViewSet):
                 status=status.HTTP_404_NOT_FOUND,
             )
 
-        # 1. Cerramos el préstamo
+     
         prestamo.fecha_hora_devolucion = timezone.now()
         prestamo.observaciones_devolucion = request.data.get("observaciones", "")
         prestamo.save()
 
-        # 2. Actualizamos la llave
         llave = prestamo.llave
         llave.estado = LlaveVehiculo.Estado.EN_BODEGA
         llave.poseedor_actual = None

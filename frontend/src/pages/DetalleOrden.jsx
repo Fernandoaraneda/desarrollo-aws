@@ -3,35 +3,29 @@ import { useParams } from 'react-router-dom';
 import apiClient from '../api/axios.js';
 import { useUserStore } from '../store/authStore.js';
 import styles from '../css/detalleorden.module.css';
-import { 
-    Wrench, User, Tag, Calendar, Image as ImageIcon, Upload, 
-    Paperclip, Play, Pause, ChevronDown, FileText, Download 
+import {
+    Wrench, User, Tag, Calendar, Image as ImageIcon, Upload,
+    Paperclip, Play, Pause, ChevronDown, FileText, Download,
+    Search, PlusCircle
 } from 'lucide-react';
 import AlertModal from '/src/components/modals/AlertModal.jsx';
+
 
 const DocumentGroup = ({ state, docs }) => {
     const [isOpen, setIsOpen] = useState(false);
 
-
     const renderFile = (doc) => {
         const fileUrl = doc.archivo_url;
         if (!fileUrl) return <p>Archivo no encontrado.</p>;
-
-        const tipo = (doc.tipo || '').toLowerCase(); 
-
-  
+        const tipo = (doc.tipo || '').toLowerCase();
         const isImage = tipo.match(/\.(jpg|jpeg|png|gif|webp|bmp)$/i);
-
         if (isImage) {
-        
             return (
                 <a href={fileUrl} target="_blank" rel="noopener noreferrer">
                     <img src={fileUrl} alt={doc.descripcion || 'Imagen'} className={styles.imagePreview} />
                 </a>
             );
         }
-        
-   
         return (
             <a href={fileUrl} target="_blank" rel="noopener noreferrer" className={styles.downloadLink}>
                 <Download size={18} />
@@ -39,7 +33,7 @@ const DocumentGroup = ({ state, docs }) => {
             </a>
         );
     };
-    // --- 👆 FIN DE LA LÓGICA CORREGIDA ---
+
     return (
         <div className={styles.documentGroup}>
             <button className={styles.groupHeader} onClick={() => setIsOpen(!isOpen)}>
@@ -97,6 +91,89 @@ const ModalInputMotivo = ({ isOpen, onClose, onConfirm }) => {
     );
 };
 
+const BuscadorRepuestos = ({ ordenId, onRepuestoAgregado }) => {
+    const [searchTerm, setSearchTerm] = useState('');
+    const [results, setResults] = useState([]);
+    const [isLoading, setIsLoading] = useState(false);
+    const [cantidad, setCantidad] = useState(1);
+
+    useEffect(() => {
+        if (searchTerm.length < 2) {
+            setResults([]);
+            return;
+        }
+        setIsLoading(true);
+        const timer = setTimeout(async () => {
+            try {
+                const res = await apiClient.get(`/productos/?search=${searchTerm}`);
+                setResults(res.data.results || res.data || []);
+            } catch (err) {
+                console.error("Error buscando productos", err);
+            } finally {
+                setIsLoading(false);
+            }
+        }, 300); // Debounce
+        return () => clearTimeout(timer);
+    }, [searchTerm]);
+
+    const handleSolicitar = async (productoSku) => {
+        try {
+            await apiClient.post('/orden-items/', {
+                orden: ordenId,
+                producto: productoSku,
+                cantidad: cantidad
+            });
+            onRepuestoAgregado(); // Llama a la función para recargar la orden
+            setSearchTerm('');
+            setResults([]);
+            setCantidad(1);
+        } catch (err) {
+            alert("Error al solicitar el repuesto: " + (err.response?.data?.error || "Error"));
+        }
+    };
+
+    return (
+        <div className={styles.infoCard} style={{ marginTop: '2rem' }}>
+            <h3><PlusCircle /> Solicitar Repuestos</h3>
+            <div className={styles.formField}>
+                <label>Buscar repuesto por nombre o SKU</label>
+                <input
+                    type="text"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    placeholder="Ej: Filtro de Aire"
+                    className={styles.motivoInput}
+                />
+            </div>
+            {isLoading && <p>Buscando...</p>}
+            {results.length > 0 && (
+                <ul className={styles.resultsList}> {/* Necesitarás crear este estilo */}
+                    {results.map(prod => (
+                        <li key={prod.sku} className={styles.resultItem}> {/* Necesitarás crear este estilo */}
+                            <div>
+                                <strong>{prod.nombre}</strong> (SKU: {prod.sku})
+                                <small>Stock: {prod.stock}</small>
+                            </div>
+                            <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                <input
+                                    type="number"
+                                    value={cantidad}
+                                    onChange={e => setCantidad(Math.max(1, e.target.value))}
+                                    style={{ width: '60px' }}
+                                    min="1"
+                                />
+                                <button onClick={() => handleSolicitar(prod.sku)} disabled={prod.stock <= 0}>
+                                    {prod.stock > 0 ? 'Solicitar' : 'Sin Stock'}
+                                </button>
+                            </div>
+                        </li>
+                    ))}
+                </ul>
+            )}
+        </div>
+    );
+};
+
 
 export default function DetalleOrden() {
     const { id } = useParams();
@@ -112,19 +189,31 @@ export default function DetalleOrden() {
     const [alertModal, setAlertModal] = useState({ isOpen: false, title: '', message: '', intent: 'success' });
     const [isMotivoModalOpen, setIsMotivoModalOpen] = useState(false);
 
+
+    const fetchOrden = async () => {
+        try {
+            const ordenRes = await apiClient.get(`/ordenes/${id}/`);
+            setOrden(ordenRes.data);
+            setDiagnostico(ordenRes.data.diagnostico_tecnico || '');
+        } catch (err) {
+            setError('No se pudo recargar la información de la orden.');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
     useEffect(() => {
+        setIsLoading(true);
         const fetchAllData = async () => {
             try {
-                const [ordenRes, mecanicosRes] = await Promise.all([
-                    apiClient.get(`/ordenes/${id}/`),
-                    apiClient.get('/mecanicos/')
-                ]);
-                setOrden(ordenRes.data);
+
+                const mecanicosRes = await apiClient.get('/mecanicos/');
                 setMecanicos(mecanicosRes.data);
-                setDiagnostico(ordenRes.data.diagnostico_tecnico || '');
+
+
+                await fetchOrden();
             } catch (err) {
                 setError('No se pudo cargar la información necesaria.');
-            } finally {
                 setIsLoading(false);
             }
         };
@@ -146,7 +235,7 @@ export default function DetalleOrden() {
     const handleSaveDiagnostico = async () => {
         try {
             const response = await apiClient.patch(`/ordenes/${id}/`, { diagnostico_tecnico: diagnostico });
-            setOrden(response.data); 
+            setOrden(response.data);
             setAlertModal({ isOpen: true, title: 'Éxito', message: 'Diagnóstico guardado con éxito.', intent: 'success' });
         } catch {
             setAlertModal({ isOpen: true, title: 'Error', message: 'Error al guardar el diagnóstico.', intent: 'danger' });
@@ -180,10 +269,9 @@ export default function DetalleOrden() {
             const response = await apiClient.post(`/ordenes/${id}/subir-documento/`, formData, {
                 headers: { 'Content-Type': 'multipart/form-data' },
             });
-            setOrden(prevOrden => ({
-                ...prevOrden,
-                documentos: [...prevOrden.documentos, response.data]
-            }));
+
+            await fetchOrden();
+
             setArchivo(null);
             setDescripcionArchivo('');
             e.target.reset();
@@ -210,7 +298,7 @@ export default function DetalleOrden() {
     const handleReanudar = async () => {
         try {
             const response = await apiClient.post(`/ordenes/${id}/reanudar/`);
-            setOrden(response.data); 
+            setOrden(response.data);
             setAlertModal({ isOpen: true, title: 'Éxito', message: 'El trabajo ha sido reanudado.', intent: 'success' });
         } catch (error) {
             setAlertModal({ isOpen: true, title: 'Error', message: 'Error al reanudar el trabajo.', intent: 'danger' });
@@ -221,12 +309,19 @@ export default function DetalleOrden() {
         setAlertModal({ isOpen: false, title: '', message: '', intent: 'success' });
     };
 
+
+    const handleRepuestoAgregado = () => {
+        fetchOrden();
+    };
+
     if (isLoading) return <p className={styles.loading}>Cargando detalle de la orden...</p>;
     if (error && !orden) return <p className={styles.error}>{error}</p>;
 
     const isFinalizada = orden?.estado === 'Finalizado';
     const tienePrivilegiosAdmin = (user.rol === 'Supervisor' || user.rol === 'Administrativo');
     const puedeModificar = (tienePrivilegiosAdmin || user.rol === 'Mecanico') && !isFinalizada;
+
+    const esMecanicoAsignado = (user.rol === 'Mecanico' && orden?.usuario_asignado === user.id);
 
     return (
         <div className={styles.pageWrapper}>
@@ -236,8 +331,9 @@ export default function DetalleOrden() {
             </header>
 
             <div className={styles.gridContainer}>
-                
+
                 <div className={styles.mainContent}>
+
                     {orden?.imagen_averia_url && (
                         <div className={styles.infoCard}>
                             <h3><ImageIcon /> Imagen de la Avería</h3>
@@ -246,6 +342,7 @@ export default function DetalleOrden() {
                             </a>
                         </div>
                     )}
+
 
                     <div className={styles.infoCard}>
                         <h3><Wrench /> Falla y Diagnóstico</h3>
@@ -268,12 +365,45 @@ export default function DetalleOrden() {
                         </div>
                     </div>
 
+                    <div className={styles.infoCard}>
+                        <h3><Wrench /> Repuestos y Servicios</h3>
+                        <ul className={styles.repuestosList}>
+                            {orden?.items && orden.items.length > 0 ? (
+                                orden.items.map(item => (
+                                    <li key={item.id} className={styles.repuestoItem}>
+                                        <div>
+                                            <strong>{item.producto_info?.nombre || item.servicio_info}</strong>
+                                            <span> (x{item.cantidad})</span>
+                                        </div>
+                                        {item.producto_info && (
+                                            <span
+                                                className={styles.statusRepuesto}
+                                                data-estado={item.estado_repuesto}
+                                            >
+                                                {item.estado_repuesto.replace(/_/g, ' ')}
+                                                {item.estado_repuesto === 'Rechazado' && (
+                                                    <small> ({item.motivo_gestion})</small>
+                                                )}
+                                            </span>
+                                        )}
+                                    </li>
+                                ))
+                            ) : (
+                                <p>No se han añadido repuestos o servicios a esta orden.</p>
+                            )}
+                        </ul>
+                    </div>
+
+                    {(esMecanicoAsignado || tienePrivilegiosAdmin) && !isFinalizada && (
+                        <BuscadorRepuestos ordenId={id} onRepuestoAgregado={handleRepuestoAgregado} />
+                    )}
+
                     {puedeModificar && (
                         <div className={styles.infoCard}>
                             <h3><Upload /> Subir Documentos</h3>
                             <form onSubmit={handleFileUpload} className={styles.uploadForm}>
                                 <div className={styles.formRow}>
-                                    <div className={styles.formField} style={{flex: 1}}>
+                                    <div className={styles.formField} style={{ flex: 1 }}>
                                         <label>Archivo</label>
                                         <input type="file" onChange={e => setArchivo(e.target.files[0])} required />
                                     </div>
@@ -286,9 +416,9 @@ export default function DetalleOrden() {
                                     {isUploading ? 'Subiendo...' : 'Subir Archivo'}
                                 </button>
                             </form>
-                            
+
                             <hr />
-                            
+
                             <h4><Paperclip /> Documentos Anexados</h4>
                             <div className={styles.documentGroupContainer}>
                                 {orden?.documentos && orden.documentos.length > 0 ? (
@@ -309,23 +439,23 @@ export default function DetalleOrden() {
                         <div className={`${styles.statusBadge} ${styles[orden?.estado.toLowerCase().replace(/\s/g, '')]}`}>
                             {orden?.estado}
                         </div>
-                        
+
                         {puedeModificar && (
                             <div className={styles.pauseActions}>
                                 {orden?.estado === 'Pausado' ? (
-                                    <button onClick={handleReanudar} className={styles.resumeButton}><Play size={16}/> Reanudar Trabajo</button>
+                                    <button onClick={handleReanudar} className={styles.resumeButton}><Play size={16} /> Reanudar Trabajo</button>
                                 ) : (
-                                    <button onClick={handlePausar} className={styles.pauseButton} disabled={orden?.estado === 'Finalizado'}><Pause size={16}/> Pausar Trabajo</button>
+                                    <button onClick={handlePausar} className={styles.pauseButton} disabled={orden?.estado === 'Finalizado'}><Pause size={16} /> Pausar Trabajo</button>
                                 )}
                             </div>
                         )}
-                        
+
                         <hr />
                         <h4>Historial de Estados</h4>
                         <ul className={styles.historyList}>
                             {orden?.historial_estados?.map(h => (
                                 <li key={h.id}>
-                                    <strong>{h.estado}</strong> 
+                                    <strong>{h.estado}</strong>
                                     <span>por {h.usuario_nombre} el {new Date(h.fecha).toLocaleString('es-CL')}</span>
                                     {h.motivo && <small>Motivo: {h.motivo}</small>}
                                 </li>
@@ -335,7 +465,7 @@ export default function DetalleOrden() {
 
                     <div className={styles.infoCard}>
                         <h3><User /> Asignación</h3>
-                        {tienePrivilegiosAdmin && !isFinalizada ? ( 
+                        {tienePrivilegiosAdmin && !isFinalizada ? (
                             <select
                                 value={orden?.usuario_asignado || ''}
                                 onChange={handleAssignMecanico}
@@ -361,6 +491,7 @@ export default function DetalleOrden() {
                 </aside>
             </div>
 
+
             <AlertModal
                 isOpen={alertModal.isOpen}
                 onClose={closeAlertModal}
@@ -368,13 +499,13 @@ export default function DetalleOrden() {
                 message={alertModal.message}
                 intent={alertModal.intent}
             />
-            
+
             <ModalInputMotivo
                 isOpen={isMotivoModalOpen}
                 onClose={() => setIsMotivoModalOpen(false)}
                 onConfirm={handleConfirmPausa}
             />
-            
+
         </div>
     );
 }

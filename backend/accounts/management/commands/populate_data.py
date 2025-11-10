@@ -1,5 +1,4 @@
 # En: backend/accounts/management/commands/populate_data.py
-# --- VERSIÓN CORREGIDA ---
 
 import random
 from datetime import timedelta
@@ -54,7 +53,7 @@ class Command(BaseCommand):
         # --- 1. Buscar Grupos ---
         grupos_nombres = [
             'admin', 'Chofer', 'Mecanico', 'Supervisor', 
-            'Seguridad', 'Administrativo', 'Control Llaves'
+            'Seguridad', 'Administrativo', 'Control Llaves',"Repuestos",
         ]
         grupos = {}
         try:
@@ -105,10 +104,11 @@ class Command(BaseCommand):
         seguridad = crear_o_actualizar_usuario('seguridad', 'seguridad@taller.cl', 'Ana', 'López', grupos['Seguridad'])
         administrativo = crear_o_actualizar_usuario('administrativo', 'administrativo@taller.cl', 'Maria', 'Gonzalez', grupos['Administrativo'])
         control_llaves = crear_o_actualizar_usuario('llaves', 'llaves@taller.cl', 'Encargado', 'Pañol', grupos['Control Llaves'])
+        repuestos_user = crear_o_actualizar_usuario('repuestos', 'repuestos@taller.cl', 'Diego', 'Muñoz', grupos['Repuestos'])
         chofer1 = crear_o_actualizar_usuario('chofer1', 'chofer1@taller.cl', 'Luis', 'Rojas', grupos['Chofer'])
         chofer2 = crear_o_actualizar_usuario('chofer2', 'chofer2@taller.cl', 'Pedro', 'Araya', grupos['Chofer'])
         self.stdout.write(self.style.SUCCESS(f"Usuarios base verificados o creados (pass: '{default_password}')."))
-
+        
         
         # --- 3. Crear Vehículos y sus Llaves (LÓGICA CORREGIDA) ---
         # Usamos patentes FIJAS para que 'get_or_create' no cree duplicados.

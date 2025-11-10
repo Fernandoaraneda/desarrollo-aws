@@ -355,22 +355,54 @@ class Servicio(TimeStampedModel):
         verbose_name_plural = "Servicios"
 
 class OrdenItem(models.Model):
+    
+    class EstadoRepuesto(models.TextChoices):
+        NO_APLICA = 'N/A', 'No Aplica' # Para servicios o items no inventariables
+        PENDIENTE = 'Pendiente', 'Pendiente de Aprobación'
+        APROBADO = 'Aprobado', 'Aprobado y Descontado'
+        RECHAZADO = 'Rechazado', 'Rechazado (Sin Stock)'
+    
+    estado_repuesto = models.CharField(
+        max_length=50, 
+        choices=EstadoRepuesto.choices, 
+        default=EstadoRepuesto.NO_APLICA,
+        db_index=True
+    )
+    solicitado_por = models.ForeignKey(
+        Usuario, 
+        related_name='items_solicitados', 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True
+    )
+    gestionado_por = models.ForeignKey(
+        Usuario, 
+        related_name='items_gestionados', 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True
+    )
+    motivo_gestion = models.TextField(blank=True, null=True) # Para el motivo de rechazo
+    fecha_gestion = models.DateTimeField(blank=True, null=True)
     orden = models.ForeignKey(Orden, on_delete=models.CASCADE, related_name='items')
     producto = models.ForeignKey(Producto, on_delete=models.SET_NULL, blank=True, null=True)
     servicio = models.ForeignKey(Servicio, on_delete=models.SET_NULL, blank=True, null=True)
     cantidad = models.DecimalField(max_digits=10, decimal_places=2, default=1.0)
-    precio_unitario = models.DecimalField(max_digits=10, decimal_places=2)
+    precio_unitario = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
 
     def clean(self):
         if (self.producto and self.servicio) or (not self.producto and not self.servicio):
             raise ValidationError("Debe especificar un producto o un servicio, pero no ambos.")
 
     def save(self, *args, **kwargs):
-        # Asigna el precio automáticamente si es un item nuevo y no se especificó un precio
-        if self._state.adding and not hasattr(self, 'precio_unitario'):
-            if self.producto:
+       
+        if self._state.adding and self.producto:      
+            self.estado_repuesto = self.EstadoRepuesto.PENDIENTE
+            if not hasattr(self, 'precio_unitario') or not self.precio_unitario:
                 self.precio_unitario = self.producto.precio_venta
-            elif self.servicio:
+        elif self._state.adding and self.servicio:
+            self.estado_repuesto = self.EstadoRepuesto.NO_APLICA
+            if not hasattr(self, 'precio_unitario') or not self.precio_unitario:
                 self.precio_unitario = self.servicio.precio_base
         super().save(*args, **kwargs)
 

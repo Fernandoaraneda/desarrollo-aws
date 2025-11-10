@@ -78,6 +78,20 @@ const navLinksByRole = {
         { to: '/gestion-llaves/historial', label: 'Historial de Llaves', icon: 'fas fa-history' },
       ]
     },
+    // --- Acordeón 4: Gestor de repuestos ---
+    { 
+      type: 'accordion', 
+      label: 'Manejo Repuestos', 
+      icon: 'fas fa-shield-alt',
+      links: [
+        { to: '/panel-repuestos', label: 'Solicitudes', icon: 'fas fa-inbox' },
+        { to: '/stock-repuestos', label: 'Gestionar Stock', icon: 'fas fa-boxes' }
+      ]
+    },
+  ],
+  'Repuestos': [
+    { to: '/panel-repuestos', label: 'Solicitudes', icon: 'fas fa-inbox' },
+    { to: '/stock-repuestos', label: 'Gestionar Stock', icon: 'fas fa-boxes' }
   ],
   'Control Llaves': [
     { to: '/gestion-llaves', label: 'Gestión de Llaves', icon: 'fas fa-key' },

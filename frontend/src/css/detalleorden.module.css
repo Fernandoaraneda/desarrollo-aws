@@ -1,177 +1,211 @@
 /* src/css/detalleorden.module.css */
 
 .pageWrapper {
-    padding: 2rem;
-    background-color: #f9fafb;
-    min-height: 100%;
+  padding: 2rem;
+  background-color: #f9fafb;
+  min-height: 100%;
 }
 
 .header {
-    margin-bottom: 2rem;
+  margin-bottom: 2rem;
 }
 
 .header h1 {
-    font-size: 2rem;
-    font-weight: bold;
-    color: #111827;
+  font-size: 2rem;
+  font-weight: bold;
+  color: #111827;
 }
 
 .header p {
-    font-size: 1.1rem;
-    color: #4b5563;
+  font-size: 1.1rem;
+  color: #4b5563;
 }
 
 .gridContainer {
-    display: grid;
-    grid-template-columns: 2fr 1fr;
-    gap: 2rem;
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 2rem;
 }
 
 .infoCard {
-    background-color: white;
-    border-radius: 12px;
-    padding: 1.5rem;
-    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
-    margin-bottom: 2rem;
+  background-color: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  margin-bottom: 2rem;
 }
 
 .infoCard h3 {
-    font-size: 1.25rem;
-    font-weight: 600;
-    color: #1f2937;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    margin-bottom: 1rem;
-    border-bottom: 1px solid #e5e7eb;
-    padding-bottom: 0.75rem;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1f2937;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid #e5e7eb;
+  padding-bottom: 0.75rem;
 }
 
 /* === ESTILOS PARA LA IMAGEN DE AVERÍA (AÑADIDO) === */
 .averiaImage {
-  width: 100%;                  /* Ocupa el 100% del ancho de su contenedor */
-  max-height: 400px;            /* LÍMITE: La altura máxima será de 400px */
-  object-fit: contain;          /* Asegura que toda la imagen se vea, sin deformarse */
-  border-radius: 6px;           /* Bordes redondeados consistentes */
-  background-color: #f3f4f6;    /* Un fondo por si la imagen es transparente */
+  width: 100%;
+  /* Ocupa el 100% del ancho de su contenedor */
+  max-height: 400px;
+  /* LÍMITE: La altura máxima será de 400px */
+  object-fit: contain;
+  /* Asegura que toda la imagen se vea, sin deformarse */
+  border-radius: 6px;
+  /* Bordes redondeados consistentes */
+  background-color: #f3f4f6;
+  /* Un fondo por si la imagen es transparente */
   border: 1px solid #e5e7eb;
   margin-top: 0.5rem;
-  display: block; /* Asegura que se comporte como un bloque */
+  display: block;
+  /* Asegura que se comporte como un bloque */
 }
 
 
 .infoField {
-    margin-bottom: 1rem;
+  margin-bottom: 1rem;
 }
 
 .infoField label {
-    display: block;
-    font-size: 0.875rem;
-    font-weight: 500;
-    color: #6b7280;
-    margin-bottom: 0.25rem;
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #6b7280;
+  margin-bottom: 0.25rem;
 }
 
 .infoField p {
-    font-size: 1rem;
-    color: #374151;
+  font-size: 1rem;
+  color: #374151;
 }
 
-.textArea, .statusSelect, .motivoInput, .mecanicoSelect, .saveButton {
-    width: 100%;
-    padding: 0.75rem;
-    border: 1px solid #d1d5db;
-    border-radius: 8px;
-    font-size: 1rem;
+.textArea,
+.statusSelect,
+.motivoInput,
+.mecanicoSelect,
+.saveButton {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 1rem;
 }
 
 .textArea {
-    min-height: 100px;
-    resize: vertical;
+  min-height: 100px;
+  resize: vertical;
 }
 
 .saveButton {
-    margin-top: 0.5rem;
-    background-color: #3b82f6;
-    color: white;
-    font-weight: 600;
-    cursor: pointer;
-    border: none;
+  margin-top: 0.5rem;
+  background-color: #3b82f6;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
 }
 
 .saveButton:hover {
-    background-color: #2563eb;
+  background-color: #2563eb;
 }
 
 .statusCard hr {
-    margin: 1.5rem 0;
-    border-top: 1px solid #e5e7eb;
+  margin: 1.5rem 0;
+  border-top: 1px solid #e5e7eb;
 }
 
 .statusBadge {
-    display: inline-block;
-    padding: 0.5rem 1rem;
-    border-radius: 9999px;
-    font-weight: bold;
-    text-align: center;
-    width: 100%;
-    font-size: 1.1rem;
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  border-radius: 9999px;
+  font-weight: bold;
+  text-align: center;
+  width: 100%;
+  font-size: 1.1rem;
 }
 
 /* Colores para tema claro de los badges */
-.ingresado { background-color: #e0e7ff; color: #4338ca; }
-.endiagnostico { background-color: #fef3c7; color: #92400e; }
-.enproceso { background-color: #dbeafe; color: #1e40af; }
-.pausado { background-color: #fee2e2; color: #991b1b; }
-.finalizado { background-color: #dcfce7; color: #166534; }
+.ingresado {
+  background-color: #e0e7ff;
+  color: #4338ca;
+}
+
+.endiagnostico {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
+.enproceso {
+  background-color: #dbeafe;
+  color: #1e40af;
+}
+
+.pausado {
+  background-color: #fee2e2;
+  color: #991b1b;
+}
+
+.finalizado {
+  background-color: #dcfce7;
+  color: #166534;
+}
 
 
 .submitButton {
-    width: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-    padding: 0.75rem;
-    background-color: #16a34a;
-    color: white;
-    border: none;
-    border-radius: 8px;
-    font-weight: bold;
-    cursor: pointer;
-    transition: background-color 0.2s;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  background-color: #16a34a;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.2s;
 }
+
 .submitButton:hover {
-    background-color: #15803d;
+  background-color: #15803d;
 }
 
 .dateField {
-    display: flex;
-    justify-content: space-between;
-    font-size: 0.9rem;
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.9rem;
 }
 
-.loading, .error {
-    text-align: center;
-    padding: 2rem;
-    font-size: 1.2rem;
-    font-weight: 500;
-}
+.loading,
 .error {
-    color: #ef4444;
+  text-align: center;
+  padding: 2rem;
+  font-size: 1.2rem;
+  font-weight: 500;
+}
+
+.error {
+  color: #ef4444;
 }
 
 /* === REGLAS RESPONSIVAS === */
 @media (max-width: 768px) {
-    .gridContainer {
-        grid-template-columns: 1fr;
-    }
-    .pageWrapper {
-        padding: 1rem;
-    }
-    .header h1 {
-        font-size: 1.5rem;
-    }
+  .gridContainer {
+    grid-template-columns: 1fr;
+  }
+
+  .pageWrapper {
+    padding: 1rem;
+  }
+
+  .header h1 {
+    font-size: 1.5rem;
+  }
 }
 
 /* ... (estilos existentes como .pageWrapper, .header, .gridContainer, etc. se quedan igual) ... */
@@ -179,57 +213,68 @@
 /* === ESTILOS PARA LA BARRA LATERAL (SIDEBAR) === */
 
 .infoCard {
-    background-color: white;
-    border-radius: 12px;
-    padding: 1.5rem;
-    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
-    margin-bottom: 2rem;
+  background-color: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  margin-bottom: 2rem;
 }
 
 .infoCard h3 {
-    font-size: 1.25rem;
-    font-weight: 600;
-    color: #1f2937;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    margin-bottom: 1rem;
-    border-bottom: 1px solid #e5e7eb;
-    padding-bottom: 0.75rem;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1f2937;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid #e5e7eb;
+  padding-bottom: 0.75rem;
 }
 
 .statusCard hr {
-    margin: 1.5rem 0;
-    border-top: 1px solid #e5e7eb;
+  margin: 1.5rem 0;
+  border-top: 1px solid #e5e7eb;
 }
 
 /* --- ✅ ESTILOS NUEVOS PARA EL HISTORIAL --- */
 
 .historyList {
-  list-style: none; /* Quita los puntos de la lista */
-  padding-left: 1.5rem; /* Espacio para la línea de tiempo */
-  position: relative; /* Contexto para la línea */
+  list-style: none;
+  /* Quita los puntos de la lista */
+  padding-left: 1.5rem;
+  /* Espacio para la línea de tiempo */
+  position: relative;
+  /* Contexto para la línea */
   margin-top: 1rem;
-  border-left: 2px solid #e5e7eb; /* La línea vertical */
+  border-left: 2px solid #e5e7eb;
+  /* La línea vertical */
 }
 
 .historyList li {
-  position: relative; /* Contexto para el "punto" */
-  margin-bottom: 1.25rem; /* Espacio entre eventos */
-  padding-left: 1.25rem; /* Espacio entre el punto y el texto */
+  position: relative;
+  /* Contexto para el "punto" */
+  margin-bottom: 1.25rem;
+  /* Espacio entre eventos */
+  padding-left: 1.25rem;
+  /* Espacio entre el punto y el texto */
 }
 
 /* El "punto" en la línea de tiempo */
 .historyList li::before {
   content: '';
   position: absolute;
-  left: -2.3rem; /* Lo mueve a la izquierda para que se centre en la línea */
-  top: 5px; /* Alineación vertical */
+  left: -2.3rem;
+  /* Lo mueve a la izquierda para que se centre en la línea */
+  top: 5px;
+  /* Alineación vertical */
   width: 10px;
   height: 10px;
   border-radius: 50%;
-  background-color: var(--accent-color, #3b82f6); /* Color del punto */
-  border: 2px solid white; /* Efecto de "agujero" */
+  background-color: var(--accent-color, #3b82f6);
+  /* Color del punto */
+  border: 2px solid white;
+  /* Efecto de "agujero" */
 }
 
 .historyList li strong {
@@ -241,8 +286,10 @@
 
 .historyList li span {
   display: block;
-  font-size: 0.8rem; /* Más pequeño */
-  color: #6b7280; /* Texto gris */
+  font-size: 0.8rem;
+  /* Más pequeño */
+  color: #6b7280;
+  /* Texto gris */
 }
 
 .historyList li small {
@@ -259,17 +306,21 @@
 .assignedMechanic {
   width: 100%;
   padding: 0.75rem;
-  border: 1px solid #e5e7eb; /* Borde sutil */
+  border: 1px solid #e5e7eb;
+  /* Borde sutil */
   border-radius: 8px;
   font-size: 1rem;
-  background-color: #f9fafb; /* Fondo gris muy claro */
-  color: #374151; /* Texto oscuro */
-  box-sizing: border-box; /* Asegura que el padding no rompa el layout */
+  background-color: #f9fafb;
+  /* Fondo gris muy claro */
+  color: #374151;
+  /* Texto oscuro */
+  box-sizing: border-box;
+  /* Asegura que el padding no rompa el layout */
 }
 
 /* Asegura que el select ocupe todo el ancho */
 .mecanicoSelect {
-    width: 100%;
+  width: 100%;
 }
 
 /* Mejora para las Fechas Clave */
@@ -278,20 +329,25 @@
   justify-content: space-between;
   align-items: center;
   font-size: 0.9rem;
-  padding: 0.75rem 0.25rem; /* Más padding vertical */
-  border-bottom: 1px dashed #e5e7eb; /* Separador */
+  padding: 0.75rem 0.25rem;
+  /* Más padding vertical */
+  border-bottom: 1px dashed #e5e7eb;
+  /* Separador */
 }
 
 .dateField:last-child {
-  border-bottom: none; /* El último no necesita separador */
+  border-bottom: none;
+  /* El último no necesita separador */
 }
 
 .dateField span {
-  color: #6b7280; /* Etiqueta "Ingreso:" en gris */
+  color: #6b7280;
+  /* Etiqueta "Ingreso:" en gris */
 }
 
 .dateField strong {
-  color: #1f2937; /* La fecha en texto oscuro */
+  color: #1f2937;
+  /* La fecha en texto oscuro */
   font-weight: 600;
 }
 
@@ -300,19 +356,39 @@
 
 /* Colores para tema claro de los badges (ya los tienes) */
 .statusBadge {
-    display: inline-block;
-    padding: 0.5rem 1rem;
-    border-radius: 9999px;
-    font-weight: bold;
-    text-align: center;
-    width: 100%;
-    font-size: 1.1rem;
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  border-radius: 9999px;
+  font-weight: bold;
+  text-align: center;
+  width: 100%;
+  font-size: 1.1rem;
 }
-.ingresado { background-color: #e0e7ff; color: #4338ca; }
-.endiagnostico { background-color: #fef3c7; color: #92400e; }
-.enproceso { background-color: #dbeafe; color: #1e40af; }
-.pausado { background-color: #fee2e2; color: #991b1b; }
-.finalizado { background-color: #dcfce7; color: #166534; }
+
+.ingresado {
+  background-color: #e0e7ff;
+  color: #4338ca;
+}
+
+.endiagnostico {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
+.enproceso {
+  background-color: #dbeafe;
+  color: #1e40af;
+}
+
+.pausado {
+  background-color: #fee2e2;
+  color: #991b1b;
+}
+
+.finalizado {
+  background-color: #dcfce7;
+  color: #166534;
+}
 
 /* --- ✅ ESTILOS PARA ORDENAR "SUBIR DOCUMENTOS" --- */
 
@@ -320,13 +396,15 @@
 .uploadForm {
   display: flex;
   flex-direction: column;
-  gap: 1rem; /* Espacio entre las filas del formulario */
+  gap: 1rem;
+  /* Espacio entre las filas del formulario */
 }
 
 /* 2. Define la fila que contiene "Tipo" y "Archivo" */
 .formRow {
   display: flex;
-  gap: 1rem; /* Espacio entre los campos "Tipo" y "Archivo" */
+  gap: 1rem;
+  /* Espacio entre los campos "Tipo" y "Archivo" */
 }
 
 /* 3. Se asegura que el select de "Tipo" se vea igual que los otros inputs */
@@ -336,7 +414,8 @@
   border: 1px solid #d1d5db;
   border-radius: 8px;
   font-size: 1rem;
-  background-color: #f9fafb; /* Fondo claro */
+  background-color: #f9fafb;
+  /* Fondo claro */
 }
 
 /* 4. Mejora visual para el input de "Archivo" */
@@ -344,7 +423,8 @@
   font-size: 0.9rem;
   color: #4b5563;
   padding: 0.5rem;
-  border: 1px dashed #d1d5db; /* Borde discontinuo */
+  border: 1px dashed #d1d5db;
+  /* Borde discontinuo */
   border-radius: 8px;
 }
 
@@ -390,12 +470,14 @@
   margin: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.75rem; /* Espacio entre cada documento */
+  gap: 0.75rem;
+  /* Espacio entre cada documento */
 }
 
 /* 9. Estilo de "Tarjeta" para cada documento en la lista */
 .documentList li {
-  background-color: #f9fafb; /* Fondo gris muy claro */
+  background-color: #f9fafb;
+  /* Fondo gris muy claro */
   border: 1px solid #e5e7eb;
   border-radius: 8px;
   padding: 0.75rem 1rem;
@@ -403,17 +485,20 @@
 }
 
 .documentList li:hover {
-  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 /* 10. Estilo para el link (nombre del documento) */
 .documentList li a {
-  display: block; /* Ocupa su propia línea */
+  display: block;
+  /* Ocupa su propia línea */
   font-weight: 600;
-  color: #3b82f6; /* Color azul (acento) */
+  color: #3b82f6;
+  /* Color azul (acento) */
   text-decoration: none;
   margin-bottom: 0.25rem;
 }
+
 .documentList li a:hover {
   text-decoration: underline;
 }
@@ -422,13 +507,15 @@
 .documentList li span {
   display: block;
   font-size: 0.8rem;
-  color: #6b7280; /* Texto gris */
+  color: #6b7280;
+  /* Texto gris */
 }
 
 /* 12. Regla para que el formulario se vea bien en móviles */
 @media (max-width: 640px) {
   .formRow {
-    flex-direction: column; /* Apila "Tipo" y "Archivo" verticalmente */
+    flex-direction: column;
+    /* Apila "Tipo" y "Archivo" verticalmente */
     gap: 1rem;
   }
 }
@@ -447,7 +534,8 @@
 .documentGroup {
   border: 1px solid #e5e7eb;
   border-radius: 8px;
-  overflow: hidden; /* Clave para el acordeón */
+  overflow: hidden;
+  /* Clave para el acordeón */
 }
 
 /* El botón que actúa como cabecera del acordeón */
@@ -481,7 +569,8 @@
 /* Cada item individual dentro del acordeón */
 .documentItem {
   display: flex;
-  flex-direction: column; /* Apila la preview y la metadata en móviles */
+  flex-direction: column;
+  /* Apila la preview y la metadata en móviles */
   gap: 1rem;
 }
 
@@ -501,7 +590,8 @@
 /* Previsualización de PDF (iframe o embed) */
 .pdfPreview {
   width: 100%;
-  height: 500px; /* Altura fija para el visor de PDF */
+  height: 500px;
+  /* Altura fija para el visor de PDF */
   border: 1px solid #e5e7eb;
   border-radius: 6px;
 }
@@ -519,6 +609,7 @@
   font-weight: 600;
   color: #374151;
 }
+
 .downloadLink:hover {
   background-color: #e5e7eb;
 }
@@ -533,8 +624,10 @@
   color: #111827;
   margin: 0 0 0.5rem 0;
 }
+
 .documentMeta span {
-  display: flex; /* Alinea ícono y texto */
+  display: flex;
+  /* Alinea ícono y texto */
   align-items: center;
   gap: 0.5rem;
   font-size: 0.8rem;
@@ -544,21 +637,25 @@
 
 /* --- Media query para pantallas más grandes --- */
 @media (min-width: 768px) {
+
   /* En pantallas grandes, pone la preview a la izquierda y la metadata a la derecha */
   .documentItem {
-    flex-direction: row; /* Lado a lado */
+    flex-direction: row;
+    /* Lado a lado */
     align-items: flex-start;
   }
 
   .imagePreview,
   .pdfPreview,
   .downloadLink {
-    flex: 0 0 250px; /* Ancho fijo para la preview */
+    flex: 0 0 250px;
+    /* Ancho fijo para la preview */
     max-width: 250px;
   }
 
   .pdfPreview {
-    height: 300px; /* Más pequeño en la vista lado a lado */
+    height: 300px;
+    /* Más pequeño en la vista lado a lado */
   }
 }
 
@@ -566,7 +663,8 @@
 
 /* 1. Contenedor de los botones (AÑADE EL MARGEN SUPERIOR) */
 .pauseActions {
-  margin-top: 1.5rem; /* <-- Este es el espacio que pediste */
+  margin-top: 1.5rem;
+  /* <-- Este es el espacio que pediste */
   display: flex;
   gap: 0.5rem;
 }
@@ -574,7 +672,8 @@
 /* 2. Estilo base común para ambos botones */
 .pauseButton,
 .resumeButton {
-  flex: 1; /* Hacen que los botones ocupen el mismo espacio */
+  flex: 1;
+  /* Hacen que los botones ocupen el mismo espacio */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -590,20 +689,26 @@
 
 /* 3. Color específico para Pausar */
 .pauseButton {
-  background-color: #fef2f2; /* Fondo rojo claro */
-  color: #b91c1c; /* Texto rojo oscuro */
+  background-color: #fef2f2;
+  /* Fondo rojo claro */
+  color: #b91c1c;
+  /* Texto rojo oscuro */
   border: 1px solid #fecaca;
 }
+
 .pauseButton:hover {
   background-color: #fee2e2;
 }
 
 /* 4. Color específico para Reanudar */
 .resumeButton {
-  background-color: #f0fdf4; /* Fondo verde claro */
-  color: #15803d; /* Texto verde oscuro */
+  background-color: #f0fdf4;
+  /* Fondo verde claro */
+  color: #15803d;
+  /* Texto verde oscuro */
   border: 1px solid #bbf7d0;
 }
+
 .resumeButton:hover {
   background-color: #dcfce7;
 }
@@ -612,91 +717,184 @@
 /* --- ✅ ESTILOS PARA EL NUEVO MODAL DE INPUT (MOTIVO PAUSA) --- */
 
 .modalOverlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: rgba(17, 24, 39, 0.6);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 1000;
-    animation: fadeIn 0.2s ease;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(17, 24, 39, 0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  animation: fadeIn 0.2s ease;
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 .modalContent {
-    background-color: #fff;
-    padding: 2rem;
-    border-radius: 8px;
-    width: 90%;
-    max-width: 500px;
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-    z-index: 1001;
+  background-color: #fff;
+  padding: 2rem;
+  border-radius: 8px;
+  width: 90%;
+  max-width: 500px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+  z-index: 1001;
 }
 
 .modalContent h2 {
-    font-size: 1.5rem;
-    font-weight: 600;
-    margin-top: 0;
-    margin-bottom: 1.5rem;
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-top: 0;
+  margin-bottom: 1.5rem;
 }
 
 .modalField {
-    margin-bottom: 1rem;
+  margin-bottom: 1rem;
 }
 
 .modalField label {
-    display: block;
-    font-weight: 600;
-    margin-bottom: 0.5rem;
-    color: #374151;
+  display: block;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: #374151;
 }
 
 .modalTextarea {
-    width: 100%;
-    min-height: 100px;
-    padding: 0.75rem;
-    border: 1px solid #d1d5db;
-    border-radius: 6px;
-    font-size: 1rem;
-    font-family: inherit;
-    resize: vertical;
+  width: 100%;
+  min-height: 100px;
+  padding: 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-family: inherit;
+  resize: vertical;
 }
 
 .modalActions {
-    margin-top: 2rem;
-    display: flex;
-    justify-content: flex-end;
-    gap: 1rem;
+  margin-top: 2rem;
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
 }
 
 .modalActions button {
-    padding: 0.75rem 1.5rem;
-    border: none;
-    border-radius: 6px;
-    font-size: 1rem;
-    font-weight: 600;
-    cursor: pointer;
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
 }
 
 .modalCancelButton {
-    background-color: #e5e7eb;
-    color: #374151;
+  background-color: #e5e7eb;
+  color: #374151;
 }
+
 .modalCancelButton:hover {
-    background-color: #d1d5db;
+  background-color: #d1d5db;
 }
 
 .modalConfirmButton {
-    background-color: #ef4444; /* Rojo para pausar */
-    color: #ffffff;
+  background-color: #ef4444;
+  /* Rojo para pausar */
+  color: #ffffff;
 }
+
 .modalConfirmButton:hover {
-    background-color: #dc2626;
+  background-color: #dc2626;
+}
+
+
+.repuestosList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.repuestoItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem;
+  background-color: #f9fafb;
+  border-radius: 6px;
+  border: 1px solid #e5e7eb;
+}
+
+/* --- ESTA ES LA PARTE IMPORTANTE --- */
+.statusRepuesto {
+  font-weight: bold;
+  font-size: 0.9rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+  text-transform: capitalize;
+  /* Pone la primera letra en mayúscula */
+}
+
+/* Estado Pendiente (Amarillo) */
+.statusRepuesto[data-estado="Pendiente"] {
+  color: #b45309;
+  background-color: #fef3c7;
+}
+
+/* Estado Aprobado (Verde) */
+.statusRepuesto[data-estado="Aprobado"] {
+  color: #047857;
+  background-color: #d1fae5;
+}
+
+/* Estado Rechazado (Rojo) */
+.statusRepuesto[data-estado="Rechazado"] {
+  color: #b91c1c;
+  background-color: #fee2e2;
+}
+
+/* Estado No Aplica (Gris) - para servicios */
+.statusRepuesto[data-estado="N/A"] {
+  color: #555;
+  background-color: #f3f4f6;
+}
+
+/* --- FIN DE LA PARTE IMPORTANTE --- */
+
+
+.resultsList {
+  list-style: none;
+  padding: 0;
+  margin-top: 1rem;
+  max-height: 200px;
+  overflow-y: auto;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+}
+
+.resultItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.resultItem:last-child {
+  border-bottom: none;
+}
+
+.resultItem small {
+  display: block;
+  color: #6b7280;
+  font-size: 0.8rem;
 }

@@ -27,7 +27,9 @@ from .views import (
     LlaveVehiculoViewSet, 
     PrestamoLlaveViewSet,
     LlaveHistorialEstadoViewSet,
-    HistorialSeguridadViewSet
+    HistorialSeguridadViewSet,
+    ProductoViewSet,
+    OrdenItemViewSet
 
 )
 
@@ -40,6 +42,12 @@ router.register(r'llaves', LlaveVehiculoViewSet, basename='llave')
 router.register(r'prestamos-llaves', PrestamoLlaveViewSet, basename='prestamo-llave')
 router.register(r'llaves-historial-estado', LlaveHistorialEstadoViewSet, basename='llave-historial')
 router.register(r'historial-seguridad', HistorialSeguridadViewSet, basename='historial-seguridad')
+router.register(r'productos', ProductoViewSet, basename='producto') 
+router.register(r'orden-items', OrdenItemViewSet, basename='orden-item') 
+
+
+
+
 urlpatterns = [
     # Autenticación
     path("login/", LoginView.as_view(), name="login"),
