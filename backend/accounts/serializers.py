@@ -12,7 +12,7 @@ import re
 # Modelos locales
 from .models import (
     Vehiculo, Agendamiento, Orden, OrdenHistorialEstado, OrdenDocumento, 
-    Notificacion, Producto, OrdenItem, LlaveVehiculo, PrestamoLlave, LlaveHistorialEstado
+    Notificacion, Producto, OrdenItem, LlaveVehiculo, PrestamoLlave, LlaveHistorialEstado, Taller
 )
 
 
@@ -553,6 +553,11 @@ class NotificacionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Notificacion
         fields = ['id', 'mensaje', 'link', 'leida', 'fecha']
+
+class TallerSerializer(serializers.ModelSerializer):
+    class Meta:
+            model = Taller
+            fields = ['id', 'nombre', 'direccion']
 
 
 

@@ -4,8 +4,8 @@ import apiClient from '/src/api/axios.js';
 import styles from '/src/css/creareditarvehiculo.module.css';
 
 
-const ANO_MAXIMO = new Date().getFullYear() + 1; 
-const ANO_MINIMO = 1980; 
+const ANO_MAXIMO = new Date().getFullYear() + 1;
+const ANO_MINIMO = 1980;
 
 const formatPatente = (value) => {
   return value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6);
@@ -39,50 +39,58 @@ export default function CrearEditarVehiculo() {
     kilometraje: '',
     color: '',
     vin: '',
-    chofer: null
+    chofer: null,
+    taller: null
   });
   const [choferes, setChoferes] = useState([]);
-  const [isLoading, setIsLoading] = useState(isEditMode);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [talleres, setTalleres] = useState([]);
 
- 
-  useEffect(() => {
-    if (isEditMode) {
-      setIsLoading(true);
-      apiClient.get(`/vehiculos/${patente}/`)
-        .then(res => {
-          setVehiculoData({
-            ...res.data,
+ useEffect(() => {
+    const fetchData = async () => {
+        setIsLoading(true);
+        try {
+            // Hacemos las 3 llamadas en paralelo para más eficiencia
+            const [choferesRes, talleresRes, vehiculoRes] = await Promise.all([
+                apiClient.get('/choferes/'),
+                apiClient.get('/talleres/'),
+                isEditMode ? apiClient.get(`/vehiculos/${patente}/`) : Promise.resolve(null)
+            ]);
+
+            // 1. Guardamos choferes
+            setChoferes(choferesRes.data.results || choferesRes.data);
             
-            chofer: res.data.chofer || '',
-            anio: res.data.anio || '',
-            kilometraje: res.data.kilometraje || '',
-            color: res.data.color || '',
-            vin: res.data.vin || '',
-          });
-        })
-        .catch(() => {
-          setError('No se pudo cargar la información del vehículo.');
-        })
-        .finally(() => {
-           setIsLoading(false);
-        });
-    }
-  }, [patente, isEditMode]);
+            // 2. Guardamos talleres
+            setTalleres(talleresRes.data.results || talleresRes.data);
 
- 
-  useEffect(() => {
-    apiClient.get('/choferes/')
-      .then(res => {
-        setChoferes(res.data.results || res.data); 
-      })
-      .catch(() => {
-       
-        setError(prev => prev || 'No se pudieron cargar los choferes disponibles.');
-      });
-  }, []);
+            // 3. Si estamos en modo edición, cargamos los datos del vehículo
+            if (isEditMode && vehiculoRes) {
+                setVehiculoData({
+                    ...vehiculoRes.data,
+                    chofer: vehiculoRes.data.chofer || '',
+                    taller: vehiculoRes.data.taller || '', // <-- AÑADIDO
+                    anio: vehiculoRes.data.anio || '',
+                    kilometraje: vehiculoRes.data.kilometraje || '',
+                    color: vehiculoRes.data.color || '',
+                    vin: vehiculoRes.data.vin || '',
+                });
+            } else {
+                setIsLoading(false); // Si es modo CREAR, terminamos de cargar
+            }
 
-  
+        } catch (err) {
+            setError('No se pudo cargar la información necesaria (choferes, talleres o vehículo).');
+        } finally {
+            if (isEditMode) {
+                setIsLoading(false); // Si es modo EDITAR, terminamos de cargar aquí
+            }
+        }
+    };
+
+    fetchData();
+}, [patente, isEditMode, navigate]); // Dependencias
+
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -94,21 +102,21 @@ export default function CrearEditarVehiculo() {
       case 'marca':
       case 'modelo':
       case 'color':
-        finalValue = formatTextoVehiculo(value); 
-        break;
-      case 'anio':
-        finalValue = formatNumero(value).slice(0, 4);
-        break;
-      case 'kilometraje':
-        finalValue = formatNumero(value).slice(0, 7);
-        break;
-      case 'vin':
-        finalValue = formatVIN(value);
-        break;
-      default:
-        finalValue = value;
-    }
-    
+        finalValue = formatTextoVehiculo(value);
+        break;
+      case 'anio':
+        finalValue = formatNumero(value).slice(0, 4);
+        break;
+      case 'kilometraje':
+        finalValue = formatNumero(value).slice(0, 7);
+        break;
+      case 'vin':
+        finalValue = formatVIN(value);
+        break;
+      default:
+        finalValue = value;
+    }
+
     setVehiculoData(prev => ({ ...prev, [name]: finalValue }));
   };
 
@@ -116,10 +124,10 @@ export default function CrearEditarVehiculo() {
     e.preventDefault();
     setError(null);
 
-    
+
     const { anio, kilometraje, patente: patenteValue, vin } = vehiculoData;
-    
-   
+
+
     const patenteRegex = /(^[A-Z]{4}\d{2}$)|(^[A-Z]{2}\d{4}$)/;
     if (!patenteRegex.test(patenteValue)) {
       setError("Formato de Patente inválido. Debe ser XX1111 o XXXX11.");
@@ -136,22 +144,23 @@ export default function CrearEditarVehiculo() {
       setError("El Kilometraje debe ser un número positivo.");
       return;
     }
-    
+
     if (vin && vin.length !== 17) {
-        setError("El VIN (Número de Chasis) debe tener 17 caracteres.");
-        return;
+      setError("El VIN (Número de Chasis) debe tener 17 caracteres.");
+      return;
     }
-    
-   
+
+
     const dataParaEnviar = {
-        ...vehiculoData,
-        anio: anioNum,
-        kilometraje: parseInt(kilometraje, 10),
-      
-        chofer: vehiculoData.chofer || null, 
+      ...vehiculoData,
+      anio: anioNum,
+      kilometraje: parseInt(kilometraje, 10),
+
+      chofer: vehiculoData.chofer || null,
+      taller: vehiculoData.taller || null,
     };
 
- 
+
     try {
       if (isEditMode) {
         await apiClient.put(`/vehiculos/${patente}/`, dataParaEnviar);
@@ -163,8 +172,8 @@ export default function CrearEditarVehiculo() {
       if (err.response && err.response.data) {
         const errorData = err.response.data;
         const messages = Object.entries(errorData).map(([key, value]) => {
-            const errorMsg = Array.isArray(value) ? value.join(', ') : String(value);
-            return `${key}: ${errorMsg}`;
+          const errorMsg = Array.isArray(value) ? value.join(', ') : String(value);
+          return `${key}: ${errorMsg}`;
         });
         setError(messages.join(' | '));
       } else {
@@ -185,18 +194,18 @@ export default function CrearEditarVehiculo() {
 
         <form onSubmit={handleSubmit}>
           <div className={styles.formGrid}>
-            
-      
-            
+
+
+
             <div className={styles.formField}>
               <label htmlFor="patente">Patente</label>
-              <input 
-                type="text" 
-                name="patente" 
-                id="patente" 
-                value={vehiculoData.patente} 
-                onChange={handleChange} 
-                required 
+              <input
+                type="text"
+                name="patente"
+                id="patente"
+                value={vehiculoData.patente}
+                onChange={handleChange}
+                required
                 disabled={isEditMode}
                 maxLength={6}
                 placeholder="BBCC12 o BB1234"
@@ -204,83 +213,83 @@ export default function CrearEditarVehiculo() {
             </div>
             <div className={styles.formField}>
               <label htmlFor="marca">Marca</label>
-              <input 
-                type="text" 
-                name="marca" 
-                id="marca" 
-                value={vehiculoData.marca} 
-                onChange={handleChange} 
-                required 
+              <input
+                type="text"
+                name="marca"
+                id="marca"
+                value={vehiculoData.marca}
+                onChange={handleChange}
+                required
                 disabled={isEditMode}
                 maxLength={50}
               />
             </div>
             <div className={styles.formField}>
               <label htmlFor="modelo">Modelo</label>
-              <input 
-                type="text" 
-                name="modelo" 
-                id="modelo" 
-                value={vehiculoData.modelo} 
-                onChange={handleChange} 
-                required 
+              <input
+                type="text"
+                name="modelo"
+                id="modelo"
+                value={vehiculoData.modelo}
+                onChange={handleChange}
+                required
                 disabled={isEditMode}
                 maxLength={50}
               />
             </div>
             <div className={styles.formField}>
               <label htmlFor="anio">Año</label>
-              <input 
-                type="text" 
-                name="anio" 
-                id="anio" 
-                value={vehiculoData.anio} 
-                onChange={handleChange} 
-                required 
+              <input
+                type="text"
+                name="anio"
+                id="anio"
+                value={vehiculoData.anio}
+                onChange={handleChange}
+                required
                 disabled={isEditMode}
-                maxLength={4} 
+                maxLength={4}
                 placeholder={`Ej: ${new Date().getFullYear()}`}
               />
             </div>
             <div className={styles.formField}>
               <label htmlFor="kilometraje">Kilometraje</label>
-              <input 
-                type="text" 
-                name="kilometraje" 
-                id="kilometraje" 
-                value={vehiculoData.kilometraje} 
-                onChange={handleChange} 
-                required 
+              <input
+                type="text"
+                name="kilometraje"
+                id="kilometraje"
+                value={vehiculoData.kilometraje}
+                onChange={handleChange}
+                required
                 maxLength={7}
                 placeholder="Ej: 150000"
               />
             </div>
             <div className={styles.formField}>
               <label htmlFor="color">Color</label>
-              <input 
-                type="text" 
-                name="color" 
-                id="color" 
-                value={vehiculoData.color} 
+              <input
+                type="text"
+                name="color"
+                id="color"
+                value={vehiculoData.color}
                 onChange={handleChange}
                 maxLength={50}
               />
             </div>
             <div className={`${styles.formField} ${styles.fullWidth}`}>
               <label htmlFor="vin">VIN (Número de Chasis)</label>
-              <input 
-                type="text" 
-                name="vin" 
-                id="vin" 
-                value={vehiculoData.vin} 
+              <input
+                type="text"
+                name="vin"
+                id="vin"
+                value={vehiculoData.vin}
                 onChange={handleChange}
                 disabled={isEditMode}
-                maxLength={17} 
+                maxLength={17}
                 placeholder="17 caracteres alfanuméricos"
               />
             </div>
-            
-            
+
+
             <div className={styles.formField}>
               <label htmlFor="chofer">Chofer a cargo</label>
               <select name="chofer" id="chofer" value={vehiculoData.chofer || ''} onChange={handleChange}>
@@ -290,7 +299,24 @@ export default function CrearEditarVehiculo() {
                 ))}
               </select>
             </div>
+            <div className={styles.formField}>
+              <label htmlFor="taller">Taller Base</label>
+              <select
+                name="taller"
+                id="taller"
+                value={vehiculoData.taller || ''}
+                onChange={handleChange}
+              >
+                <option value="">Seleccionar un taller</option>
+                {talleres.map(taller => (
+                  <option key={taller.id} value={taller.id}>
+                    {taller.nombre}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
+
 
           {error && <p style={{ color: 'red', marginTop: '1rem' }}>{error}</p>}
 

@@ -75,6 +75,15 @@ class Usuario(AbstractUser):
         verbose_name = "Usuario"
         verbose_name_plural = "Usuarios"
 
+
+class Taller(models.Model):
+    nombre = models.CharField(max_length=100, unique=True, help_text="Nombre descriptivo del taller (Ej: Pepsico Maipú)")
+    direccion = models.CharField(max_length=255, help_text="Dirección completa del taller")
+
+    def __str__(self):
+        return f"{self.nombre} ({self.direccion})"
+
+
 # --------------------------------------------------------------------------
 # FLOTA Y TALLER
 # --------------------------------------------------------------------------
@@ -95,6 +104,7 @@ class Vehiculo(TimeStampedModel):
         related_name='vehiculos',
         limit_choices_to={'groups__name': 'Chofer', 'is_active': True}
     )
+    taller = models.ForeignKey(Taller, on_delete=models.SET_NULL, null=True, blank=True, related_name='vehiculos')
     is_active = models.BooleanField(default=True)
 
     # Managers

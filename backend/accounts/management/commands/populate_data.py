@@ -8,7 +8,7 @@ from django.db import transaction, IntegrityError
 from faker import Faker
 from accounts.models import (
     Usuario, Vehiculo, Agendamiento, Orden, Producto, Servicio, OrdenItem,
-    LlaveVehiculo, PrestamoLlave
+    LlaveVehiculo, PrestamoLlave,Taller
 )
 from django.contrib.auth.models import Group
 
@@ -108,11 +108,12 @@ class Command(BaseCommand):
         chofer1 = crear_o_actualizar_usuario('chofer1', 'chofer1@taller.cl', 'Luis', 'Rojas', grupos['Chofer'])
         chofer2 = crear_o_actualizar_usuario('chofer2', 'chofer2@taller.cl', 'Pedro', 'Araya', grupos['Chofer'])
         self.stdout.write(self.style.SUCCESS(f"Usuarios base verificados o creados (pass: '{default_password}')."))
+        self.stdout.write("Creando Taller base...")
+        taller_maipu, _ = Taller.objects.get_or_create(
+             nombre="Pepsico Evercrisp Maipú",
+             defaults={'direccion': "Sta. Marta 1701, 9260081 Maipú, Región Metropolitana"}
+        )
         
-        
-        # --- 3. Crear Vehículos y sus Llaves (LÓGICA CORREGIDA) ---
-        # Usamos patentes FIJAS para que 'get_or_create' no cree duplicados.
-        # Estas patentes cumplen tu formato LLLLDD o LLDDDD.
         
         self.stdout.write("Verificando vehículos base...")
 

@@ -37,6 +37,7 @@ from .models import (
     LlaveVehiculo, 
     PrestamoLlave, 
     LlaveHistorialEstado,
+    Taller
 )
 
 # Serializers
@@ -57,6 +58,7 @@ from .serializers import (
     LlaveHistorialEstadoSerializer,
     HistorialSeguridadSerializer,
     OrdenSalidaListSerializer,
+    TallerSerializer
 )
 
 User = get_user_model()
@@ -767,20 +769,33 @@ class AgendamientoViewSet(viewsets.ModelViewSet):
 
             # Notificar al chofer (Esta lógica está bien)
             try:
-                # El chofer ya está en 'agendamiento.chofer_asociado' desde que se creó la cita
                 if agendamiento.chofer_asociado:
-                    mensaje = f"Su cita para {agendamiento.vehiculo.patente} fue asignada/reagendada para el {fecha_a_validar.strftime('%d-%m-%Y a las %H:%M')}. Motivo: {motivo_cambio or 'Asignación de taller.'}"
+                    # --- 1. Obtenemos la dirección del taller ---
+                    taller_direccion = "Taller no especificado. Consulte con su supervisor."
+                    if agendamiento.vehiculo and agendamiento.vehiculo.taller:
+                        taller_direccion = agendamiento.vehiculo.taller.direccion
+
+                    # --- 2. Creamos el mensaje con la dirección ---
+                    fecha_str = fecha_a_validar.strftime('%d-%m-%Y a las %H:%M')
+                    motivo_str = motivo_cambio or 'Asignación de taller.'
+                    mensaje = (
+                        f"Cita Confirmada: Su cita para {agendamiento.vehiculo.patente} es el {fecha_str}. "
+                        f"Dirección Taller: {taller_direccion}. Motivo: {motivo_str}"
+                    )
+
+                    # --- 3. Enviamos la notificación y el correo ---
                     Notificacion.objects.create(
                         usuario=agendamiento.chofer_asociado,
                         mensaje=mensaje,
-                        link=f"/historial",
+                        link=f"/historial",  # Link al historial del chofer
                     )
-                    subject_chofer = f"Actualización de Cita: Vehículo {agendamiento.vehiculo.patente}"
+                    subject_chofer = f"Cita Confirmada: {agendamiento.vehiculo.patente} el {fecha_str}"
                     enviar_correo_notificacion(
                         agendamiento.chofer_asociado, subject_chofer, mensaje
                     )
             except Exception as e:
                 print(f"Error al crear notificación de reagendamiento: {e}")
+
             try:
                 # 1. Buscamos a todos los usuarios del grupo "Seguridad"
                 usuarios_seguridad = User.objects.filter(
@@ -1298,8 +1313,23 @@ class NotificacionViewSet(viewsets.ModelViewSet):
             leida=True
         )
         return Response(status=status.HTTP_204_NO_CONTENT)
+    
+class TallerViewSet(viewsets.ModelViewSet):
+    """
+    API para gestionar los Talleres.
+    Solo Supervisores/Admin pueden crear o editar talleres.
+    """
+    queryset = Taller.objects.all()
+    serializer_class = TallerSerializer
+    permission_classes = [IsSupervisor] # Protegido
+      
+    def get_permissions(self):
+        if self.action in ['list', 'retrieve']:
+            # Permite a cualquier usuario autenticado (ej. Mecánico) ver la lista
+            self.permission_classes = [IsAuthenticated]
+        return super().get_permissions()
 
-
+    
 class ProductoViewSet(viewsets.ModelViewSet):
     """
     API para buscar productos (repuestos) y ver stock.
