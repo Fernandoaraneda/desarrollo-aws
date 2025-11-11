@@ -1,20 +1,23 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import apiClient from '/src/api/axios.js';
 import styles from '../css/gestionagenda.module.css';
-import { Calendar as CalendarIcon, User, Paperclip } from 'lucide-react';
+import { Calendar as CalendarIcon, User, Paperclip, Truck } from 'lucide-react'; // 1. AÑADIMOS Truck
 import { useUserStore } from '/src/store/authStore.js';
 import AlertModal from '/src/components/modals/AlertModal.jsx';
 
 export default function GestionAgenda() {
     const { user } = useUserStore();
-
-
     const [vehiculos, setVehiculos] = useState([]);
 
-    const [formData, setFormData] = useState({ vehiculo: '', motivo_ingreso: '', solicita_grua: false });
+    // 2. AÑADIMOS 'direccion_grua' AL ESTADO INICIAL
+    const [formData, setFormData] = useState({
+        vehiculo: '',
+        motivo_ingreso: '',
+        solicita_grua: false,
+        direccion_grua: '' // <-- AÑADIDO
+    });
     const [imagenFile, setImagenFile] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
-
     const [error, setError] = useState(null);
     const [isAlertOpen, setIsAlertOpen] = useState(false);
     const [successMessage, setSuccessMessage] = useState(null);
@@ -35,12 +38,10 @@ export default function GestionAgenda() {
         loadVehiculos();
     }, []);
 
-
     const handleImageChange = (e) => {
         setImagenFile(e.target.files[0]);
     };
 
- 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError(null);
@@ -53,40 +54,49 @@ export default function GestionAgenda() {
             return;
         }
 
+        // 3. AÑADIMOS VALIDACIÓN DE DIRECCIÓN
+        if (formData.solicita_grua && !formData.direccion_grua) {
+            setError("Marcó 'Necesita Grúa', por favor especifique la dirección de retiro.");
+            setIsAlertOpen(true);
+            return;
+        }
+
         const dataParaEnviar = new FormData();
         dataParaEnviar.append('vehiculo', formData.vehiculo);
         dataParaEnviar.append('motivo_ingreso', formData.motivo_ingreso);
         dataParaEnviar.append('solicita_grua', formData.solicita_grua || false);
-        dataParaEnviar.append('duracion_estimada_minutos', 60); 
+        dataParaEnviar.append('duracion_estimada_minutos', 60);
+
+        // 4. AÑADIMOS 'direccion_grua' AL FORMDATA
+        if (formData.solicita_grua) {
+            dataParaEnviar.append('direccion_grua', formData.direccion_grua);
+        }
+
         if (imagenFile) {
             dataParaEnviar.append('imagen_averia', imagenFile);
         }
 
-    
         try {
             await apiClient.post('/agendamientos/', dataParaEnviar, {
                 headers: { 'Content-Type': 'multipart/form-data' },
             });
 
-       
-            setFormData({ vehiculo: '', motivo_ingreso: '', solicita_grua: false });
+            // 5. REINICIAMOS EL ESTADO COMPLETO
+            setFormData({ vehiculo: '', motivo_ingreso: '', solicita_grua: false, direccion_grua: '' });
             setImagenFile(null);
             if (e.target) e.target.reset();
             setSuccessMessage("¡Solicitud de cita enviada! El supervisor la revisará y le asignará una hora a la brevedad.");
             setIsAlertOpen(true);
 
         } catch (err) {
-         
             const errorData = err.response?.data;
             let errorMsg = "Error al enviar la solicitud.";
             if (typeof errorData === 'string') {
                 errorMsg = errorData;
             } else if (errorData && typeof errorData === 'object') {
- 
                 errorMsg = errorData.non_field_errors?.[0] || Object.values(errorData)[0];
             }
-
-            setError(String(errorMsg)); 
+            setError(String(errorMsg));
             setIsAlertOpen(true);
         }
     };
@@ -99,7 +109,6 @@ export default function GestionAgenda() {
         return vehiculos.filter(v => v.chofer === user.id);
     }, [vehiculos, user]);
 
-  
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
         setFormData(prev => ({
@@ -110,7 +119,6 @@ export default function GestionAgenda() {
 
     if (isLoading) return <p>Cargando...</p>;
 
-
     return (
         <div className={styles.pageWrapper}>
             <header className={styles.header}>
@@ -120,7 +128,7 @@ export default function GestionAgenda() {
             <div className={styles.contentGrid}>
                 <div className={styles.formCard}>
                     <h2>Crear Nueva Solicitud</h2>
-              
+
                     <form onSubmit={handleSubmit}>
 
                         <div className={styles.formField}>
@@ -134,6 +142,7 @@ export default function GestionAgenda() {
                                 ))}
                             </select>
                         </div>
+
                         <div className={styles.formField}>
                             <label htmlFor="motivo_ingreso">Motivo del Ingreso</label>
                             <textarea
@@ -143,6 +152,7 @@ export default function GestionAgenda() {
                                 onChange={handleChange}
                                 required
                             ></textarea>
+
                             <div className={styles.formFieldCheckbox}>
                                 <input
                                     type="checkbox"
@@ -151,9 +161,26 @@ export default function GestionAgenda() {
                                     checked={formData.solicita_grua}
                                     onChange={handleChange}
                                 />
-                                <label htmlFor="solicita_grua">El vehículo no puede moverse por sí mismo y necesita una grúa.</label>
+                                <label htmlFor="solicita_grua"><Truck size={16} style={{ marginRight: '8px' }} /> El vehículo no puede moverse por sí mismo y necesita una grúa.</label>
                             </div>
                         </div>
+
+                        {/* --- 5. AÑADIMOS EL CAMPO DE DIRECCIÓN CONDICIONAL --- */}
+                        {formData.solicita_grua && (
+                            <div className={styles.formField}>
+                                <label htmlFor="direccion_grua" style={{ color: '#b91c1c', fontWeight: 'bold' }}>Dirección de Retiro (Grúa)</label>
+                                <textarea
+                                    id="direccion_grua"
+                                    name="direccion_grua"
+                                    rows="3"
+                                    placeholder="Escriba la dirección exacta donde está el vehículo..."
+                                    value={formData.direccion_grua}
+                                    onChange={handleChange}
+                                    required
+                                ></textarea>
+                            </div>
+                        )}
+
                         <div className={styles.formField}>
                             <label htmlFor="imagen_averia"><Paperclip size={16} /> Adjuntar Imagen (Opcional)</label>
                             <input
@@ -168,6 +195,7 @@ export default function GestionAgenda() {
                         <button type="submit" className={styles.submitButton} style={{ marginTop: '1rem' }}>Enviar Solicitud</button>
                     </form>
                 </div>
+
                 <div className={styles.infoCard}>
                     <h3><User size={20} /> Proceso de Solicitud</h3>
                     <p>1. Envíe su solicitud (vehículo y motivo).</p>
@@ -176,10 +204,8 @@ export default function GestionAgenda() {
                 </div>
             </div>
 
-         
             <AlertModal
                 isOpen={isAlertOpen}
-                
                 onClose={() => {
                     setIsAlertOpen(false);
                     setError(null);
@@ -187,7 +213,7 @@ export default function GestionAgenda() {
                 }}
                 title={error ? "Error" : "Éxito"}
                 message={error || successMessage}
-                intent={error ? "danger" : "success"} 
+                intent={error ? "danger" : "success"}
             />
         </div>
     );

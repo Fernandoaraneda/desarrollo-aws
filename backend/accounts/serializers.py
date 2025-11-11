@@ -340,7 +340,8 @@ class AgendamientoSerializer(serializers.ModelSerializer):
             'id', 'vehiculo', 'vehiculo_patente', 'chofer_asociado', 'chofer_nombre',
             'mecanico_asignado', 'mecanico_nombre',
             'fecha_hora_programada', 'duracion_estimada_minutos', 'fecha_hora_fin',
-            'motivo_ingreso', 'estado', 'imagen_averia', 'creado_por', 'solicita_grua'
+            'motivo_ingreso', 'estado', 'imagen_averia', 'creado_por', 'solicita_grua',
+            'direccion_grua', 'grua_enviada'
         ]
         read_only_fields = ['creado_por', 'fecha_hora_fin']
 

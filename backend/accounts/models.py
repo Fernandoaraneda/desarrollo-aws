@@ -126,6 +126,8 @@ class Agendamiento(TimeStampedModel):
         FINALIZADO = 'Finalizado', 'Finalizado'
         CANCELADO = 'Cancelado', 'Cancelado'
     solicita_grua = models.BooleanField(default=False, help_text="Marcar si el vehículo requiere ser movilizado por una grúa.")
+    direccion_grua = models.CharField(max_length=255, null=True, blank=True, help_text="Dirección de retiro para la grúa")
+    grua_enviada = models.BooleanField(default=False, help_text="Marca si la grúa ya fue despachada")
     vehiculo = models.ForeignKey(Vehiculo, on_delete=models.PROTECT, related_name="agendamientos")
     chofer_asociado = models.ForeignKey(Usuario, on_delete=models.SET_NULL, null=True, blank=True, related_name="agendamientos_chofer", limit_choices_to={'groups__name': 'Chofer'})
     mecanico_asignado = models.ForeignKey(

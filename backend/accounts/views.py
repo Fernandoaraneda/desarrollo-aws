@@ -632,7 +632,7 @@ class AgendamientoViewSet(viewsets.ModelViewSet):
         try:
             # 2. Obtenemos a todos los supervisores activos
             supervisores = User.objects.filter(
-                groups__name=["Supervisor", "Administrativo"], is_active=True
+                groups__name__in=["Supervisor", "Administrativo"], is_active=True
             )
 
             # 3. Preparamos el mensaje
@@ -799,7 +799,7 @@ class AgendamientoViewSet(viewsets.ModelViewSet):
             try:
                 # 1. Buscamos a todos los usuarios del grupo "Seguridad"
                 usuarios_seguridad = User.objects.filter(
-                    groups__name="Seguridad", is_active=True
+                groups__name="Seguridad", is_active=True
                 )
 
                 # 2. Creamos el mensaje
@@ -812,12 +812,12 @@ class AgendamientoViewSet(viewsets.ModelViewSet):
                         mensaje=mensaje_seguridad,
                         link="/panel-ingresos",  # El link a su panel de trabajo
                     )
-                subject_seguridad = (
-                    f"Cita Confirmada: Vehículo {agendamiento.vehiculo.patente}"
-                )
-                enviar_correo_notificacion(
-                    user_seg, subject_seguridad, mensaje_seguridad
-                )
+                    subject_seguridad = (
+                        f"Cita Confirmada: Vehículo {agendamiento.vehiculo.patente}"
+                    )
+                    enviar_correo_notificacion(
+                        user_seg, subject_seguridad, mensaje_seguridad
+                    )
             except Exception as e:
                 # Si falla la notificación de seguridad, no detenemos la operación
                 print(f"Error al crear notificación para Seguridad: {e}")
@@ -885,6 +885,61 @@ class AgendamientoViewSet(viewsets.ModelViewSet):
         return Response(
             self.get_serializer(agendamiento).data, status=status.HTTP_200_OK
         )
+        
+    @action(
+            detail=True,
+            methods=["post"],
+            url_path="enviar-grua",
+            permission_classes=[IsSupervisor], # Solo supervisores pueden despachar
+        )
+    def enviar_grua(self, request, pk=None):
+        agendamiento = self.get_object()
+
+        if not agendamiento.solicita_grua:
+            return Response({"error": "Esta cita no tiene una grúa solicitada."}, status=status.HTTP_400_BAD_REQUEST)
+        
+        if not agendamiento.direccion_grua:
+            return Response({"error": "No hay dirección de retiro especificada."}, status=status.HTTP_400_BAD_REQUEST)
+        
+        if agendamiento.grua_enviada:
+            return Response({"error": "La grúa para esta cita ya fue enviada."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            # 1. Buscamos a todos los usuarios del rol "Grua"
+            # (Asegúrate de haber creado este grupo en el Admin o en grupos.json)
+            usuarios_grua = User.objects.filter(groups__name="Grua", is_active=True)
+            if not usuarios_grua.exists():
+                return Response({"error": "No hay usuarios en el rol 'Grua' para notificar."}, status=status.HTTP_404_NOT_FOUND)
+
+            # 2. Preparamos el mensaje
+            chofer_nombre = agendamiento.chofer_asociado.get_full_name()
+            chofer_telefono = agendamiento.chofer_asociado.telefono or "No especificado"
+            mensaje = (
+                f"NUEVA SOLICITUD DE GRÚA (Cita #{agendamiento.id}):\n"
+                f"Vehículo: {agendamiento.vehiculo.patente}\n"
+                f"Dirección Retiro: {agendamiento.direccion_grua}\n"
+                f"Contacto Chofer: {chofer_nombre} (Tel: {chofer_telefono})"
+            )
+            subject = f"Solicitud de Grúa - Cita #{agendamiento.id} - Patente {agendamiento.vehiculo.patente}"
+
+            # 3. Enviamos notificación y email a CADA usuario de grúa
+            for user_grua in usuarios_grua:
+                Notificacion.objects.create(
+                    usuario=user_grua, 
+                    mensaje=f"Nueva solicitud de grúa para {agendamiento.vehiculo.patente}. Dirección: {agendamiento.direccion_grua}",
+                    link="/panel-gruas" # Un futuro panel para ellos
+                )
+                enviar_correo_notificacion(user_grua, subject, mensaje)
+        
+            # 4. Marcamos la grúa como enviada
+            agendamiento.grua_enviada = True
+            agendamiento.save()
+        
+            return Response(self.get_serializer(agendamiento).data, status=status.HTTP_200_OK)
+        
+        except Exception as e:
+            return Response({"error": f"Error inesperado: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 
 class OrdenViewSet(viewsets.ModelViewSet):

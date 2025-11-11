@@ -304,6 +304,7 @@ export default function CrearEditarUsuario() {
                 <option>Administrativo</option>
                 <option>Control Llaves</option>
                 <option>Repuestos</option>
+                <option>Grua</option>
               </select>
             </div>
              <div className={`${styles.formField} ${styles.checkboxField} ${styles.fullWidth}`}>

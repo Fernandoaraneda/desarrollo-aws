@@ -205,21 +205,14 @@ MEDIA_ROOT = BASE_DIR / 'media'
 
 # DEBUG ya está definido arriba en tu archivo
 
-if DEBUG:
-    # MODO DESARROLLO (DEBUG=True, en tu PC)
-    # Los correos se imprimirán en la consola donde corre "runserver"
-    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-    DEFAULT_FROM_EMAIL = 'desarrollo-local@tallerpepsico.com'
-    
-else:
-    # MODO PRODUCCIÓN (DEBUG=False, en Render)
-    # Usaremos el backend de SendGrid. Asegúrate de tener
-    # 'django-sendgrid-v5' en tu requirements.txt
-    EMAIL_BACKEND = 'sendgrid_backend.SendgridBackend'
-    
-    # Estas variables DEBEN estar en tu entorno de Render
-    SENDGRID_API_KEY = config('SENDGRID_API_KEY') 
-    DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL') # (Render usará 'fer.araneda@duocuc.cl' aquí)
-    
-    # Opcional: para ver los envíos en los logs de Render
-    SENDGRID_ECHO_TO_STDOUT = True
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+
+# Lee el usuario y contraseña desde tu archivo .env
+EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='joseyenid2@gmail.com')
+EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD') 
+
+# El correo "Desde" será tu misma cuenta de Gmail
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
