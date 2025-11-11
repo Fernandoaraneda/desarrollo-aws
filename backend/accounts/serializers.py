@@ -341,14 +341,14 @@ class AgendamientoSerializer(serializers.ModelSerializer):
             'mecanico_asignado', 'mecanico_nombre',
             'fecha_hora_programada', 'duracion_estimada_minutos', 'fecha_hora_fin',
             'motivo_ingreso', 'estado', 'imagen_averia', 'creado_por', 'solicita_grua',
-            'direccion_grua', 'grua_enviada'
+            'direccion_grua', 'grua_enviada', 'es_mantenimiento'
         ]
         read_only_fields = ['creado_por', 'fecha_hora_fin']
 
         extra_kwargs = {
             'fecha_hora_programada': {'required': False, 'allow_null': True},
             'vehiculo': {'required': True},
-            'motivo_ingreso': {'required': True}
+            'motivo_ingreso': {'required': False, 'allow_blank': True}
         }
 
     def __init__(self, *args, **kwargs):

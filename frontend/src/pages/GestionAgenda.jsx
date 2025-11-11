@@ -14,7 +14,8 @@ export default function GestionAgenda() {
         vehiculo: '',
         motivo_ingreso: '',
         solicita_grua: false,
-        direccion_grua: '' // <-- AÑADIDO
+        direccion_grua: '',
+        es_mantenimiento: false
     });
     const [imagenFile, setImagenFile] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
@@ -48,25 +49,25 @@ export default function GestionAgenda() {
         setSuccessMessage(null);
         setIsAlertOpen(false);
 
-        if (!formData.vehiculo || !formData.motivo_ingreso) {
-            setError("Por favor, complete el vehículo y el motivo.");
+        if (!formData.vehiculo) {
+            setError("Por favor, complete el vehículo.");
             setIsAlertOpen(true);
             return;
         }
 
-        // 3. AÑADIMOS VALIDACIÓN DE DIRECCIÓN
-        if (formData.solicita_grua && !formData.direccion_grua) {
-            setError("Marcó 'Necesita Grúa', por favor especifique la dirección de retiro.");
+        // Ahora solo pedimos el motivo si NO es mantenimiento
+        if (!formData.es_mantenimiento && !formData.motivo_ingreso) {
+            setError("Por favor, complete el motivo del ingreso (o marque 'Es Mantenimiento').");
             setIsAlertOpen(true);
             return;
         }
 
         const dataParaEnviar = new FormData();
         dataParaEnviar.append('vehiculo', formData.vehiculo);
-        dataParaEnviar.append('motivo_ingreso', formData.motivo_ingreso);
+        dataParaEnviar.append('motivo_ingreso', formData.es_mantenimiento ? 'Mantenimiento General' : formData.motivo_ingreso);
         dataParaEnviar.append('solicita_grua', formData.solicita_grua || false);
         dataParaEnviar.append('duracion_estimada_minutos', 60);
-
+        dataParaEnviar.append('es_mantenimiento', formData.es_mantenimiento || false);
         // 4. AÑADIMOS 'direccion_grua' AL FORMDATA
         if (formData.solicita_grua) {
             dataParaEnviar.append('direccion_grua', formData.direccion_grua);
@@ -82,7 +83,7 @@ export default function GestionAgenda() {
             });
 
             // 5. REINICIAMOS EL ESTADO COMPLETO
-            setFormData({ vehiculo: '', motivo_ingreso: '', solicita_grua: false, direccion_grua: '' });
+            setFormData({ vehiculo: '', motivo_ingreso: '', solicita_grua: false, direccion_grua: '', es_mantenimiento: false });
             setImagenFile(null);
             if (e.target) e.target.reset();
             setSuccessMessage("¡Solicitud de cita enviada! El supervisor la revisará y le asignará una hora a la brevedad.");
@@ -111,10 +112,21 @@ export default function GestionAgenda() {
 
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
-        setFormData(prev => ({
-            ...prev,
-            [name]: type === 'checkbox' ? checked : value
-        }));
+        setFormData(prev => {
+            const newState = { ...prev, [name]: type === 'checkbox' ? checked : value };
+
+            // Si marcamos/desmarcamos "es_mantenimiento"
+            if (name === 'es_mantenimiento') {
+                if (checked) {
+                    // Si se marca, autocompletar y hacer solo lectura
+                    newState.motivo_ingreso = 'Mantenimiento General';
+                } else {
+                    // Si se desmarca, limpiar
+                    newState.motivo_ingreso = '';
+                }
+            }
+            return newState;
+        });
     };
 
     if (isLoading) return <p>Cargando...</p>;
@@ -145,12 +157,28 @@ export default function GestionAgenda() {
 
                         <div className={styles.formField}>
                             <label htmlFor="motivo_ingreso">Motivo del Ingreso</label>
+                            <div className={styles.formFieldCheckbox}>
+                                <input
+                                    type="checkbox"
+                                    id="es_mantenimiento"
+                                    name="es_mantenimiento"
+                                    checked={formData.es_mantenimiento}
+                                    onChange={handleChange}
+                                />
+                                <label htmlFor="es_mantenimiento" style={{ fontWeight: 'bold' }}>
+                                    Es Mantenimiento General (Revisión, cambio de aceite, filtros)
+                                </label>
+                            </div>
                             <textarea
                                 name="motivo_ingreso" rows="4"
-                                placeholder="Ej: Falla en el motor, revisión de 100.000km, etc."
+                                placeholder="Ej: Falla en el motor, etc."
                                 value={formData.motivo_ingreso}
                                 onChange={handleChange}
-                                required
+
+
+                                required={!formData.es_mantenimiento} // Solo requerido si NO es mantenimiento
+                                readOnly={formData.es_mantenimiento} // Usar readOnly en vez de disabled para que el valor se envíe
+                                style={formData.es_mantenimiento ? { backgroundColor: '#f3f4f6', color: '#6b7280' } : {}}
                             ></textarea>
 
                             <div className={styles.formFieldCheckbox}>

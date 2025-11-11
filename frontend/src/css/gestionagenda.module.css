@@ -186,3 +186,38 @@
 .ingresoButton:hover {
   background-color: #218838;
 }
+
+
+
+.formFieldCheckbox {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem; /* Un poco más de espacio */
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+  background-color: #f9fafb; /* Fondo gris claro */
+  border: 1px solid #e5e7eb; /* Borde sutil */
+  padding: 1rem; /* Más espacio interno */
+  border-radius: 8px; /* Bordes redondeados */
+  cursor: pointer; /* Para que parezca clickeable */
+  transition: background-color 0.2s;
+}
+
+
+.formFieldCheckbox:hover {
+  background-color: #f3f4f6; 
+}
+
+.formFieldCheckbox input[type="checkbox"] {
+  width: 1.25rem; /* 20px (más grande que el tamaño por defecto) */
+  height: 1.25rem;
+  cursor: pointer;
+}
+
+.formFieldCheckbox label {
+  font-weight: 600; /* Más grueso */
+  font-size: 1rem; /* 16px (un poco más grande) */
+  color: #1f2937; /* Texto más oscuro */
+  cursor: pointer; 
+  margin: 0; /* Reseteamos márgenes */
+}

@@ -145,7 +145,7 @@ class Agendamiento(TimeStampedModel):
     )
     duracion_estimada_minutos = models.PositiveIntegerField(default=60)
     fecha_hora_fin = models.DateTimeField(editable=False, null=True, blank=True)
-    motivo_ingreso = models.TextField()
+    motivo_ingreso = models.TextField(blank=True, null=True)
     estado = models.CharField(max_length=50, choices=Estado.choices, default=Estado.PROGRAMADO, db_index=True)
     imagen_averia = models.ImageField(
         "Imagen de la avería", 
@@ -160,6 +160,12 @@ class Agendamiento(TimeStampedModel):
         blank=True, 
         null=True,
         help_text="El motivo por el cual el supervisor cambió la hora de la cita original."
+    )
+    
+    es_mantenimiento = models.BooleanField(
+        "Es Mantenimiento",
+        default=False,
+        help_text="Marcar si la solicitud es para un mantenimiento general predefinido."
     )
 
     def save(self, *args, **kwargs):
@@ -198,7 +204,17 @@ class Agendamiento(TimeStampedModel):
         verbose_name = "Agendamiento"
         verbose_name_plural = "Agendamientos"
         ordering = ['fecha_hora_programada']
-        unique_together = ('vehiculo', 'fecha_hora_programada')
+        constraints = [
+            models.UniqueConstraint(
+                fields=['vehiculo', 'fecha_hora_programada'],
+                # --- USA LOS STRINGS AQUÍ ---
+                condition=~Q(estado__in=[
+                    'Finalizado',
+                    'Cancelado'
+                ]),
+                name='agendamiento_activo_unico_por_vehiculo_y_fecha'
+            )
+        ]
 
 class AgendamientoHistorial(models.Model):
     agendamiento = models.ForeignKey(Agendamiento, on_delete=models.CASCADE, related_name='historial')
@@ -409,7 +425,8 @@ class OrdenItem(models.Model):
     def save(self, *args, **kwargs):
        
         if self._state.adding and self.producto:      
-            self.estado_repuesto = self.EstadoRepuesto.PENDIENTE
+            if self.estado_repuesto == self.EstadoRepuesto.NO_APLICA:
+                     self.estado_repuesto = self.EstadoRepuesto.PENDIENTE
             if not hasattr(self, 'precio_unitario') or not self.precio_unitario:
                 self.precio_unitario = self.producto.precio_venta
         elif self._state.adding and self.servicio:

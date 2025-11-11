@@ -23,6 +23,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from django.shortcuts import get_object_or_404
 from rest_framework.views import APIView
 import os
+
 # Models
 from .models import (
     Producto, 
@@ -658,6 +659,61 @@ class AgendamientoViewSet(viewsets.ModelViewSet):
         except Exception as e:
       
             print(f"ERROR al notificar al supervisor sobre nueva cita: {e}")
+            
+    @action(
+    detail=True,
+    methods=["get"],
+    url_path="verificar-stock-mantenimiento",
+    permission_classes=[IsSupervisor], # Solo el supervisor puede ver esto
+                )
+    def verificar_stock_mantenimiento(self, request, pk=None):
+                agendamiento = self.get_object()
+
+                if not agendamiento.es_mantenimiento:
+                    return Response({"error": "Esta no es una cita de mantenimiento."}, status=status.HTTP_400_BAD_REQUEST)
+
+                # --- LISTA DE REPUESTOS PREDETERMINADOS ---
+                # ¡IMPORTANTE! Debes usar los SKUs reales de tu BD.
+                # Usaré los de tu archivo populate_data.py como ejemplo.
+                REPUESTOS_MANTENIMIENTO = {
+                    'ACE-10W40': 1,     # SKU: Cantidad necesaria
+                    'FIL-AIRE-01': 1,
+                    'Fre-liq': 1
+                    # 'SKU-FILTRO-ACEITE': 1, # <--- Añade más aquí
+                }
+                
+                skus_requeridos = list(REPUESTOS_MANTENIMIENTO.keys())
+                productos = Producto.objects.filter(sku__in=skus_requeridos)
+                
+                faltantes = []
+                stock_completo = True
+                
+                for sku, cantidad_necesaria in REPUESTOS_MANTENIMIENTO.items():
+                    try:
+                        producto = productos.get(sku=sku)
+                        if producto.stock < cantidad_necesaria:
+                            stock_completo = False
+                            faltantes.append({
+                                "nombre": producto.nombre,
+                                "sku": sku,
+                                "stock_actual": producto.stock,
+                                "necesario": cantidad_necesaria,
+                            })
+                    except Producto.DoesNotExist:
+                        stock_completo = False
+                        faltantes.append({
+                            "nombre": f"Producto (SKU: {sku}) no encontrado",
+                            "sku": sku,
+                            "stock_actual": 0,
+                            "necesario": cantidad_necesaria,
+                        })
+
+                return Response({
+                    "stock_completo": stock_completo,
+                    "faltantes": faltantes,
+                    "repuestos_revisados": REPUESTOS_MANTENIMIENTO
+                }, status=status.HTTP_200_OK)
+
 
 
 
@@ -668,13 +724,20 @@ class AgendamientoViewSet(viewsets.ModelViewSet):
         permission_classes=[IsSupervisor],
     )
     def confirmar_y_asignar(self, request, pk=None):
+       with transaction.atomic():
         agendamiento = self.get_object()
-
-   
         mecanico_id_raw = request.data.get("mecanico_id")
         fecha_hora_asignada_str = request.data.get("fecha_hora_asignada")
         motivo_cambio = request.data.get("motivo_reagendamiento", None)
 
+
+        REPUESTOS_MANTENIMIENTO = {}
+        if agendamiento.es_mantenimiento:
+            REPUESTOS_MANTENIMIENTO = {
+                'ACE-10W40': 1,
+                'FIL-AIRE-01': 1,
+                'Fre-liq': 1
+            }
         try:
             mecanico_id = int(mecanico_id_raw)
             mecanico = User.objects.get(id=mecanico_id, groups__name="Mecanico")
@@ -708,6 +771,25 @@ class AgendamientoViewSet(viewsets.ModelViewSet):
                 {"error": "Formato de fecha/hora asignada es inválido."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
+        if agendamiento.es_mantenimiento:
+                skus_requeridos = list(REPUESTOS_MANTENIMIENTO.keys())
+                # Bloqueamos los productos para la transacción
+                productos = Producto.objects.select_for_update().filter(sku__in=skus_requeridos) 
+                
+                for sku, cantidad_necesaria in REPUESTOS_MANTENIMIENTO.items():
+                    try:
+                        producto = productos.get(sku=sku)
+                        if producto.stock < cantidad_necesaria:
+                            # Si falta stock, la transacción falla y no se confirma la cita
+                            return Response(
+                                {"error": f"Stock agotado para {producto.nombre} (quedan {producto.stock}). La cita no fue confirmada."},
+                                status=status.HTTP_400_BAD_REQUEST
+                            )
+                    except Producto.DoesNotExist:
+                         return Response(
+                                {"error": f"Producto {sku} no encontrado. Cita no confirmada."},
+                                status=status.HTTP_404_NOT_FOUND
+                                )
 
         # Calculamos el fin
         fecha_fin = fecha_a_validar + timedelta(
@@ -737,27 +819,22 @@ class AgendamientoViewSet(viewsets.ModelViewSet):
 
         # 5. VALIDACIÓN DE CONFLICTO (VEHÍCULO)
         overlapping_vehiculo = (
-            Agendamiento.objects.filter(
-                Q(fecha_hora_programada__lt=fecha_fin)
-                & Q(fecha_hora_fin__gt=fecha_a_validar)
-                & Q(vehiculo=agendamiento.vehiculo)
+                Agendamiento.objects.filter(
+                    Q(vehiculo=agendamiento.vehiculo)
+                    & Q(fecha_hora_programada__lt=fecha_fin)
+                    & Q(fecha_hora_fin__gt=fecha_a_validar)
+                    & ~Q(estado__in=['Finalizado', 'Cancelado']) # <--- Lógica de la constraint
+                )
+                .exclude(pk=agendamiento.pk)
             )
-            .exclude(
-                estado__in=[
-                    Agendamiento.Estado.FINALIZADO,
-                    Agendamiento.Estado.CANCELADO,
-                ]
-            )
-            .exclude(pk=agendamiento.pk)
-        )  # Excluir la cita que estamos moviendo
 
         if overlapping_vehiculo.exists():
-            return Response(
-                {
-                    "error": f"Conflicto de horario (Vehículo): El vehículo {agendamiento.vehiculo.patente} ya tiene OTRA cita activa en ese nuevo rango."
-                },
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+                return Response(
+                    {
+                        "error": f"Conflicto de horario (Vehículo): El vehículo {agendamiento.vehiculo.patente} ya tiene OTRA cita activa en ese nuevo rango."
+                    },
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
 
         # 6. GUARDAR TODO (SIN chofer_asociado)
         agendamiento.mecanico_asignado = mecanico
@@ -821,6 +898,37 @@ class AgendamientoViewSet(viewsets.ModelViewSet):
             except Exception as e:
                 # Si falla la notificación de seguridad, no detenemos la operación
                 print(f"Error al crear notificación para Seguridad: {e}")
+                
+            if agendamiento.es_mantenimiento:
+                # 1. Crear la Orden de Trabajo asociada
+                nueva_orden = Orden.objects.create(
+                    vehiculo=agendamiento.vehiculo,
+                    agendamiento_origen=agendamiento,
+                    descripcion_falla=agendamiento.motivo_ingreso,
+                    usuario_asignado=agendamiento.mecanico_asignado,
+                    estado=Orden.Estado.INGRESADO # Queda lista para cuando el auto llegue
+                )
+
+                # 2. Descontar stock y crear los items (ya pre-aprobados)
+                for sku, cantidad_necesaria in REPUESTOS_MANTENIMIENTO.items():
+                    # Usamos 'productos.get()' del 'select_for_update()' que hicimos arriba
+                    producto = productos.get(sku=sku) 
+                    
+                    # 2a. Descontar Stock
+                    producto.stock = F('stock') - cantidad_necesaria
+                    producto.save()
+                    
+                    # 2b. Crear el OrdenItem como APROBADO
+                    OrdenItem.objects.create(
+                        orden=nueva_orden,
+                        producto=producto,
+                        cantidad=cantidad_necesaria,
+                        precio_unitario=producto.precio_venta,
+                        solicitado_por=request.user,    # Solicitado por el Supervisor
+                        gestionado_por=request.user,   # Aprobado por el Supervisor
+                        fecha_gestion=timezone.now(),  # Aprobado ahora mismo
+                        estado_repuesto=OrdenItem.EstadoRepuesto.APROBADO # ¡Estado Aprobado!
+                    )
 
         agendamiento.save()  # Esta línea ya no dará error
         return Response(
@@ -833,6 +941,7 @@ class AgendamientoViewSet(viewsets.ModelViewSet):
         url_path="registrar-ingreso",
         permission_classes=[IsSupervisorOrSeguridad],
     )
+    @transaction.atomic # <--- Añadimos transacción por seguridad
     def registrar_ingreso(self, request, pk=None):
         agendamiento = self.get_object()
         if agendamiento.estado != Agendamiento.Estado.CONFIRMADO:
@@ -841,37 +950,56 @@ class AgendamientoViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        with transaction.atomic():
+        # --- LÓGICA MODIFICADA ---
+        # 1. Buscamos si la orden YA EXISTE (creada por el supervisor)
+        try:
+            # Usamos 'orden_generada' (el related_name del OneToOneField)
+            nueva_orden = agendamiento.orden_generada 
+            
+            # Si existe, solo actualizamos el estado (si es necesario)
+            if nueva_orden.estado == Orden.Estado.INGRESADO:
+                # (Opcional: puedes cambiarlo a 'En Diagnóstico' si quieres)
+                pass # Ya está 'Ingresado', no hacemos nada.
+            
+            mensaje_respuesta = "Ingreso registrado en orden existente."
+
+        except Orden.DoesNotExist:
+            # 2. Si NO existe (cita normal), la CREAMOS.
             nueva_orden = Orden.objects.create(
                 vehiculo=agendamiento.vehiculo,
                 agendamiento_origen=agendamiento,
                 descripcion_falla=agendamiento.motivo_ingreso,
                 usuario_asignado=agendamiento.mecanico_asignado,
+                estado=Orden.Estado.INGRESADO # <--- Estado inicial
             )
-            if agendamiento.mecanico_asignado:
-                mensaje = f"Se te ha asignado una nueva orden (#{nueva_orden.id}) para el vehículo {nueva_orden.vehiculo.patente}."
-                Notificacion.objects.create(
-                    usuario=agendamiento.mecanico_asignado,
-                    mensaje=mensaje,
-                    link=f"/ordenes/{nueva_orden.id}",  # Link para que al hacer clic, vaya al detalle de la orden
-                )
+            mensaje_respuesta = "Ingreso registrado y orden creada."
+        # --- FIN DE LÓGICA MODIFICADA ---
 
-                subject_mecanico = f"Nueva Orden Asignada: #{nueva_orden.id}"
-                enviar_correo_notificacion(
-                    agendamiento.mecanico_asignado, subject_mecanico, mensaje
-                )
-            # Conservador: mantenemos el comportamiento original (FINALIZADO) para no cambiar el flujo actual.
-            agendamiento.estado = Agendamiento.Estado.FINALIZADO
-            agendamiento.save()
+        # Notificamos al mecánico (solo si no se le notificó al crear la orden)
+        if agendamiento.mecanico_asignado and not agendamiento.es_mantenimiento:
+            mensaje = f"Se te ha asignado una nueva orden (#{nueva_orden.id}) para el vehículo {nueva_orden.vehiculo.patente}."
+            Notificacion.objects.create(
+                usuario=agendamiento.mecanico_asignado,
+                mensaje=mensaje,
+                link=f"/ordenes/{nueva_orden.id}", 
+            )
+
+            subject_mecanico = f"Nueva Orden Asignada: #{nueva_orden.id}"
+            enviar_correo_notificacion(
+                agendamiento.mecanico_asignado, subject_mecanico, mensaje
+            )
+        
+        # Marcamos el agendamiento como FINALIZADO (ya cumplió su propósito)
+        agendamiento.estado = Agendamiento.Estado.FINALIZADO
+        agendamiento.save()
 
         return Response(
             {
-                "message": "Ingreso registrado y orden creada.",
+                "message": mensaje_respuesta,
                 "orden_id": nueva_orden.id,
             },
             status=status.HTTP_201_CREATED,
         )
-
     @action(
         detail=True,
         methods=["post"],

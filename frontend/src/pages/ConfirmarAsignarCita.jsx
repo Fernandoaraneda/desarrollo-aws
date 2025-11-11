@@ -12,6 +12,7 @@ import {
     Clock,
     Trash2,
     Truck,
+    Package,
 } from 'lucide-react';
 
 import AlertModal from '/src/components/modals/AlertModal.jsx';
@@ -47,7 +48,11 @@ export default function ConfirmarAsignarCita() {
     const [isConfirmCancelOpen, setIsConfirmCancelOpen] = useState(false);
     const [motivoCambio, setMotivoCambio] = useState('');
     const [fechaOriginal, setFechaOriginal] = useState(null);
-
+    const [stockCheck, setStockCheck] = useState({
+        isLoading: false,
+        data: null,
+        error: null,
+    });
     // --- Carga inicial de datos ---
     useEffect(() => {
         const loadData = async () => {
@@ -66,6 +71,15 @@ export default function ConfirmarAsignarCita() {
                     setFechaOriginal(fecha.toISOString());
                 } else {
                     setFechaOriginal(null);
+                }
+                if (agendamientoRes.data.es_mantenimiento) {
+                    setStockCheck({ isLoading: true, data: null, error: null });
+                    try {
+                        const stockRes = await apiClient.get(`/agendamientos/${id}/verificar-stock-mantenimiento/`);
+                        setStockCheck({ isLoading: false, data: stockRes.data, error: null });
+                    } catch (stockErr) {
+                        setStockCheck({ isLoading: false, data: null, error: "No se pudo verificar el stock." });
+                    }
                 }
             } catch (err) {
                 setError('No se pudo cargar la información de la cita.');
@@ -231,6 +245,17 @@ export default function ConfirmarAsignarCita() {
         agendamiento.fecha_hora_programada &&
         new Date(agendamiento.fecha_hora_programada).getFullYear() > 1970;
 
+    const fechaHaCambiado = selectedSlot !== fechaOriginal;
+
+    // ¿Está listo para confirmar?
+    let puedeConfirmar = true;
+    let motivoBotonDeshabilitado = "";
+
+    if (stockCheck.data && !stockCheck.data.stock_completo && !fechaHaCambiado) {
+        puedeConfirmar = false;
+        motivoBotonDeshabilitado = "Falta stock. Debe reagendar la cita (se recomienda 3 días después).";
+    }
+
     return (
         <div className={styles.pageWrapper}>
             <div className={styles.formCard}>
@@ -280,6 +305,51 @@ export default function ConfirmarAsignarCita() {
                                 className={styles.fullWidthImage}
                             />
                         </a>
+                    </div>
+                )}
+                {agendamiento.es_mantenimiento && (
+                    <div
+                        className={styles.infoSection}
+                        style={{
+                            borderLeftWidth: '4px',
+                            borderRadius: '8px',
+                            padding: '1rem',
+                            borderColor: stockCheck.data?.stock_completo ? '#16a34a' : '#f97316',
+                            backgroundColor: stockCheck.data?.stock_completo ? '#f0fdf4' : '#fffbeb',
+                        }}
+                    >
+                        <h4 style={{ color: stockCheck.data?.stock_completo ? '#15803d' : '#d97706' }}>
+                            <Package /> Verificación de Stock (Mantenimiento)
+                        </h4>
+                        {stockCheck.isLoading && <p>Verificando stock de repuestos...</p>}
+                        {stockCheck.error && <p style={{ color: '#b91c1c' }}>{stockCheck.error}</p>}
+                        {stockCheck.data && (
+                            <div>
+                                {stockCheck.data.stock_completo ? (
+                                    <p style={{ fontWeight: 'bold', color: '#15803d' }}>
+                                        ✅ Stock de repuestos disponible. Puede confirmar la cita.
+                                    </p>
+                                ) : (
+                                    <div>
+                                        <p style={{ fontWeight: 'bold', color: '#b91c1c' }}>
+                                            ⚠️ ¡Falta Stock!
+                                        </p>
+                                        <ul style={{ listStyleType: 'none', paddingLeft: 0, fontSize: '0.9rem' }}>
+                                            {stockCheck.data.faltantes.map(item => (
+                                                <li key={item.sku}>
+                                                    - <strong>{item.nombre}</strong> (SKU: {item.sku})
+                                                    <br />
+                                                    <span style={{ color: '#b91c1c' }}> (Necesario: {item.necesario} | Actual: {item.stock_actual})</span>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                        <p style={{ color: '#b45309', marginTop: '0.5rem' }}>
+                                            No puede confirmar sin stock. Para continuar, cambie la fecha de la cita (reagende) y contacte a Bodega.
+                                        </p>
+                                    </div>
+                                )}
+                            </div>
+                        )}
                     </div>
                 )}
 
@@ -464,7 +534,8 @@ export default function ConfirmarAsignarCita() {
                             <Trash2 size={16} /> Cancelar Cita
                         </button>
 
-                        <button type="submit" className={styles.submitButton}>
+                        <button type="submit" className={styles.submitButton} disabled={!puedeConfirmar}
+                            title={motivoBotonDeshabilitado}>
                             Confirmar y Asignar
                         </button>
                     </div>

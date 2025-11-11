@@ -69,3 +69,20 @@ CARGAR DATOS FAKE
 
 
 python manage.py populate_data
+
+
+
+el env backend
+
+
+
+DATABASE_URL=mysql://root:@127.0.0.1:3306/capstone_db
+
+SECRET_KEY=br@cj8nm#06n$$64rgf5292_q2x($yzv!h07xr*ybva$!b7j=8
+DEBUG=True
+ALLOWED_HOSTS=127.0.0.1,localhost
+
+CORS_ALLOW_ALL_ORIGINS=True
+EMAIL_BACKEND=django.core.mail.backends.console.EmailBackend
+EMAIL_HOST_USER=joseyenid2@gmail.com
+EMAIL_HOST_PASSWORD=hzrxkejppsthwrbw
