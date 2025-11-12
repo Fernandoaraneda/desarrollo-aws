@@ -46,6 +46,7 @@ export default function ConfirmarAsignarCita() {
     const [isAlertOpen, setIsAlertOpen] = useState(false);
     const [successMessage, setSuccessMessage] = useState(null);
     const [isConfirmCancelOpen, setIsConfirmCancelOpen] = useState(false);
+    const [isConfirmGruaOpen, setIsConfirmGruaOpen] = useState(false);
     const [motivoCambio, setMotivoCambio] = useState('');
     const [fechaOriginal, setFechaOriginal] = useState(null);
     const [stockCheck, setStockCheck] = useState({
@@ -53,7 +54,7 @@ export default function ConfirmarAsignarCita() {
         data: null,
         error: null,
     });
-    
+
     useEffect(() => {
         const loadData = async () => {
             try {
@@ -92,7 +93,7 @@ export default function ConfirmarAsignarCita() {
         loadData();
     }, [id]);
 
-    
+
     useEffect(() => {
         if (!selectedMecanicoId || !selectedDate) {
             setAgendaMecanico([]);
@@ -120,7 +121,7 @@ export default function ConfirmarAsignarCita() {
         fetchAgendaMecanico();
     }, [selectedMecanicoId, selectedDate]);
 
-    
+
     const availableSlots = useMemo(() => {
         const slots = [];
 
@@ -160,7 +161,7 @@ export default function ConfirmarAsignarCita() {
         return available;
     }, [selectedDate, agendaMecanico]);
 
-    
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError(null);
@@ -195,7 +196,7 @@ export default function ConfirmarAsignarCita() {
         }
     };
 
-    
+
     const handleOpenCancelModal = () => {
         setError(null);
         setSuccessMessage(null);
@@ -217,16 +218,16 @@ export default function ConfirmarAsignarCita() {
         }
     };
 
-    
-    const handleEnviarGrua = async () => {
-        if (
-            !window.confirm(
-                '¿Estás seguro de que deseas despachar la grúa a esta dirección? Esta acción notificará al personal de grúas.'
-            )
-        ) {
-            return;
-        }
 
+    const handleEnviarGrua = () => {
+        setIsConfirmGruaOpen(true);
+    };
+
+    // --- AÑADE ESTA NUEVA FUNCIÓN ---
+    const handleDoEnviarGrua = async () => {
+        setIsConfirmGruaOpen(false); // 1. Cierra el modal
+
+        // 2. Ejecuta la lógica que estaba antes en handleEnviarGrua
         try {
             const res = await apiClient.post(`/agendamientos/${id}/enviar-grua/`);
             setAgendamiento(res.data);
@@ -237,7 +238,6 @@ export default function ConfirmarAsignarCita() {
             setIsAlertOpen(true);
         }
     };
-
     if (isLoading) return <div>Cargando...</div>;
     if (!agendamiento) return <div>No se encontró la cita.</div>;
 
@@ -247,7 +247,7 @@ export default function ConfirmarAsignarCita() {
 
     const fechaHaCambiado = selectedSlot !== fechaOriginal;
 
-    
+
     let puedeConfirmar = true;
     let motivoBotonDeshabilitado = "";
 
@@ -353,7 +353,7 @@ export default function ConfirmarAsignarCita() {
                     </div>
                 )}
 
-                
+
                 {agendamiento?.solicita_grua && (
                     <div
                         className={styles.infoSection}
@@ -404,7 +404,7 @@ export default function ConfirmarAsignarCita() {
                         </button>
                     </div>
                 )}
-                
+
 
                 <form onSubmit={handleSubmit}>
                     <hr className={styles.divider} />
@@ -563,6 +563,16 @@ export default function ConfirmarAsignarCita() {
                 message="¿Estás seguro de que quieres cancelar esta cita? Esta acción marcará la cita como 'Cancelado' y no se podrá revertir."
                 confirmButtonText="Sí, Cancelar Cita"
                 intent="danger"
+            />
+
+            <ConfirmModal
+                isOpen={isConfirmGruaOpen}
+                onClose={() => setIsConfirmGruaOpen(false)}
+                onConfirm={handleDoEnviarGrua}
+                title="Confirmar Despacho de Grúa"
+                message={`¿Estás seguro de que deseas despachar la grúa a la dirección: "${agendamiento?.direccion_grua || 'No especificada'}"? Esta acción es irreversible.`}
+                confirmButtonText="Sí, Despachar Grúa"
+                intent="warning"
             />
         </div>
     );
