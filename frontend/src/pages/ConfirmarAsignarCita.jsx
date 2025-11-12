@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import apiClient from '/src/api/axios.js';
 import styles from '../css/ConfirmarAsignarCita.module.css';
 
-// --- 1. AÑADIMOS 'Truck' A LAS IMPORTACIONES ---
+
 import {
     CalendarCheck,
     User,
@@ -53,7 +53,7 @@ export default function ConfirmarAsignarCita() {
         data: null,
         error: null,
     });
-    // --- Carga inicial de datos ---
+    
     useEffect(() => {
         const loadData = async () => {
             try {
@@ -92,7 +92,7 @@ export default function ConfirmarAsignarCita() {
         loadData();
     }, [id]);
 
-    // --- Carga de agenda del mecánico ---
+    
     useEffect(() => {
         if (!selectedMecanicoId || !selectedDate) {
             setAgendaMecanico([]);
@@ -120,7 +120,7 @@ export default function ConfirmarAsignarCita() {
         fetchAgendaMecanico();
     }, [selectedMecanicoId, selectedDate]);
 
-    // --- Generación de slots disponibles ---
+    
     const availableSlots = useMemo(() => {
         const slots = [];
 
@@ -160,7 +160,7 @@ export default function ConfirmarAsignarCita() {
         return available;
     }, [selectedDate, agendaMecanico]);
 
-    // --- Guardar asignación ---
+    
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError(null);
@@ -195,7 +195,7 @@ export default function ConfirmarAsignarCita() {
         }
     };
 
-    // --- Cancelar cita ---
+    
     const handleOpenCancelModal = () => {
         setError(null);
         setSuccessMessage(null);
@@ -217,7 +217,7 @@ export default function ConfirmarAsignarCita() {
         }
     };
 
-    // --- 2. Despachar grúa ---
+    
     const handleEnviarGrua = async () => {
         if (
             !window.confirm(
@@ -247,7 +247,7 @@ export default function ConfirmarAsignarCita() {
 
     const fechaHaCambiado = selectedSlot !== fechaOriginal;
 
-    // ¿Está listo para confirmar?
+    
     let puedeConfirmar = true;
     let motivoBotonDeshabilitado = "";
 
@@ -353,7 +353,7 @@ export default function ConfirmarAsignarCita() {
                     </div>
                 )}
 
-                {/* --- 3. Bloque visual de grúa --- */}
+                
                 {agendamiento?.solicita_grua && (
                     <div
                         className={styles.infoSection}
@@ -404,7 +404,7 @@ export default function ConfirmarAsignarCita() {
                         </button>
                     </div>
                 )}
-                {/* --- Fin bloque grúa --- */}
+                
 
                 <form onSubmit={handleSubmit}>
                     <hr className={styles.divider} />

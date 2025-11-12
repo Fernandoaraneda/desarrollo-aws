@@ -1,4 +1,3 @@
-/* Estilos de la Página (similares a gestionvehiculos.module.css) */
 .pageWrapper {
     padding: 2rem;
 }
@@ -24,8 +23,7 @@
 
 .tableControls {
     padding: 1rem 1.5rem;
-    background-color: #f9fafb; /* Un gris muy claro */
-    border-bottom: 1px solid #e5e7eb;
+    background-color: #f9fafb;     border-bottom: 1px solid #e5e7eb;
 }
 
 .searchBox {
@@ -43,8 +41,7 @@
 
 .searchBox input {
     width: 100%;
-    padding: 0.75rem 1rem 0.75rem 2.5rem; /* Espacio para el icono */
-    border: 1px solid #d1d5db;
+    padding: 0.75rem 1rem 0.75rem 2.5rem;     border: 1px solid #d1d5db;
     border-radius: 6px;
     font-size: 1rem;
 }
@@ -130,7 +127,6 @@
 }
 
 
-/* --- ESTILOS DEL MODAL (AHORA SÍ ESTÁN INCLUIDOS) --- */
 .modalOverlay {
     position: fixed;
     top: 0;
@@ -219,8 +215,7 @@
 }
 
 .saveButton {
-    background-color: #004b93; /* Color Pepsi */
-    color: #ffffff;
+    background-color: #004b93;     color: #ffffff;
 }
 .saveButton:hover {
     background-color: #003a70;

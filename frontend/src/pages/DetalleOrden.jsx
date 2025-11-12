@@ -112,7 +112,7 @@ const BuscadorRepuestos = ({ ordenId, onRepuestoAgregado }) => {
             } finally {
                 setIsLoading(false);
             }
-        }, 300); // Debounce
+        }, 300); 
         return () => clearTimeout(timer);
     }, [searchTerm]);
 
@@ -123,7 +123,7 @@ const BuscadorRepuestos = ({ ordenId, onRepuestoAgregado }) => {
                 producto: productoSku,
                 cantidad: cantidad
             });
-            onRepuestoAgregado(); // Llama a la función para recargar la orden
+            onRepuestoAgregado(); 
             setSearchTerm('');
             setResults([]);
             setCantidad(1);
@@ -147,9 +147,9 @@ const BuscadorRepuestos = ({ ordenId, onRepuestoAgregado }) => {
             </div>
             {isLoading && <p>Buscando...</p>}
             {results.length > 0 && (
-                <ul className={styles.resultsList}> {/* Necesitarás crear este estilo */}
+                <ul className={styles.resultsList}> 
                     {results.map(prod => (
-                        <li key={prod.sku} className={styles.resultItem}> {/* Necesitarás crear este estilo */}
+                        <li key={prod.sku} className={styles.resultItem}> 
                             <div>
                                 <strong>{prod.nombre}</strong> (SKU: {prod.sku})
                                 <small>Stock: {prod.stock}</small>

@@ -1,11 +1,7 @@
-/* src/css/ConfirmarAsignarCita.module.css (VERSIÓN LIMPIA) */
-/* --- INICIO DE REGLAS RESPONSIVAS --- */
 
-/* Para tablets (hasta 768px) */
 @media (max-width: 768px) {
   .pageWrapper {
-    /* Hacemos que la tarjeta ocupe más pantalla */
-    margin: 1rem;
+        margin: 1rem;
     padding: 0;
   }
   .formCard {
@@ -13,7 +9,6 @@
   }
 }
 
-/* Para móviles (hasta 640px) */
 @media (max-width: 640px) {
   .formCard {
     padding: 1rem;
@@ -22,8 +17,7 @@
     font-size: 1.5rem;
   }
 
-  /* ESTA ES LA REGLA PARA LOS BOTONES */
-  .formActions {
+    .formActions {
     flex-direction: column;
     align-items: stretch;  
     gap: 0.75rem;          
@@ -31,12 +25,10 @@
 
   .submitButton,
   .cancelButton {
-    width: 100%; /* Asegura que ocupen todo el ancho */
-  }
+    width: 100%;   }
 }
 
 
-/* --- Estructura General de la Página --- */
 .pageWrapper {
   max-width: 800px;
   margin: 2rem auto;
@@ -74,7 +66,6 @@
 }
 
 
-/* --- SECCIÓN DE INFORMACIÓN Y DE IMAGEN --- */
 .infoSection {
   margin-bottom: 2rem;
 }
@@ -110,7 +101,6 @@
 }
 
 
-/* --- Formulario de Asignación --- */
 .formField {
   margin-top: 1rem;
   display: flex;
@@ -137,7 +127,6 @@
   box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3);
 }
 
-/* --- Alerta de Grúa --- */
 .alertaGrua {
     background-color: #fffbeb;
     border: 1px solid #fde68a;
@@ -152,7 +141,6 @@
 }
 
 
-/* --- Botones de Acción --- */
 .formActions {
   margin-top: 2rem;
   padding-top: 1.5rem;
@@ -188,9 +176,7 @@
   background-color: #d1d5db;
 }
 
-/* --- ESTILOS PARA EL NUEVO CALENDARIO (react-datepicker) --- */
 
-/* 1. El divisor para separar secciones */
 .divider {
   border: none;
   border-top: 1px solid #e5e7eb;
@@ -198,7 +184,6 @@
   margin-bottom: 1.5rem;
 }
 
-/* 2. El texto de ayuda (debajo del título "Fecha y Hora") */
 .infoText {
   font-size: 0.9rem;
   color: #6b7280;
@@ -206,7 +191,6 @@
   margin-top: -1rem;
 }
 
-/* 3. Estilos para los nuevos inputs (QUE COINCIDAN CON TU SELECT) */
 .dateInput,
 .textArea {
   width: 100%;
@@ -215,15 +199,13 @@
   border-radius: 8px;
   font-size: 1rem;
   background-color: #f9fafb;
-  box-sizing: border-box; /* Importante para que el padding no rompa el ancho */
-}
+  box-sizing: border-box; }
 
 .textArea {
   resize: vertical;
   min-height: 80px;
 }
 
-/* 4. Estilo de FOCO (para que brille en azul igual que el select) */
 .dateInput:focus,
 .textArea:focus {
   outline: none;
@@ -231,7 +213,6 @@
   box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3);
 }
 
-/* 5. Estilo para el visor de agenda del mecánico */
 .agendaPreview {
   background-color: #f9fafb;
   border: 1px solid #e5e7eb;
@@ -272,19 +253,14 @@
   border-bottom: none;
 }
 
-/* --- ESTILOS PARA EL NUEVO CALENDARIO (react-datepicker) --- */
 
-/* 1. Este 'wrapper' fuerza al calendario a ocupar el 100% del ancho */
 .datePickerWrapper {
   width: 100%;
 }
 
-/* 2. Esto asegura que el input *dentro* del calendario también ocupe el 100% */
-.datePickerWrapper > div { /* Apunta a .react-datepicker-wrapper */
-  width: 100%;
+.datePickerWrapper > div {   width: 100%;
 }
 
-/* 3. (Esto ya estaba arriba, pero lo dejamos por si acaso) */
 .dateInput { 
   width: 100%;
   padding: 0.75rem;
@@ -300,7 +276,6 @@
   box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3);
 }
 
-/* 4. Arregla el z-index */
 :global(.react-datepicker-popper) {
   z-index: 10;
 }

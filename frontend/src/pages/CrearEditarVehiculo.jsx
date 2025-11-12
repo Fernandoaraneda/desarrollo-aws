@@ -51,45 +51,45 @@ export default function CrearEditarVehiculo() {
     const fetchData = async () => {
         setIsLoading(true);
         try {
-            // Hacemos las 3 llamadas en paralelo para más eficiencia
+            
             const [choferesRes, talleresRes, vehiculoRes] = await Promise.all([
                 apiClient.get('/choferes/'),
                 apiClient.get('/talleres/'),
                 isEditMode ? apiClient.get(`/vehiculos/${patente}/`) : Promise.resolve(null)
             ]);
 
-            // 1. Guardamos choferes
+            
             setChoferes(choferesRes.data.results || choferesRes.data);
             
-            // 2. Guardamos talleres
+            
             setTalleres(talleresRes.data.results || talleresRes.data);
 
-            // 3. Si estamos en modo edición, cargamos los datos del vehículo
+            
             if (isEditMode && vehiculoRes) {
                 setVehiculoData({
                     ...vehiculoRes.data,
                     chofer: vehiculoRes.data.chofer || '',
-                    taller: vehiculoRes.data.taller || '', // <-- AÑADIDO
+                    taller: vehiculoRes.data.taller || '', 
                     anio: vehiculoRes.data.anio || '',
                     kilometraje: vehiculoRes.data.kilometraje || '',
                     color: vehiculoRes.data.color || '',
                     vin: vehiculoRes.data.vin || '',
                 });
             } else {
-                setIsLoading(false); // Si es modo CREAR, terminamos de cargar
+                setIsLoading(false); 
             }
 
         } catch (err) {
             setError('No se pudo cargar la información necesaria (choferes, talleres o vehículo).');
         } finally {
             if (isEditMode) {
-                setIsLoading(false); // Si es modo EDITAR, terminamos de cargar aquí
+                setIsLoading(false); 
             }
         }
     };
 
     fetchData();
-}, [patente, isEditMode, navigate]); // Dependencias
+}, [patente, isEditMode, navigate]); 
 
 
   const handleChange = (e) => {

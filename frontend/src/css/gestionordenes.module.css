@@ -1,10 +1,7 @@
-/* src/css/GestionOrdenes.module.css (Versión para Tema Claro) */
 
-/* Estilos generales */
 .pageWrapper { 
     padding: 2rem; 
-    background-color: #f9fafb; /* Un fondo gris muy claro para la página */
-}
+    background-color: #f9fafb; }
 .header { margin-bottom: 2rem; }
 .header h1 { 
     font-size: 2rem; 
@@ -12,31 +9,23 @@
     display: flex; 
     align-items: center; 
     gap: 0.5rem;
-    color: #111827; /* Texto oscuro */
-}
-.header p { color: #6b7280; } /* Texto gris oscuro */
-
+    color: #111827; }
+.header p { color: #6b7280; } 
 .tableCard { 
-    background-color: #ffffff; /* Fondo blanco para la tarjeta */
-    padding: 1.5rem; 
+    background-color: #ffffff;     padding: 1.5rem; 
     border-radius: 8px; 
-    border: 1px solid #e5e7eb; /* Borde claro */
-    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+    border: 1px solid #e5e7eb;     box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
 }
 .tableContainer { overflow-x: auto; }
 .table { width: 100%; border-collapse: collapse; }
 .table th, .table td { 
     padding: 0.75rem 1rem; 
     text-align: left; 
-    border-bottom: 1px solid #e5e7eb; /* Borde claro */
-    color: #374151; /* Texto oscuro para celdas */
-}
+    border-bottom: 1px solid #e5e7eb;     color: #374151; }
 .table th { 
     font-weight: 600; 
-    color: #6b7280; /* Texto gris oscuro para encabezados */
-}
+    color: #6b7280; }
 
-/* Estilos para las acciones */
 .actionsCell { display: flex; gap: 0.5rem; }
 .actionButton {
     display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0.75rem;
@@ -51,27 +40,17 @@
 }
 .editButton:hover { background-color: #fb923c; border-color: #fb923c; }
 
-/* Estilos para los Badges de Estado (Estos se mantienen igual, tienen buen contraste) */
 .statusBadge {
     padding: 0.25rem 0.75rem; border-radius: 9999px; font-weight: 500; font-size: 0.8rem;
     text-align: center; color: white;
 }
-.ingresado { background-color: #3b82f6; } /* Azul */
-.endiagnostico { background-color: #8b5cf6; } /* Púrpura */
-.enproceso { background-color: #eab308; } /* Amarillo */
-.pausado { background-color: #6b7280; } /* Gris */
-.finalizado { background-color: #22c55e; } /* Verde */
-
-/* --- Estilos para el Modal (Versión Clara) --- */
+.ingresado { background-color: #3b82f6; } .endiagnostico { background-color: #8b5cf6; } .enproceso { background-color: #eab308; } .pausado { background-color: #6b7280; } .finalizado { background-color: #22c55e; } 
 .modalOverlay {
     position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-    background-color: rgba(17, 24, 39, 0.6); /* Fondo semi-transparente oscuro */
-    display: flex; justify-content: center; align-items: center; z-index: 1000;
+    background-color: rgba(17, 24, 39, 0.6);     display: flex; justify-content: center; align-items: center; z-index: 1000;
 }
 .modalContent {
-    background-color: #ffffff; /* Fondo blanco */
-    color: #111827; /* Texto oscuro */
-    padding: 2rem; border-radius: 8px; 
+    background-color: #ffffff;     color: #111827;     padding: 2rem; border-radius: 8px; 
     width: 90%; max-width: 500px;
     box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
 }
@@ -81,10 +60,7 @@
 .formField label { display: block; margin-bottom: 0.5rem; font-weight: 500; color: #374151; }
 .formField select, .formField textarea {
     width: 100%; padding: 0.75rem; border-radius: 6px;
-    background-color: #f9fafb; /* Fondo de input muy claro */
-    border: 1px solid #d1d5db; /* Borde gris claro */
-    color: #111827; /* Texto oscuro */
-}
+    background-color: #f9fafb;     border: 1px solid #d1d5db;     color: #111827; }
 .formField select:focus, .formField textarea:focus {
     outline: none;
     border-color: #3b82f6;
@@ -98,9 +74,7 @@
     cursor: pointer; font-weight: bold; transition: background-color 0.2s;
 }
 .cancelButton { 
-    background-color: #e5e7eb; /* Fondo gris claro */
-    color: #374151; /* Texto oscuro */
-    border: 1px solid #d1d5db;
+    background-color: #e5e7eb;     color: #374151;     border: 1px solid #d1d5db;
 }
 .cancelButton:hover { background-color: #d1d5db; }
 .saveButton { background-color: #16a34a; color: white; }

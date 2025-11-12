@@ -161,7 +161,7 @@ const ModalReporte = ({ llave, onClose, onConfirmReporte, onConfirmRevertir, onA
 };
 
 
-// --- Componente Principal de la Página (Actualizado) ---
+
 export default function GestionLlaves() {
     const [llaves, setLlaves] = useState([]);
     const [usuarios, setUsuarios] = useState([]);

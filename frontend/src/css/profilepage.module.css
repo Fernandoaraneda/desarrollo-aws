@@ -1,14 +1,11 @@
-/* --- Estilos para la página de perfil --- */
 .pageWrapper {
   max-width: 900px;
   margin: 0 auto;
-  padding: 1rem; /* Añadido para que no toque los bordes en móviles */
-}
+  padding: 1rem; }
 
 .header {
   display: flex;
-  flex-direction: column; /* móvil primero */
-  align-items: flex-start;
+  flex-direction: column;   align-items: flex-start;
   gap: 0.5rem;
   margin-bottom: 2rem;
   color: #111827;
@@ -20,14 +17,12 @@
   line-height: 1;
 }
 
-/* --- Card general --- */
 .card {
   background-color: #ffffff;
   border-radius: 12px;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
               0 2px 4px -2px rgba(0, 0, 0, 0.1);
-  padding: 1.5rem; /* un poco más compacto en móvil */
-  margin-bottom: 2rem;
+  padding: 1.5rem;   margin-bottom: 2rem;
 }
 
 .cardTitle {
@@ -42,30 +37,25 @@
   border-bottom: 1px solid #e5e7eb;
 }
 
-/* --- Sección de Información de Cuenta --- */
 .infoGrid {
   display: grid;
-  grid-template-columns: 1fr; /* móvil: 1 columna */
-  gap: 1rem;
+  grid-template-columns: 1fr;   gap: 1rem;
 }
 
 @media (min-width: 640px) {
   .infoGrid {
-    grid-template-columns: repeat(2, 1fr); /* tablet */
-  }
+    grid-template-columns: repeat(2, 1fr);   }
 }
 
 @media (min-width: 1024px) {
   .infoGrid {
-    grid-template-columns: repeat(2, 1fr); /* desktop */
-    gap: 1.5rem;
+    grid-template-columns: repeat(2, 1fr);     gap: 1.5rem;
   }
 }
 
 .infoItem {
   display: flex;
-  flex-direction: column; /* móvil: columna */
-  gap: 0.5rem;
+  flex-direction: column;   gap: 0.5rem;
   background-color: #f9fafb;
   padding: 0.75rem;
   border-radius: 8px;
@@ -73,8 +63,7 @@
 
 @media (min-width: 640px) {
   .infoItem {
-    flex-direction: row; /* tablet+ fila */
-    align-items: center;
+    flex-direction: row;     align-items: center;
     gap: 0.75rem;
   }
 }
@@ -88,7 +77,6 @@
   color: #1f2937;
 }
 
-/* --- Formulario para cambiar contraseña --- */
 .form {
   display: flex;
   flex-direction: column;
@@ -122,19 +110,16 @@
   box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.3);
 }
 
-/* --- Botones --- */
 .buttonGroup {
   display: flex;
-  flex-direction: column; /* móvil: columna */
-  gap: 0.5rem;
+  flex-direction: column;   gap: 0.5rem;
   padding-top: 1rem;
   border-top: 1px solid #e5e7eb;
 }
 
 @media (min-width: 640px) {
   .buttonGroup {
-    flex-direction: row; /* tablet+ fila */
-    gap: 1rem;
+    flex-direction: row;     gap: 1rem;
   }
 }
 
@@ -170,7 +155,6 @@
   background-color: #d1d5db;
 }
 
-/* --- Mensajes de feedback --- */
 .message {
   padding: 0.75rem;
   border-radius: 8px;

@@ -54,8 +54,7 @@
 
 .searchBox input {
   width: 100%;
-  padding: 0.75rem 1rem 0.75rem 2.5rem; /* Espacio para el icono */
-  border: 1px solid #d1d5db;
+  padding: 0.75rem 1rem 0.75rem 2.5rem;   border: 1px solid #d1d5db;
   border-radius: 8px;
   font-size: 1rem;
 }
@@ -101,12 +100,9 @@
 }
 
 .actionButtons button {
-  background-color: #f3f4f6; /* Fondo gris claro por defecto */
-  border: 1px solid #e5e7eb; /* Borde sutil */
-  border-radius: 6px;
+  background-color: #f3f4f6;   border: 1px solid #e5e7eb;   border-radius: 6px;
   cursor: pointer;
-  color: #4b5563; /* Color de icono más oscuro */
-  padding: 0.5rem;
+  color: #4b5563;   padding: 0.5rem;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -114,9 +110,7 @@
 }
 
 .actionButtons button:hover {
-  background-color: #e5e7eb; /* Un gris un poco más oscuro al pasar el cursor */
-  color: var(--accent-color); /* Color de acento al pasar el cursor */
-}
+  background-color: #e5e7eb;   color: var(--accent-color); }
 
 .noResults td {
     text-align: center;
@@ -138,17 +132,13 @@
 
 .pagination button {
   padding: 0.5rem 1rem;
-  border: none; /* Se quita el borde */
-  border-radius: 6px;
-  background-color: var(--accent-color); /* Fondo azul */
-  color: white; /* Texto blanco */
-  cursor: pointer;
+  border: none;   border-radius: 6px;
+  background-color: var(--accent-color);   color: white;   cursor: pointer;
   transition: background-color 0.2s ease;
 }
 
 .pagination button:hover:not(:disabled) {
-  background-color: var(--accent-color-hover); /* Azul más oscuro al pasar el cursor */
-}
+  background-color: var(--accent-color-hover); }
 
 .pagination button:disabled {
   opacity: 0.5;
@@ -162,9 +152,7 @@
     color: #6b7280;
 }
 
-/* =================== REGLAS RESPONSIVAS =================== */
 
-/* Tablets (hasta 1024px) */
 @media (max-width: 1024px) {
   .header {
     flex-direction: column;
@@ -185,7 +173,6 @@
   }
 }
 
-/* Móviles (hasta 640px) */
 @media (max-width: 640px) {
   .header h1 {
     font-size: 1.5rem;
@@ -199,8 +186,7 @@
     font-size: 0.875rem;
   }
   .tableContainer {
-    overflow-x: auto; /* scroll horizontal si la tabla es muy ancha */
-  }
+    overflow-x: auto;   }
   .table th, .table td {
     padding: 0.5rem 0.75rem;
     font-size: 0.7rem;
@@ -227,8 +213,7 @@
   padding: 0.5rem 1rem;
   border: none;
   background-color: transparent;
-  color: #000000; /* Texto gris claro */
-  font-weight: 600;
+  color: #000000;   font-weight: 600;
   border-radius: 0.5rem;
   cursor: pointer;
   transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;

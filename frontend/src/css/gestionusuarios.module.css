@@ -17,8 +17,7 @@
 }
 
 .header h1 {
-  font-size: 1.875rem; /* 30px */
-  font-weight: 700;
+  font-size: 1.875rem;   font-weight: 700;
   color: #111827;
 }
 
@@ -40,7 +39,6 @@
   background-color: var(--accent-color-hover);
 }
 
-/* --- SE AÑADEN ESTOS ESTILOS NUEVOS --- */
 .controls {
   margin-bottom: 1.5rem;
 }
@@ -52,8 +50,7 @@
 
 .searchBox input {
   width: 100%;
-  padding: 0.75rem 1rem 0.75rem 2.5rem; /* Espacio para el icono */
-  border: 1px solid #d1d5db;
+  padding: 0.75rem 1rem 0.75rem 2.5rem;   border: 1px solid #d1d5db;
   border-radius: 8px;
   font-size: 1rem;
 }
@@ -65,7 +62,6 @@
   transform: translateY(-50%);
   color: #9ca3af;
 }
-/* --- FIN DE LOS ESTILOS NUEVOS --- */
 
 .userList {
   display: grid;
@@ -73,10 +69,8 @@
   gap: 1.5rem;
 }
 
-/* Se añade esta clase para el mensaje de "no resultados" */
 .noResults {
-    grid-column: 1 / -1; /* Ocupa todo el ancho de la grilla */
-    text-align: center;
+    grid-column: 1 / -1;     text-align: center;
     padding: 2rem;
     color: #6b7280;
 }
@@ -129,8 +123,7 @@
 }
 
 .userActions {
-  margin-top: auto; /* Push actions to the bottom */
-  padding-top: 1rem;
+  margin-top: auto;   padding-top: 1rem;
   border-top: 1px solid #f3f4f6;
   display: flex;
   gap: 0.75rem;
@@ -156,7 +149,6 @@
 
 
 
-/* Para tablets (hasta 1024px) */
 @media (max-width: 1024px) {
   .userList {
     grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
@@ -164,7 +156,6 @@
   }
 }
 
-/* Para móviles (hasta 640px) */
 @media (max-width: 640px) {
   .pageWrapper {
     padding: 1rem;
@@ -188,8 +179,7 @@
   }
 
   .userList {
-    grid-template-columns: 1fr; /* Cada card ocupa toda la fila */
-    gap: 0.75rem;
+    grid-template-columns: 1fr;     gap: 0.75rem;
   }
 
   .userCard {

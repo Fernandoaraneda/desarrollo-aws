@@ -102,17 +102,13 @@
 }
 
 
-/* =================== REGLAS RESPONSIVAS =================== */
 
-/* Tablets (hasta 1024px) */
 @media (max-width: 1024px) {
   .formGrid {
-    grid-template-columns: 1fr 1fr; /* Mantiene 2 columnas, pero se ajusta al ancho */
-    gap: 1rem;
+    grid-template-columns: 1fr 1fr;     gap: 1rem;
   }
 }
 
-/* Móviles (hasta 640px) */
 @media (max-width: 640px) {
   .pageWrapper {
     padding: 1rem;
@@ -127,8 +123,7 @@
     font-size: 0.875rem;
   }
   .formGrid {
-    grid-template-columns: 1fr; /* Cada campo ocupa toda la fila */
-    gap: 0.75rem;
+    grid-template-columns: 1fr;     gap: 0.75rem;
   }
   .formField input,
   .formField select {

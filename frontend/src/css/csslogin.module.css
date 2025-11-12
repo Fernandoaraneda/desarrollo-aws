@@ -1,6 +1,3 @@
-/* Este es el archivo de módulo CSS que contiene los estilos locales para tu componente LoginPage.
-  Los estilos aquí solo se aplicarán a los elementos que los importen.
-*/
 
 * {
     margin: 0;
@@ -10,8 +7,7 @@
 }
 
 body {
-    /* No definimos el fondo aquí para que no afecte a todas las páginas */
-    font-family: 'Roboto', sans-serif;
+        font-family: 'Roboto', sans-serif;
 }
 
 .containerFormWrapper {
@@ -19,8 +15,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    /* El fondo ahora es parte de este contenedor específico */
-    background-position: center;
+        background-position: center;
     background-repeat: no-repeat;
     background-size: cover;
     color: #fff;
@@ -261,53 +256,38 @@ body {
     cursor: pointer;
 }
 
-/* Ajustes para pantallas pequeñas */
 @media (max-width: 768px) {
     .containerForm {
-        width: 90%;           /* Ocupa casi todo el ancho */
-        padding: 2rem;        /* Reduce padding */
-        border-radius: 2rem;  /* Menos redondeo para móviles */
-    }
+        width: 90%;                   padding: 2rem;                border-radius: 2rem;      }
 
     .welcomeCard {
-        width: 90%;           /* Ocupa casi todo el ancho */
-        padding: 1.5rem;      /* Padding reducido */
-    }
+        width: 90%;                   padding: 1.5rem;          }
 
     .welcomeTitle {
-        font-size: 2rem;      /* Reduce tamaño de título */
-    }
+        font-size: 2rem;          }
 
     .welcomeSubtitle {
-        font-size: 1.2rem;    /* Reduce tamaño de subtítulo */
-    }
+        font-size: 1.2rem;        }
 
     .formularioInput {
-        width: 95%;           /* Inputs más anchos en móviles */
-        font-size: 0.85rem;   /* Ajuste de tamaño de fuente */
-    }
+        width: 95%;                   font-size: 0.85rem;       }
 
     .formulario input[type="button"] {
-        width: 80%;           /* Botón más ancho y visible */
-        padding: 0.6rem;
+        width: 80%;                   padding: 0.6rem;
         font-size: 0.9rem;
     }
 
     .iconos {
-        flex-wrap: wrap;      /* Los iconos se acomodan en varias filas si hace falta */
-        gap: 0.5rem;          /* Reduce el espacio entre iconos */
-    }
+        flex-wrap: wrap;              gap: 0.5rem;              }
 
     .gradientBorderButton, .slideButton {
-        padding: 0.9rem 1.8rem;  /* Botones un poco más pequeños */
-        font-size: 1rem;
+        padding: 0.9rem 1.8rem;          font-size: 1rem;
     }
 }
 
 @media (max-width: 480px) {
     .containerForm {
-        padding: 1.5rem;       /* Padding aún más pequeño */
-    }
+        padding: 1.5rem;           }
 
     .welcomeTitle {
         font-size: 1.5rem;
@@ -331,13 +311,10 @@ body {
   left: 0;
   width: 100%;
   height: 100%;
-  object-fit: cover; /* para que ocupe todo el contenedor sin deformarse */
-  z-index: -1;       /* queda detrás del contenido */
-}
+  object-fit: cover;   z-index: -1;       }
 
 .containerFormWrapper {
-  position: relative; /* importante para que el video quede dentro del contenedor */
-  height: 100vh;
+  position: relative;   height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;

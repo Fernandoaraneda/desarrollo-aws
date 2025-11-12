@@ -30,8 +30,19 @@ from .views import (
     HistorialSeguridadViewSet,
     ProductoViewSet,
     OrdenItemViewSet,
-    TallerViewSet
-
+    TallerViewSet,
+    exportar_bitacora_seguridad,
+    exportar_snapshot_taller_pdf,
+    exportar_consumo_repuestos,
+    exportar_inventario_valorizado,
+    exportar_quiebres_stock,
+    exportar_productividad_mecanicos,
+    exportar_tiempos_taller,
+    exportar_solicitudes_grua,
+    exportar_historial_prestamos,
+    exportar_inventario_llaves_pdf,
+    exportar_frecuencia_fallas, 
+    exportar_hoja_vida_vehiculo_pdf,
 )
 
 router = DefaultRouter()
@@ -76,16 +87,26 @@ urlpatterns = [
     path('dashboard/mecanico/stats/', mecanico_dashboard_stats, name='mecanico-dashboard-stats'),
 
 
-    path('ordenes/pendientes-salida/', OrdenesPendientesSalidaView.as_view(), name='ordenes-pendientes-salida'
-        ),
-        
-        # POST /api/ordenes/123/registrar-salida/
-        path('ordenes/<int:pk>/registrar-salida/', RegistrarSalidaView.as_view(), name='registrar-salida'
-        ),
-
-
-
-
+    path('ordenes/pendientes-salida/', OrdenesPendientesSalidaView.as_view(), name='ordenes-pendientes-salida'),
+    path('ordenes/<int:pk>/registrar-salida/', RegistrarSalidaView.as_view(), name='registrar-salida'),
+    
+    
+    # --- Reportes Administrativos ---
+    path('reportes/seguridad/', exportar_bitacora_seguridad, name='reporte-seguridad'),
+    path('reportes/seguridad/snapshot-pdf/', exportar_snapshot_taller_pdf, name='reporte-seguridad-pdf'),
+    path('reportes/repuestos/consumo/', exportar_consumo_repuestos, name='reporte-repuestos-consumo'),
+    path('reportes/repuestos/inventario-valorizado/', exportar_inventario_valorizado, name='export-inventario-valorizado'),
+    path('reportes/repuestos/quiebres-stock/', exportar_quiebres_stock, name='export-quiebres-stock'),
+    path('reportes/mecanicos/productividad/', exportar_productividad_mecanicos, name='export-productividad-mecanicos'),
+    path('reportes/mecanicos/tiempos-taller/',exportar_tiempos_taller, name='export-tiempos-taller'),
+    path('reportes/gruas/solicitudes/', exportar_solicitudes_grua, name='export-solicitudes-grua'),
+    path('reportes/llaves/historial-prestamos/', exportar_historial_prestamos, name='export-historial-prestamos'),
+    path('reportes/llaves/inventario-pdf/', exportar_inventario_llaves_pdf, name='export-inventario-llaves-pdf'),
+    path('reportes/flota/frecuencia-fallas/', exportar_frecuencia_fallas, name='export-frecuencia-fallas'),
+    path('reportes/flota/hoja-vida-pdf/', exportar_hoja_vida_vehiculo_pdf, name='export-hoja-vida-pdf'),
+    
+    
+    
     # Incluir rutas del router (vehiculos, agendamientos, ordenes)
     path('', include(router.urls)),
 ]

@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import apiClient from '/src/api/axios.js';
-import styles from '/src/css/gestionllaves.module.css'; // Reutilizamos estilos de gestión
+import styles from '/src/css/gestionllaves.module.css'; 
 import { Package, Plus, Edit, Search, Save, XCircle } from 'lucide-react';
 import AlertModal from '/src/components/modals/AlertModal.jsx';
 
-// --- Modal para Crear/Editar Repuestos ---
+
 const RepuestoModal = ({ isOpen, onClose, onSave, producto, onAlert }) => {
     const [formData, setFormData] = useState({
         sku: '',
@@ -18,11 +18,11 @@ const RepuestoModal = ({ isOpen, onClose, onSave, producto, onAlert }) => {
 
     useEffect(() => {
         if (producto) {
-            // Modo Edición
+            
             setFormData(producto);
             setIsEditMode(true);
         } else {
-            // Modo Creación
+            
             setFormData({
                 sku: '', nombre: '', marca: '', descripcion: '', precio_venta: 0, stock: 0,
             });
@@ -45,7 +45,7 @@ const RepuestoModal = ({ isOpen, onClose, onSave, producto, onAlert }) => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         
-        // Validación simple
+        
         if (!formData.sku || !formData.nombre) {
             onAlert("SKU y Nombre son obligatorios.");
             return;
@@ -53,14 +53,14 @@ const RepuestoModal = ({ isOpen, onClose, onSave, producto, onAlert }) => {
 
         try {
             if (isEditMode) {
-                // En modo edición, solo podemos actualizar (PATCH)
-                // Usamos el SKU como ID, tal como en tu modelo
+                
+                
                 await apiClient.patch(`/productos/${formData.sku}/`, formData);
             } else {
-                // En modo creación (POST)
+                
                 await apiClient.post('/productos/', formData);
             }
-            onSave(); // Llama a la función para recargar y cerrar
+            onSave(); 
         } catch (err) {
             const errorMsg = err.response?.data?.sku?.[0] || err.response?.data?.error || "Error al guardar.";
             onAlert(errorMsg);
@@ -79,7 +79,7 @@ const RepuestoModal = ({ isOpen, onClose, onSave, producto, onAlert }) => {
                             name="sku"
                             value={formData.sku}
                             onChange={handleChange}
-                            disabled={isEditMode} // No se puede editar el SKU
+                            disabled={isEditMode} 
                             required
                         />
                     </div>
@@ -138,19 +138,19 @@ const RepuestoModal = ({ isOpen, onClose, onSave, producto, onAlert }) => {
 };
 
 
-// --- Componente Principal ---
+
 export default function GestionStock() {
     const [productos, setProductos] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
 
-    // Estado para los modales
+    
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [productoSeleccionado, setProductoSeleccionado] = useState(null);
     const [alert, setAlert] = useState({ isOpen: false, message: '', intent: 'danger' });
 
-    // Función para cargar los datos
+    
     const fetchProductos = async () => {
         setIsLoading(true);
         try {
@@ -167,7 +167,7 @@ export default function GestionStock() {
         fetchProductos();
     }, []);
 
-    // Memo para el filtrado de búsqueda
+    
     const filteredProductos = useMemo(() => {
         return productos.filter(p =>
             p.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -176,7 +176,7 @@ export default function GestionStock() {
         );
     }, [productos, searchTerm]);
 
-    // Handlers para el Modal
+    
     const handleOpenModal = (producto = null) => {
         setProductoSeleccionado(producto);
         setIsModalOpen(true);
@@ -189,11 +189,11 @@ export default function GestionStock() {
 
     const handleSaveSuccess = () => {
         handleCloseModal();
-        fetchProductos(); // Recarga la lista de productos
+        fetchProductos(); 
         showAlert("¡Repuesto guardado con éxito!", "success");
     };
 
-    // Handlers para Alertas
+    
     const showAlert = (message, intent = 'danger') => {
         setAlert({ isOpen: true, message, intent });
     };
@@ -276,7 +276,7 @@ export default function GestionStock() {
                     onClose={handleCloseModal}
                     onSave={handleSaveSuccess}
                     producto={productoSeleccionado}
-                    onAlert={showAlert} // Pasamos la función de alerta al modal
+                    onAlert={showAlert} 
                 />
             )}
             

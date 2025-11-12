@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import apiClient from '/src/api/axios.js';
 import styles from '../css/gestionagenda.module.css';
-import { Calendar as CalendarIcon, User, Paperclip, Truck } from 'lucide-react'; // 1. AÑADIMOS Truck
+import { Calendar as CalendarIcon, User, Paperclip, Truck } from 'lucide-react'; 
 import { useUserStore } from '/src/store/authStore.js';
 import AlertModal from '/src/components/modals/AlertModal.jsx';
 
@@ -9,7 +9,7 @@ export default function GestionAgenda() {
     const { user } = useUserStore();
     const [vehiculos, setVehiculos] = useState([]);
 
-    // 2. AÑADIMOS 'direccion_grua' AL ESTADO INICIAL
+    
     const [formData, setFormData] = useState({
         vehiculo: '',
         motivo_ingreso: '',
@@ -55,7 +55,7 @@ export default function GestionAgenda() {
             return;
         }
 
-        // Ahora solo pedimos el motivo si NO es mantenimiento
+        
         if (!formData.es_mantenimiento && !formData.motivo_ingreso) {
             setError("Por favor, complete el motivo del ingreso (o marque 'Es Mantenimiento').");
             setIsAlertOpen(true);
@@ -68,7 +68,7 @@ export default function GestionAgenda() {
         dataParaEnviar.append('solicita_grua', formData.solicita_grua || false);
         dataParaEnviar.append('duracion_estimada_minutos', 60);
         dataParaEnviar.append('es_mantenimiento', formData.es_mantenimiento || false);
-        // 4. AÑADIMOS 'direccion_grua' AL FORMDATA
+        
         if (formData.solicita_grua) {
             dataParaEnviar.append('direccion_grua', formData.direccion_grua);
         }
@@ -82,7 +82,7 @@ export default function GestionAgenda() {
                 headers: { 'Content-Type': 'multipart/form-data' },
             });
 
-            // 5. REINICIAMOS EL ESTADO COMPLETO
+            
             setFormData({ vehiculo: '', motivo_ingreso: '', solicita_grua: false, direccion_grua: '', es_mantenimiento: false });
             setImagenFile(null);
             if (e.target) e.target.reset();
@@ -115,13 +115,13 @@ export default function GestionAgenda() {
         setFormData(prev => {
             const newState = { ...prev, [name]: type === 'checkbox' ? checked : value };
 
-            // Si marcamos/desmarcamos "es_mantenimiento"
+            
             if (name === 'es_mantenimiento') {
                 if (checked) {
-                    // Si se marca, autocompletar y hacer solo lectura
+                    
                     newState.motivo_ingreso = 'Mantenimiento General';
                 } else {
-                    // Si se desmarca, limpiar
+                    
                     newState.motivo_ingreso = '';
                 }
             }
@@ -176,8 +176,8 @@ export default function GestionAgenda() {
                                 onChange={handleChange}
 
 
-                                required={!formData.es_mantenimiento} // Solo requerido si NO es mantenimiento
-                                readOnly={formData.es_mantenimiento} // Usar readOnly en vez de disabled para que el valor se envíe
+                                required={!formData.es_mantenimiento} 
+                                readOnly={formData.es_mantenimiento} 
                                 style={formData.es_mantenimiento ? { backgroundColor: '#f3f4f6', color: '#6b7280' } : {}}
                             ></textarea>
 
@@ -193,7 +193,7 @@ export default function GestionAgenda() {
                             </div>
                         </div>
 
-                        {/* --- 5. AÑADIMOS EL CAMPO DE DIRECCIÓN CONDICIONAL --- */}
+                        
                         {formData.solicita_grua && (
                             <div className={styles.formField}>
                                 <label htmlFor="direccion_grua" style={{ color: '#b91c1c', fontWeight: 'bold' }}>Dirección de Retiro (Grúa)</label>

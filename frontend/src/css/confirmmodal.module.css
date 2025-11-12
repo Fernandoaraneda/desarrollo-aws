@@ -40,12 +40,10 @@
   width: 48px;
   height: 48px;
   border-radius: 50%;
-  background-color: #fee2e2; /* Fondo rojo claro */
-  display: flex;
+  background-color: #fee2e2;   display: flex;
   align-items: center;
   justify-content: center;
-  color: #ef4444; /* Rojo principal */
-}
+  color: #ef4444; }
 
 .modal h2 {
   font-size: 1.25rem;
@@ -76,8 +74,7 @@
 }
 
 .confirmButton {
-  background-color: #ef4444; /* Rojo */
-  color: white;
+  background-color: #ef4444;   color: white;
 }
 .confirmButton:hover {
   background-color: #dc2626;

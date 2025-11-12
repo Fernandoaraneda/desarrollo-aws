@@ -1,22 +1,10 @@
-/* supervisor-dashboard.module.css */
 
-/* --- ✅ 1. CLASE NUEVA AÑADIDA --- */
-/* Contenedor padre para la fila de alertas y controles */
 .topRowContainer {
   display: flex;
-  flex-wrap: wrap; /* Para que se apilen en móvil */
-  justify-content: space-between; /* Espacio entre los dos bloques */
-  align-items: flex-start; /* Alinea por arriba */
-  gap: 1.5rem; /* Espacio entre bloques (útil en móvil) */
-  margin-bottom: 1.5rem; /* El margen que antes tenía la barra de controles */
-}
+  flex-wrap: wrap;   justify-content: space-between;   align-items: flex-start;   gap: 1.5rem;   margin-bottom: 1.5rem; }
 
-/* --- ✅ 2. CLASE NUEVA AÑADIDA --- */
-/* El nuevo widget de alertas */
 .alertWidget {
-  flex: 1; /* Crece para ocupar espacio */
-  min-width: 300px; /* Ancho mínimo antes de apilarse */
-  padding: 1rem;
+  flex: 1;   min-width: 300px;   padding: 1rem;
   background-color: white;
   border-radius: 12px;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
@@ -24,16 +12,11 @@
   display: flex;
   align-items: center;
   gap: 1rem;
-  border-left: 5px solid #f97316; /* Borde naranja de alerta */
-}
+  border-left: 5px solid #f97316; }
 
-/* --- ✅ 3. CLASES NUEVAS AÑADIDAS --- */
-/* Estilos para el texto e ícono dentro del widget de alertas */
 .alertWidget svg {
   font-size: 1.5rem;
-  color: #f97316; /* Mismo color naranja */
-  flex-shrink: 0; /* Evita que el icono se encoja */
-}
+  color: #f97316;   flex-shrink: 0; }
 .alertWidget p {
   margin: 0;
   font-size: 0.9rem;
@@ -47,45 +30,28 @@
 }
 
 
-/* --- ✅ 4. CLASE MODIFICADA --- */
-/* Tu barra de controles. 
-   Quitamos width, margin-bottom y margin-left.
-   Añadimos flex: 1 y min-width.
-*/
 .controlsToolbar {
-  /* width: 50%; <-- ELIMINADO */
-  /* margin-bottom: 1.5rem; <-- ELIMINADO */
-  /* margin-left: auto; <-- ELIMINADO */
-  
-  flex: 1; /* Crece para ocupar espacio */
-  min-width: 300px; /* Ancho mínimo antes de apilarse */
-
+        
+  flex: 1;   min-width: 300px; 
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  justify-content: space-between; /* Distribuye botones (como lo tenías) */
-  gap: 1rem;
-  padding: 2rem; /* Mantengo tu padding */
-  background-color: white;
+  justify-content: space-between;   gap: 1rem;
+  padding: 2rem;   background-color: white;
   border-radius: 12px;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
     0 2px 4px -2px rgba(0, 0, 0, 0.1);
 }
 
-/* --- (SIN CAMBIOS) --- */
 .controlsToolbar label {
   display: flex;
   align-items: center;
   gap: 4rem;
-  font-size: 0.875rem; /* 14px */
-  color: #6b7280; /* text-gray-500 */
-  cursor: pointer;
+  font-size: 0.875rem;   color: #6b7280;   cursor: pointer;
   margin: 0;
 }
 .controlsToolbar span {
-  font-size: 0.75rem; /* 12px */
-  color: #6b7280; /* text-gray-500 */
-  margin: 0;
+  font-size: 0.75rem;   color: #6b7280;   margin: 0;
 }
 .dashboardGrid {
   display: grid;
@@ -176,17 +142,12 @@
 .statusBadge.endiagnóstico { background-color: #fef3c7; color: #92400e; }
 .statusBadge.pausado { background-color: #fee2e2; color: #991b1b; }
 
-/* --- (SIN CAMBIOS) --- */
 @media (max-width: 1024px) {
   .dashboardGrid {
     grid-template-columns: repeat(2, 1fr);
   }
 }
 
-/* --- ✅ 5. REGLA MODIFICADA/ELIMINADA --- */
-/* Ya no necesitamos esta regla específica para .controlsToolbar 
-   porque .topRowContainer se encarga del 'wrap'
-*/
 @media (max-width: 640px) {
   .dashboardGrid {
     grid-template-columns: 1fr;
@@ -195,16 +156,9 @@
     grid-column: span 1;
   }
   
-  /* .controlsToolbar {
-     width: 100%; 
-     justify-content: flex-start;
-  } 
-  ^-- PUEDES BORRAR ESTA REGLA, YA NO ES NECESARIA
-  */
-}
+  }
 
 
-/* --- (SIN CAMBIOS) --- */
 @media (max-width: 1024px) {
   .dashboardGrid {
     grid-template-columns: repeat(2, 1fr);

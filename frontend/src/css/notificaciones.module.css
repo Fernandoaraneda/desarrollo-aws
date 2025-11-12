@@ -1,4 +1,3 @@
-/* src/css/notificaciones.module.css */
 
 .notificationWrapper { position: relative; }
 .bellButton { background: none; border: none; color: #9ca3af; cursor: pointer; position: relative; }
@@ -9,8 +8,7 @@
     width: 18px; height: 18px; border-radius: 50%;
     font-size: 0.7rem; font-weight: bold;
     display: flex; align-items: center; justify-content: center;
-    border: 2px solid #1f2937; /* Asumiendo fondo oscuro del header */
-}
+    border: 2px solid #1f2937; }
 
 .dropdown {
     position: absolute; top: 150%; right: 0;

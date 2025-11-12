@@ -2,8 +2,7 @@
     font-size: 1.5rem;
     font-weight: bold;
     margin-bottom: 1.5rem;
-    color: #f9fafb; /* Texto blanco para que contraste con el fondo oscuro del dashboard */
-}
+    color: #f9fafb; }
 
 .tasksGrid {
     display: grid;
@@ -12,8 +11,7 @@
 }
 
 .taskCard {
-    background-color: #374151; /* Un gris un poco más claro que el fondo del dashboard */
-    border-radius: 12px;
+    background-color: #374151;     border-radius: 12px;
     padding: 1.25rem;
     border: 1px solid #4b5563;
     cursor: pointer;

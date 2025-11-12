@@ -1,4 +1,3 @@
-/* src/css/detalleorden.module.css */
 
 .pageWrapper {
   padding: 2rem;
@@ -47,23 +46,16 @@
   padding-bottom: 0.75rem;
 }
 
-/* === ESTILOS PARA LA IMAGEN DE AVERÍA (AÑADIDO) === */
 .averiaImage {
   width: 100%;
-  /* Ocupa el 100% del ancho de su contenedor */
-  max-height: 400px;
-  /* LÍMITE: La altura máxima será de 400px */
-  object-fit: contain;
-  /* Asegura que toda la imagen se vea, sin deformarse */
-  border-radius: 6px;
-  /* Bordes redondeados consistentes */
-  background-color: #f3f4f6;
-  /* Un fondo por si la imagen es transparente */
-  border: 1px solid #e5e7eb;
+    max-height: 400px;
+    object-fit: contain;
+    border-radius: 6px;
+    background-color: #f3f4f6;
+    border: 1px solid #e5e7eb;
   margin-top: 0.5rem;
   display: block;
-  /* Asegura que se comporte como un bloque */
-}
+  }
 
 
 .infoField {
@@ -128,7 +120,6 @@
   font-size: 1.1rem;
 }
 
-/* Colores para tema claro de los badges */
 .ingresado {
   background-color: #e0e7ff;
   color: #4338ca;
@@ -193,7 +184,6 @@
   color: #ef4444;
 }
 
-/* === REGLAS RESPONSIVAS === */
 @media (max-width: 768px) {
   .gridContainer {
     grid-template-columns: 1fr;
@@ -208,9 +198,7 @@
   }
 }
 
-/* ... (estilos existentes como .pageWrapper, .header, .gridContainer, etc. se quedan igual) ... */
 
-/* === ESTILOS PARA LA BARRA LATERAL (SIDEBAR) === */
 
 .infoCard {
   background-color: white;
@@ -237,45 +225,32 @@
   border-top: 1px solid #e5e7eb;
 }
 
-/* --- ✅ ESTILOS NUEVOS PARA EL HISTORIAL --- */
 
 .historyList {
   list-style: none;
-  /* Quita los puntos de la lista */
-  padding-left: 1.5rem;
-  /* Espacio para la línea de tiempo */
-  position: relative;
-  /* Contexto para la línea */
-  margin-top: 1rem;
+    padding-left: 1.5rem;
+    position: relative;
+    margin-top: 1rem;
   border-left: 2px solid #e5e7eb;
-  /* La línea vertical */
-}
+  }
 
 .historyList li {
   position: relative;
-  /* Contexto para el "punto" */
-  margin-bottom: 1.25rem;
-  /* Espacio entre eventos */
-  padding-left: 1.25rem;
-  /* Espacio entre el punto y el texto */
-}
+    margin-bottom: 1.25rem;
+    padding-left: 1.25rem;
+  }
 
-/* El "punto" en la línea de tiempo */
 .historyList li::before {
   content: '';
   position: absolute;
   left: -2.3rem;
-  /* Lo mueve a la izquierda para que se centre en la línea */
-  top: 5px;
-  /* Alineación vertical */
-  width: 10px;
+    top: 5px;
+    width: 10px;
   height: 10px;
   border-radius: 50%;
   background-color: var(--accent-color, #3b82f6);
-  /* Color del punto */
-  border: 2px solid white;
-  /* Efecto de "agujero" */
-}
+    border: 2px solid white;
+  }
 
 .historyList li strong {
   display: block;
@@ -287,10 +262,8 @@
 .historyList li span {
   display: block;
   font-size: 0.8rem;
-  /* Más pequeño */
-  color: #6b7280;
-  /* Texto gris */
-}
+    color: #6b7280;
+  }
 
 .historyList li small {
   display: block;
@@ -300,61 +273,46 @@
   margin-top: 0.25rem;
 }
 
-/* --- ✅ ESTILOS NUEVOS PARA ASIGNACIÓN Y FECHAS --- */
 
-/* Clase para el <p> que muestra el mecánico asignado (cuando está deshabilitado) */
 .assignedMechanic {
   width: 100%;
   padding: 0.75rem;
   border: 1px solid #e5e7eb;
-  /* Borde sutil */
-  border-radius: 8px;
+    border-radius: 8px;
   font-size: 1rem;
   background-color: #f9fafb;
-  /* Fondo gris muy claro */
-  color: #374151;
-  /* Texto oscuro */
-  box-sizing: border-box;
-  /* Asegura que el padding no rompa el layout */
-}
+    color: #374151;
+    box-sizing: border-box;
+  }
 
-/* Asegura que el select ocupe todo el ancho */
 .mecanicoSelect {
   width: 100%;
 }
 
-/* Mejora para las Fechas Clave */
 .dateField {
   display: flex;
   justify-content: space-between;
   align-items: center;
   font-size: 0.9rem;
   padding: 0.75rem 0.25rem;
-  /* Más padding vertical */
-  border-bottom: 1px dashed #e5e7eb;
-  /* Separador */
-}
+    border-bottom: 1px dashed #e5e7eb;
+  }
 
 .dateField:last-child {
   border-bottom: none;
-  /* El último no necesita separador */
-}
+  }
 
 .dateField span {
   color: #6b7280;
-  /* Etiqueta "Ingreso:" en gris */
-}
+  }
 
 .dateField strong {
   color: #1f2937;
-  /* La fecha en texto oscuro */
-  font-weight: 600;
+    font-weight: 600;
 }
 
 
-/* ... (El resto de tus estilos como .statusBadge, .textArea, etc., se quedan igual) ... */
 
-/* Colores para tema claro de los badges (ya los tienes) */
 .statusBadge {
   display: inline-block;
   padding: 0.5rem 1rem;
@@ -390,24 +348,18 @@
   color: #166534;
 }
 
-/* --- ✅ ESTILOS PARA ORDENAR "SUBIR DOCUMENTOS" --- */
 
-/* 1. Estilos para el formulario de subida */
 .uploadForm {
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  /* Espacio entre las filas del formulario */
-}
+  }
 
-/* 2. Define la fila que contiene "Tipo" y "Archivo" */
 .formRow {
   display: flex;
   gap: 1rem;
-  /* Espacio entre los campos "Tipo" y "Archivo" */
-}
+  }
 
-/* 3. Se asegura que el select de "Tipo" se vea igual que los otros inputs */
 .statusSelect {
   width: 100%;
   padding: 0.75rem;
@@ -415,20 +367,16 @@
   border-radius: 8px;
   font-size: 1rem;
   background-color: #f9fafb;
-  /* Fondo claro */
-}
+  }
 
-/* 4. Mejora visual para el input de "Archivo" */
 .formField input[type="file"] {
   font-size: 0.9rem;
   color: #4b5563;
   padding: 0.5rem;
   border: 1px dashed #d1d5db;
-  /* Borde discontinuo */
-  border-radius: 8px;
+    border-radius: 8px;
 }
 
-/* 5. Estiliza el botón "Seleccionar archivo" (nativo del navegador) */
 .formField input[type="file"]::file-selector-button {
   background-color: #e5e7eb;
   color: #374151;
@@ -445,14 +393,12 @@
   background-color: #d1d5db;
 }
 
-/* 6. Estilo para el separador <hr> */
 .infoCard hr {
   border: none;
   border-top: 1px solid #e5e7eb;
   margin: 1.5rem 0;
 }
 
-/* 7. Estilo para el subtítulo "Documentos Anexados" */
 .infoCard h4 {
   font-size: 1.15rem;
   font-weight: 600;
@@ -463,7 +409,6 @@
   margin-bottom: 1rem;
 }
 
-/* 8. Contenedor de la lista de documentos */
 .documentList {
   list-style: none;
   padding: 0;
@@ -471,14 +416,11 @@
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
-  /* Espacio entre cada documento */
-}
+  }
 
-/* 9. Estilo de "Tarjeta" para cada documento en la lista */
 .documentList li {
   background-color: #f9fafb;
-  /* Fondo gris muy claro */
-  border: 1px solid #e5e7eb;
+    border: 1px solid #e5e7eb;
   border-radius: 8px;
   padding: 0.75rem 1rem;
   transition: box-shadow 0.2s;
@@ -488,14 +430,11 @@
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
-/* 10. Estilo para el link (nombre del documento) */
 .documentList li a {
   display: block;
-  /* Ocupa su propia línea */
-  font-weight: 600;
+    font-weight: 600;
   color: #3b82f6;
-  /* Color azul (acento) */
-  text-decoration: none;
+    text-decoration: none;
   margin-bottom: 0.25rem;
 }
 
@@ -503,42 +442,33 @@
   text-decoration: underline;
 }
 
-/* 11. Estilo para la metadata (quién y cuándo lo subió) */
 .documentList li span {
   display: block;
   font-size: 0.8rem;
   color: #6b7280;
-  /* Texto gris */
-}
+  }
 
-/* 12. Regla para que el formulario se vea bien en móviles */
 @media (max-width: 640px) {
   .formRow {
     flex-direction: column;
-    /* Apila "Tipo" y "Archivo" verticalmente */
-    gap: 1rem;
+        gap: 1rem;
   }
 }
 
 
-/* --- ✅ CSS PARA EL ACORDEÓN DE DOCUMENTOS --- */
 
-/* Contenedor de todos los grupos */
 .documentGroupContainer {
   display: flex;
   flex-direction: column;
   gap: 1rem;
 }
 
-/* El bloque de un solo grupo (ej: "En Proceso") */
 .documentGroup {
   border: 1px solid #e5e7eb;
   border-radius: 8px;
   overflow: hidden;
-  /* Clave para el acordeón */
-}
+  }
 
-/* El botón que actúa como cabecera del acordeón */
 .groupHeader {
   display: flex;
   justify-content: space-between;
@@ -558,7 +488,6 @@
   background-color: #f3f4f6;
 }
 
-/* Contenedor del contenido colapsable */
 .groupContent {
   padding: 1rem;
   display: flex;
@@ -566,17 +495,13 @@
   gap: 1rem;
 }
 
-/* Cada item individual dentro del acordeón */
 .documentItem {
   display: flex;
   flex-direction: column;
-  /* Apila la preview y la metadata en móviles */
-  gap: 1rem;
+    gap: 1rem;
 }
 
-/* --- ✅ CSS PARA LAS PREVISUALIZACIONES --- */
 
-/* Previsualización de Imagen */
 .imagePreview {
   max-width: 100%;
   height: auto;
@@ -587,16 +512,13 @@
   background-color: #f9fafb;
 }
 
-/* Previsualización de PDF (iframe o embed) */
 .pdfPreview {
   width: 100%;
   height: 500px;
-  /* Altura fija para el visor de PDF */
-  border: 1px solid #e5e7eb;
+    border: 1px solid #e5e7eb;
   border-radius: 6px;
 }
 
-/* Link de descarga (para boletas, .doc, etc.) */
 .downloadLink {
   display: inline-flex;
   align-items: center;
@@ -614,7 +536,6 @@
   background-color: #e5e7eb;
 }
 
-/* Metadata del archivo (quién, cuándo) */
 .documentMeta {
   flex: 1;
 }
@@ -627,54 +548,43 @@
 
 .documentMeta span {
   display: flex;
-  /* Alinea ícono y texto */
-  align-items: center;
+    align-items: center;
   gap: 0.5rem;
   font-size: 0.8rem;
   color: #6b7280;
   margin-bottom: 0.25rem;
 }
 
-/* --- Media query para pantallas más grandes --- */
 @media (min-width: 768px) {
 
-  /* En pantallas grandes, pone la preview a la izquierda y la metadata a la derecha */
-  .documentItem {
+    .documentItem {
     flex-direction: row;
-    /* Lado a lado */
-    align-items: flex-start;
+        align-items: flex-start;
   }
 
   .imagePreview,
   .pdfPreview,
   .downloadLink {
     flex: 0 0 250px;
-    /* Ancho fijo para la preview */
-    max-width: 250px;
+        max-width: 250px;
   }
 
   .pdfPreview {
     height: 300px;
-    /* Más pequeño en la vista lado a lado */
-  }
+      }
 }
 
-/* --- ✅ ESTILOS PARA BOTONES PAUSA/REANUDAR --- */
 
-/* 1. Contenedor de los botones (AÑADE EL MARGEN SUPERIOR) */
 .pauseActions {
   margin-top: 1.5rem;
-  /* <-- Este es el espacio que pediste */
-  display: flex;
+    display: flex;
   gap: 0.5rem;
 }
 
-/* 2. Estilo base común para ambos botones */
 .pauseButton,
 .resumeButton {
   flex: 1;
-  /* Hacen que los botones ocupen el mismo espacio */
-  display: flex;
+    display: flex;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
@@ -687,26 +597,20 @@
   transition: background-color 0.2s;
 }
 
-/* 3. Color específico para Pausar */
 .pauseButton {
   background-color: #fef2f2;
-  /* Fondo rojo claro */
-  color: #b91c1c;
-  /* Texto rojo oscuro */
-  border: 1px solid #fecaca;
+    color: #b91c1c;
+    border: 1px solid #fecaca;
 }
 
 .pauseButton:hover {
   background-color: #fee2e2;
 }
 
-/* 4. Color específico para Reanudar */
 .resumeButton {
   background-color: #f0fdf4;
-  /* Fondo verde claro */
-  color: #15803d;
-  /* Texto verde oscuro */
-  border: 1px solid #bbf7d0;
+    color: #15803d;
+    border: 1px solid #bbf7d0;
 }
 
 .resumeButton:hover {
@@ -714,7 +618,6 @@
 }
 
 
-/* --- ✅ ESTILOS PARA EL NUEVO MODAL DE INPUT (MOTIVO PAUSA) --- */
 
 .modalOverlay {
   position: fixed;
@@ -806,8 +709,7 @@
 
 .modalConfirmButton {
   background-color: #ef4444;
-  /* Rojo para pausar */
-  color: #ffffff;
+    color: #ffffff;
 }
 
 .modalConfirmButton:hover {
@@ -834,41 +736,34 @@
   border: 1px solid #e5e7eb;
 }
 
-/* --- ESTA ES LA PARTE IMPORTANTE --- */
 .statusRepuesto {
   font-weight: bold;
   font-size: 0.9rem;
   padding: 0.25rem 0.5rem;
   border-radius: 6px;
   text-transform: capitalize;
-  /* Pone la primera letra en mayúscula */
-}
+  }
 
-/* Estado Pendiente (Amarillo) */
 .statusRepuesto[data-estado="Pendiente"] {
   color: #b45309;
   background-color: #fef3c7;
 }
 
-/* Estado Aprobado (Verde) */
 .statusRepuesto[data-estado="Aprobado"] {
   color: #047857;
   background-color: #d1fae5;
 }
 
-/* Estado Rechazado (Rojo) */
 .statusRepuesto[data-estado="Rechazado"] {
   color: #b91c1c;
   background-color: #fee2e2;
 }
 
-/* Estado No Aplica (Gris) - para servicios */
 .statusRepuesto[data-estado="N/A"] {
   color: #555;
   background-color: #f3f4f6;
 }
 
-/* --- FIN DE LA PARTE IMPORTANTE --- */
 
 
 .resultsList {
