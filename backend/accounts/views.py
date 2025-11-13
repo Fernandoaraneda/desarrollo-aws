@@ -60,6 +60,7 @@ from .models import (
     LlaveHistorialEstado,
     Taller,
     Usuario,
+    AgendamientoHistorial
 )
 
 # Serializers
@@ -983,6 +984,13 @@ class AgendamientoViewSet(viewsets.ModelViewSet):
                         estado_repuesto=OrdenItem.EstadoRepuesto.APROBADO,  # ¡Estado Aprobado!
                     )
 
+                    AgendamientoHistorial.objects.create(
+                        agendamiento=agendamiento,
+                        estado=agendamiento.estado,  # Guardará "Confirmado"
+                        usuario=request.user,
+                        comentario=motivo_cambio or "Cita confirmada y asignada.",
+                    )
+
         agendamiento.save()  # Esta línea ya no dará error
         return Response(
             self.get_serializer(agendamiento).data, status=status.HTTP_200_OK
@@ -1045,6 +1053,13 @@ class AgendamientoViewSet(viewsets.ModelViewSet):
         # Marcamos el agendamiento como FINALIZADO (ya cumplió su propósito)
         agendamiento.estado = Agendamiento.Estado.FINALIZADO
         agendamiento.save()
+        
+        AgendamientoHistorial.objects.create(
+            agendamiento=agendamiento,
+            estado=agendamiento.estado, # Guardará "Finalizado"
+            usuario=request.user,
+            comentario="Vehículo ingresado al taller. Orden creada."
+        )
 
         return Response(
             {
@@ -1064,9 +1079,17 @@ class AgendamientoViewSet(viewsets.ModelViewSet):
         agendamiento = self.get_object()
         agendamiento.estado = Agendamiento.Estado.CANCELADO
         agendamiento.save()
+        
+        AgendamientoHistorial.objects.create(
+            agendamiento=agendamiento,
+            estado=agendamiento.estado, # Guardará "Cancelado"
+            usuario=request.user,
+            comentario="Cita cancelada por el supervisor."
+        )
         return Response(
             self.get_serializer(agendamiento).data, status=status.HTTP_200_OK
         )
+
 
     @action(
         detail=True,

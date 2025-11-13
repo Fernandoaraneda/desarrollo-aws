@@ -28,6 +28,19 @@ const HORA_INICIO = 9;
 const HORA_FIN = 19;
 const DURACION_CITA_MINUTOS = 60;
 
+/**
+ * Convierte un objeto Date a un string YYYY-MM-DD en la zona horaria local.
+ * @param {Date} date El objeto de fecha local.
+ * @returns {string} La fecha en formato YYYY-MM-DD.
+ */
+const toLocalISOString = (date) => {
+    const y = date.getFullYear();
+    // getMonth() es 0-indexado, por eso +1
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+};
+
 export default function ConfirmarAsignarCita() {
     const { id } = useParams();
     const navigate = useNavigate();
@@ -100,14 +113,15 @@ export default function ConfirmarAsignarCita() {
             return;
         }
 
-        const fechaParaAPI = selectedDate.toISOString().split('T')[0];
+        // 1. Usamos la función helper para obtener la fecha local
+        const fechaParaAPI = toLocalISOString(selectedDate);
 
         const fetchAgendaMecanico = async () => {
             setIsLoadingAgenda(true);
             try {
                 const response = await apiClient.get(
                     `/mecanicos/${selectedMecanicoId}/agenda/`,
-                    { params: { fecha: fechaParaAPI } }
+                    { params: { fecha: fechaParaAPI } } // Se envía 'YYYY-MM-DD' local
                 );
                 setAgendaMecanico(response.data.results || response.data || []);
             } catch (err) {
@@ -121,11 +135,14 @@ export default function ConfirmarAsignarCita() {
         fetchAgendaMecanico();
     }, [selectedMecanicoId, selectedDate]);
 
-
     const availableSlots = useMemo(() => {
         const slots = [];
 
-        const fechaString = selectedDate.toISOString().split('T')[0];
+        // 1. Usamos la función helper para obtener la fecha local
+        const fechaString = toLocalISOString(selectedDate);
+
+        // 2. Creamos el inicio y fin del día usando el string local
+        // new Date('YYYY-MM-DDTHH:MM:SS') crea una fecha en la zona horaria local
         const dayStart = new Date(
             `${fechaString}T${String(HORA_INICIO).padStart(2, '0')}:00:00`
         );
@@ -142,6 +159,7 @@ export default function ConfirmarAsignarCita() {
             );
         }
 
+        // Esta lógica ya es correcta porque compara `getTime()`
         const bookedTimes = agendaMecanico.map((cita) =>
             new Date(cita.fecha_hora_programada).getTime()
         );
@@ -150,9 +168,12 @@ export default function ConfirmarAsignarCita() {
         );
 
         const now = new Date();
-        const todayString = now.toISOString().split('T')[0];
+
+        // 3. Usamos la función helper para comparar el día
+        const todayString = toLocalISOString(now);
         const isToday = fechaString === todayString;
-        const nowWithMargin = new Date(now.getTime() + 5 * 60000);
+
+        const nowWithMargin = new Date(now.getTime() + 5 * 60000); // Margen de 5 min
 
         if (isToday) {
             return available.filter((slot) => slot.getTime() > nowWithMargin.getTime());
