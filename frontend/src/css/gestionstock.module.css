@@ -269,3 +269,23 @@
     background-color: #003a70;
     box-shadow: 0 4px 8px rgba(0, 75, 147, 0.2);
 }
+
+.deleteButton {
+    display: flex; /* Añadido para alinear icono */
+    align-items: center; /* Añadido para alinear icono */
+    gap: 0.25rem; /* Añadido para alinear icono */
+    font-size: 0.9rem; /* Añadido para alinear icono */
+    padding: 0.25rem 0.5rem; /* Añadido para alinear icono */
+    border-radius: 4px; /* Añadido para alinear icono */
+    transition: background-color 0.2s; /* Añadido para alinear icono */
+    background: none; /* Añadido para alinear icono */
+    border: none; /* Añadido para alinear icono */
+    cursor: pointer; /* Añadido para alinear icono */
+    
+    color: #b91c1c; /* Color rojo oscuro */
+}
+
+.deleteButton:hover {
+    background-color: #fef2f2; /* Fondo rojo muy claro */
+    color: #991b1b; /* Rojo más oscuro al pasar el mouse */
+}

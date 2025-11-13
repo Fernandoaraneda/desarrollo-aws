@@ -2,14 +2,14 @@ import React, { useState, useEffect, useMemo } from 'react';
 import apiClient from '/src/api/axios.js';
 import styles from '../css/gestionstock.module.css';
 import AlertModal from '/src/components/modals/AlertModal.jsx';
-import { Package, Plus, Edit, Search, Save, XCircle, Hash, Bookmark, DollarSign, Boxes } from 'lucide-react';
-
+import { Package, Plus, Edit, Search, Save, XCircle, Hash, Bookmark, DollarSign, Boxes, Trash2 } from 'lucide-react'; // <-- Añadir Trash2
+import ConfirmModal from '/src/components/modals/ConfirmModal.jsx';
 const RepuestoModal = ({ isOpen, onClose, onSave, producto, onAlert }) => {
     const [formData, setFormData] = useState({
         sku: '',
         nombre: '',
         marca: '',
-        descripcion: '', // Aunque no lo mostremos, lo mantenemos
+        descripcion: '',
         precio_venta: 0,
         stock: 0,
     });
@@ -32,7 +32,6 @@ const RepuestoModal = ({ isOpen, onClose, onSave, producto, onAlert }) => {
         let finalValue = value;
 
         if (type === 'number') {
-            // Permitir campo vacío temporalmente
             if (value === '') {
                 finalValue = '';
             } else {
@@ -40,11 +39,9 @@ const RepuestoModal = ({ isOpen, onClose, onSave, producto, onAlert }) => {
                 if (isNaN(finalValue) || finalValue < 0) finalValue = 0;
             }
         }
-
         setFormData(prev => ({ ...prev, [name]: finalValue }));
     };
 
-    // Manejar el 'blur' para campos numéricos
     const handleBlur = (e) => {
         const { name, value } = e.target;
         if (e.target.type === 'number' && value === '') {
@@ -55,32 +52,38 @@ const RepuestoModal = ({ isOpen, onClose, onSave, producto, onAlert }) => {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        if (!formData.sku || !formData.nombre) {
-            onAlert("SKU y Nombre son obligatorios.");
+        // 1. VALIDACIÓN CAMBIADA: Solo chequear el nombre
+        if (!formData.nombre) {
+            onAlert("El Nombre es obligatorio.");
             return;
         }
 
-        // Asegurarnos de que los números no se envíen vacíos
         const dataToSave = {
             ...formData,
             precio_venta: parseFloat(formData.precio_venta) || 0,
             stock: parseInt(formData.stock, 10) || 0,
         };
 
+        // 2. LÓGICA CAMBIADA: Borrar el SKU si es un producto nuevo
+        if (!isEditMode) {
+            delete dataToSave.sku;
+        }
+
         try {
             if (isEditMode) {
-                await apiClient.patch(`/productos/${dataToSave.sku}/`, dataToSave);
+                // Patch (editar) usa el SKU en la URL
+                await apiClient.patch(`/productos/${formData.sku}/`, dataToSave);
             } else {
+                // Post (crear) ahora va SIN SKU. El backend lo generará.
                 await apiClient.post('/productos/', dataToSave);
             }
             onSave();
         } catch (err) {
-            const errorMsg = err.response?.data?.sku?.[0] || err.response?.data?.error || "Error al guardar.";
+            const errorMsg = err.response?.data?.nombre?.[0] || err.response?.data?.error || "Error al guardar.";
             onAlert(errorMsg);
         }
     };
 
-    // No renderizar nada si no está abierto
     if (!isOpen) return null;
 
     return (
@@ -89,25 +92,24 @@ const RepuestoModal = ({ isOpen, onClose, onSave, producto, onAlert }) => {
                 <h2>{isEditMode ? 'Editar Repuesto' : 'Añadir Nuevo Repuesto'}</h2>
 
                 <form onSubmit={handleSubmit}>
-                    {/* Usamos el grid layout */}
                     <div className={styles.formGrid}>
 
-                        {/* Campo SKU */}
-                        <div className={styles.formField}>
-                            <label><Hash size={16} /> SKU (Código Único)</label>
-                            <input
-                                type="text"
-                                name="sku"
-                                value={formData.sku}
-                                onChange={handleChange}
-                                disabled={isEditMode}
-                                required
-                                className={styles.formInput} 
-                            />
-                        </div>
+                        {/* 3. CAMPO SKU CONDICIONAL */}
+                        {isEditMode && (
+                            <div className={`${styles.formField} ${styles.spanFull}`}>
+                                <label><Hash size={16} /> SKU (Código Único)</label>
+                                <input
+                                    type="text"
+                                    name="sku"
+                                    value={formData.sku}
+                                    disabled={true} // Siempre deshabilitado
+                                    className={styles.formInput}
+                                />
+                            </div>
+                        )}
 
-                        {/* Campo Nombre */}
-                        <div className={styles.formField}>
+                        {/* Campo Nombre (siempre ocupa todo el ancho) */}
+                        <div className={`${styles.formField} ${styles.spanFull}`}>
                             <label><Package size={16} /> Nombre del Repuesto</label>
                             <input
                                 type="text"
@@ -115,19 +117,21 @@ const RepuestoModal = ({ isOpen, onClose, onSave, producto, onAlert }) => {
                                 value={formData.nombre}
                                 onChange={handleChange}
                                 required
-                                className={styles.formInput} 
+                                className={styles.formInput}
+                                placeholder="Ej: Pastillas de Freno Delanteras"
                             />
                         </div>
 
-                        {/* Campo Marca (ocupando 2 columnas) */}
-                        <div className={`${styles.formField} ${styles.spanFull}`}> {/* <-- CLASE SPAN */}
+                        {/* Campo Marca (siempre ocupa todo el ancho) */}
+                        <div className={`${styles.formField} ${styles.spanFull}`}>
                             <label><Bookmark size={16} /> Marca (Opcional)</label>
                             <input
                                 type="text"
                                 name="marca"
                                 value={formData.marca}
-                                Añadido onChange={handleChange}
-                                className={styles.formInput} 
+                                onChange={handleChange}
+                                className={styles.formInput}
+                                placeholder="Ej: Bosch, Aisin"
                             />
                         </div>
 
@@ -139,9 +143,9 @@ const RepuestoModal = ({ isOpen, onClose, onSave, producto, onAlert }) => {
                                 name="precio_venta"
                                 value={formData.precio_venta}
                                 onChange={handleChange}
-                                onBlur={handleBlur} 
+                                onBlur={handleBlur}
                                 min="0"
-                                className={styles.formInput} 
+                                className={styles.formInput}
                             />
                         </div>
 
@@ -153,9 +157,9 @@ const RepuestoModal = ({ isOpen, onClose, onSave, producto, onAlert }) => {
                                 name="stock"
                                 value={formData.stock}
                                 onChange={handleChange}
-                                onBlur={handleBlur} 
+                                onBlur={handleBlur}
                                 min="0"
-                                className={styles.formInput} 
+                                className={styles.formInput}
                             />
                         </div>
 
@@ -163,7 +167,7 @@ const RepuestoModal = ({ isOpen, onClose, onSave, producto, onAlert }) => {
 
                     <div className={styles.modalActions}>
                         <button type="button" className={styles.cancelButton} onClick={onClose}>
-                <XCircle size={16} /> Cancelar
+                            <XCircle size={16} /> Cancelar
                         </button>
                         <button type="submit" className={styles.saveButton}>
                             <Save size={16} /> Guardar Repuesto
@@ -187,6 +191,9 @@ export default function GestionStock() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [productoSeleccionado, setProductoSeleccionado] = useState(null);
     const [alert, setAlert] = useState({ isOpen: false, message: '', intent: 'danger' });
+
+    const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+    const [productoParaEliminar, setProductoParaEliminar] = useState(null);
 
 
     const fetchProductos = async () => {
@@ -237,6 +244,40 @@ export default function GestionStock() {
     };
     const closeAlert = () => {
         setAlert({ isOpen: false, message: '', intent: 'danger' });
+    };
+
+    const handleDeleteClick = (producto) => {
+        setProductoParaEliminar(producto);
+        setIsConfirmOpen(true);
+    };
+
+    // 2. Cierra el modal de confirmación
+    const handleCloseConfirm = () => {
+        setIsConfirmOpen(false);
+        setProductoParaEliminar(null);
+    };
+
+    // 3. Al confirmar la eliminación
+    const handleConfirmDelete = async () => {
+        if (!productoParaEliminar) return;
+
+        try {
+            // Llama a la API (DELETE /productos/{sku}/)
+            await apiClient.delete(`/productos/${productoParaEliminar.sku}/`);
+
+            // Cierra el modal y recarga los datos
+            handleCloseConfirm();
+            fetchProductos();
+
+            // Muestra alerta de éxito
+            showAlert(`Producto "${productoParaEliminar.nombre}" eliminado con éxito.`, "success");
+
+        } catch (err) {
+            // Manejo de errores (ej: El producto no se puede borrar si está en una OrdenItem (PROTECT))
+            handleCloseConfirm();
+            const errorMsg = err.response?.data?.detail || err.response?.data?.error || "Error al eliminar el producto. Es probable que esté siendo usado en una orden de servicio.";
+            showAlert(errorMsg, 'danger');
+        }
     };
 
     if (isLoading) return <p className={styles.centeredMessage}>Cargando inventario...</p>;
@@ -293,8 +334,16 @@ export default function GestionStock() {
                                             <div className={styles.actionButtons}>
                                                 <button onClick={() => handleOpenModal(prod)} title="Editar Stock/Precio">
                                                     <Edit size={16} /> Editar
+
+                                                </button>
+                                                <button
+                                                    className={styles.deleteButton}
+                                                    onClick={() => handleDeleteClick(prod)}
+                                                    title="Eliminar Repuesto">
+                                                    <Trash2 size={16} /> Eliminar
                                                 </button>
                                             </div>
+
                                         </td>
                                     </tr>
                                 )) : (
@@ -324,6 +373,14 @@ export default function GestionStock() {
                 title={alert.intent === 'danger' ? 'Error' : 'Éxito'}
                 message={alert.message}
                 intent={alert.intent}
+            />
+
+            <ConfirmModal
+                isOpen={isConfirmOpen}
+                onClose={handleCloseConfirm}
+                onConfirm={handleConfirmDelete}
+                title="Confirmar Eliminación"
+                message={`¿Estás seguro de que deseas eliminar el producto "${productoParaEliminar?.nombre}" (SKU: ${productoParaEliminar?.sku})? Esta acción no se puede deshacer.`}
             />
         </>
     );

@@ -1587,6 +1587,61 @@ class ProductoViewSet(viewsets.ModelViewSet):
     search_fields = ["nombre", "sku", "marca"]
     lookup_field = "sku"
 
+    def create(self, request, *args, **kwargs):
+        # Copiamos los datos para poder modificarlos
+        data = request.data.copy()
+
+        # Verificamos si es una creación (sin SKU) y si hay un nombre
+        if "sku" not in data or not data["sku"]:
+            nombre = data.get("nombre")
+            if not nombre:
+                return Response(
+                    {"error": "El campo 'nombre' es obligatorio para crear un SKU."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            # --- Lógica de generación de SKU ---
+
+            # 1. Generar prefijo (Ej: "Frenos" -> "FRE")
+            prefix = nombre[:3].upper()
+            base_sku = f"{prefix}-"
+
+            # 2. Buscar el último número usado para este prefijo
+            # Usamos .order_by('sku').last() para obtener el más alto alfanuméricamente
+            last_product = (
+                Producto.objects.filter(sku__startswith=base_sku).order_by("sku").last()
+            )
+
+            next_num = 101  # Empezamos en 101 si es el primero
+
+            if last_product:
+                try:
+                    # Extraer el número del último SKU (Ej: "FRE-273" -> "273")
+                    last_num_str = last_product.sku.split("-")[-1]
+                    next_num = int(last_num_str) + 1
+                except (ValueError, IndexError):
+                    # Si falla (ej: SKU es "FRE-ABC"), usamos el 'next_num' por defecto
+                    pass
+
+            # 3. Bucle de seguridad para garantizar unicidad (evita "race conditions")
+            while True:
+                new_sku = f"{base_sku}{next_num}"
+                if not Producto.objects.filter(sku=new_sku).exists():
+                    data["sku"] = new_sku  # Asignamos el SKU único
+                    break
+                next_num += 1  # Si "FRE-101" existe, prueba "FRE-102"
+
+            # --- Fin de la lógica ---
+
+        # 4. Continuar con la creación normal usando los datos modificados
+        serializer = self.get_serializer(data=data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        return Response(
+            serializer.data, status=status.HTTP_201_CREATED, headers=headers
+        )
+
 
 class OrdenItemViewSet(viewsets.ModelViewSet):
     """
