@@ -6,7 +6,7 @@ from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, 
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib import colors
 from django.utils import timezone
-from datetime import datetime, timedelta,time
+from datetime import datetime, timedelta, time
 from django.conf import settings
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
@@ -18,7 +18,17 @@ from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 from django.core.mail import send_mail
 from django.db import transaction
-from django.db.models import Count, Avg, F, DateField, Q, Sum, F, ExpressionWrapper, DurationField
+from django.db.models import (
+    Count,
+    Avg,
+    F,
+    DateField,
+    Q,
+    Sum,
+    F,
+    ExpressionWrapper,
+    DurationField,
+)
 from django.db.models.functions import TruncDay
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
@@ -36,41 +46,41 @@ from .permissions import IsAdministrativo
 
 # Models
 from .models import (
-    Producto, 
-    OrdenItem, 
-    Notificacion, 
-    Orden, 
-    Agendamiento, 
-    Vehiculo, 
-    OrdenHistorialEstado, 
-    OrdenPausa, 
-    OrdenDocumento, 
-    LlaveVehiculo, 
-    PrestamoLlave, 
+    Producto,
+    OrdenItem,
+    Notificacion,
+    Orden,
+    Agendamiento,
+    Vehiculo,
+    OrdenHistorialEstado,
+    OrdenPausa,
+    OrdenDocumento,
+    LlaveVehiculo,
+    PrestamoLlave,
     LlaveHistorialEstado,
     Taller,
-    Usuario
+    Usuario,
 )
 
 # Serializers
 from .serializers import (
-    ProductoSerializer, 
-    OrdenItemSerializer, 
+    ProductoSerializer,
+    OrdenItemSerializer,
     NotificacionSerializer,
-    OrdenSerializer, 
+    OrdenSerializer,
     AgendamientoSerializer,
     OrdenDocumentoSerializer,
-    VehiculoSerializer, 
-    LoginSerializer, 
+    VehiculoSerializer,
+    LoginSerializer,
     UserSerializer,
     ChangePasswordSerializer,
     UserCreateUpdateSerializer,
-    LlaveVehiculoSerializer, 
-    PrestamoLlaveSerializer, 
+    LlaveVehiculoSerializer,
+    PrestamoLlaveSerializer,
     LlaveHistorialEstadoSerializer,
     HistorialSeguridadSerializer,
     OrdenSalidaListSerializer,
-    TallerSerializer
+    TallerSerializer,
 )
 
 User = get_user_model()
@@ -99,16 +109,16 @@ def enviar_correo_notificacion(usuario, subject, message_body):
     }
 
     try:
-     
+
         html_message = render_to_string("emails/notificacion_base.html", context)
-   
+
         plain_message = strip_tags(html_message)
 
         send_mail(
             subject,
             plain_message,
-            None,  
-            [recipient_email],  
+            None,
+            [recipient_email],
             html_message=html_message,
             fail_silently=False,
         )
@@ -152,10 +162,13 @@ class IsSupervisorOrSeguridad(permissions.BasePermission):
                 name__in=["Supervisor", "Seguridad", "Administrativo"]
             ).exists()
         )
+
+
 class IsAdministrativo(permissions.BasePermission):
     """
     Permiso específico para el rol Administrativo o Supervisor.
     """
+
     def has_permission(self, request, view):
         return bool(
             request.user
@@ -164,6 +177,7 @@ class IsAdministrativo(permissions.BasePermission):
                 name__in=["Administrativo", "Supervisor"]
             ).exists()
         )
+
 
 class IsControlLlaves(permissions.BasePermission):
     """
@@ -193,11 +207,13 @@ class IsSupervisorOrControlLlaves(permissions.BasePermission):
                 name__in=["Supervisor", "Control Llaves", "Administrativo"]
             ).exists()
         )
-    
+
+
 class IsRepuestos(permissions.BasePermission):
     """
     Permiso para el rol de Repuestos o Supervisor.
     """
+
     def has_permission(self, request, view):
         return bool(
             request.user
@@ -206,6 +222,7 @@ class IsRepuestos(permissions.BasePermission):
                 name__in=["Repuestos", "Supervisor", "Administrativo"]
             ).exists()
         )
+
 
 # --------------------
 # Autenticación y perfil
@@ -401,7 +418,6 @@ class ChoferListView(generics.ListAPIView):
 dias_semana = {0: "Lun", 1: "Mar", 2: "Mié", 3: "Jue", 4: "Vie", 5: "Sáb", 6: "Dom"}
 
 
-
 @api_view(["GET"])
 @permission_classes([IsSupervisor])
 def supervisor_dashboard_stats(request):
@@ -410,12 +426,13 @@ def supervisor_dashboard_stats(request):
         datetime.combine(today.replace(day=1), datetime.min.time())
     )
     start_of_week = today - timedelta(days=today.weekday())
-    start_of_week_dt = timezone.make_aware(datetime.combine(start_of_week, datetime.min.time()))
+    start_of_week_dt = timezone.make_aware(
+        datetime.combine(start_of_week, datetime.min.time())
+    )
 
     pendientes_aprobacion = Agendamiento.objects.filter(
         estado=Agendamiento.Estado.PROGRAMADO
     ).count()
-   
 
     # Vehículos en taller (fallback si no existe manager 'activas')
     try:
@@ -494,7 +511,6 @@ def supervisor_dashboard_stats(request):
                 break
         ordenes_ultima_semana.append({"dia": dia_nombre, "creadas": cre})
 
-   
     ordenes_recientes = list(
         Orden.objects.select_related("vehiculo", "usuario_asignado")
         .order_by("-fecha_ingreso")[:10]
@@ -532,7 +548,7 @@ def supervisor_dashboard_stats(request):
             "tiempoPromedioRep": tiempo_promedio_str,
         },
         "alertas": {
-            "pendientesAprobacion": pendientes_aprobacion,  
+            "pendientesAprobacion": pendientes_aprobacion,
         },
         "ordenesPorEstado": ordenes_por_estado,
         "ordenesUltimaSemana": ordenes_ultima_semana,
@@ -567,29 +583,24 @@ class VehiculoViewSet(viewsets.ModelViewSet):
         Se ejecuta después de crear un Vehículo.
         Automatiza la creación de sus llaves por defecto.
         """
-      
+
         vehiculo = serializer.save()
 
         try:
-            
+
             LlaveVehiculo.objects.get_or_create(
                 vehiculo=vehiculo,
                 tipo=LlaveVehiculo.Tipo.ORIGINAL,
-                defaults={
-                    "codigo_interno": f"{vehiculo.patente}-ORI" 
-                },
+                defaults={"codigo_interno": f"{vehiculo.patente}-ORI"},
             )
 
-          
             LlaveVehiculo.objects.get_or_create(
                 vehiculo=vehiculo,
                 tipo=LlaveVehiculo.Tipo.DUPLICADO,
-                defaults={
-                    "codigo_interno": f"{vehiculo.patente}-DUP" 
-                },
+                defaults={"codigo_interno": f"{vehiculo.patente}-DUP"},
             )
         except Exception as e:
-         
+
             print(
                 f"ERROR: No se pudieron crear llaves automáticas para {vehiculo.patente}: {e}"
             )
@@ -679,65 +690,72 @@ class AgendamientoViewSet(viewsets.ModelViewSet):
                 enviar_correo_notificacion(supervisor, subject, mensaje)
 
         except Exception as e:
-      
+
             print(f"ERROR al notificar al supervisor sobre nueva cita: {e}")
-            
+
     @action(
-    detail=True,
-    methods=["get"],
-    url_path="verificar-stock-mantenimiento",
-    permission_classes=[IsSupervisor], # Solo el supervisor puede ver esto
-                )
+        detail=True,
+        methods=["get"],
+        url_path="verificar-stock-mantenimiento",
+        permission_classes=[IsSupervisor],  # Solo el supervisor puede ver esto
+    )
     def verificar_stock_mantenimiento(self, request, pk=None):
-                agendamiento = self.get_object()
+        agendamiento = self.get_object()
 
-                if not agendamiento.es_mantenimiento:
-                    return Response({"error": "Esta no es una cita de mantenimiento."}, status=status.HTTP_400_BAD_REQUEST)
+        if not agendamiento.es_mantenimiento:
+            return Response(
+                {"error": "Esta no es una cita de mantenimiento."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
-                # --- LISTA DE REPUESTOS PREDETERMINADOS ---
-                # ¡IMPORTANTE! Debes usar los SKUs reales de tu BD.
-                # Usaré los de tu archivo populate_data.py como ejemplo.
-                REPUESTOS_MANTENIMIENTO = {
-                    'ACE-10W40': 1,     # SKU: Cantidad necesaria
-                    'FIL-AIRE-01': 1,
-                    'Fre-liq': 1
-                    # 'SKU-FILTRO-ACEITE': 1, # <--- Añade más aquí
-                }
-                
-                skus_requeridos = list(REPUESTOS_MANTENIMIENTO.keys())
-                productos = Producto.objects.filter(sku__in=skus_requeridos)
-                
-                faltantes = []
-                stock_completo = True
-                
-                for sku, cantidad_necesaria in REPUESTOS_MANTENIMIENTO.items():
-                    try:
-                        producto = productos.get(sku=sku)
-                        if producto.stock < cantidad_necesaria:
-                            stock_completo = False
-                            faltantes.append({
-                                "nombre": producto.nombre,
-                                "sku": sku,
-                                "stock_actual": producto.stock,
-                                "necesario": cantidad_necesaria,
-                            })
-                    except Producto.DoesNotExist:
-                        stock_completo = False
-                        faltantes.append({
-                            "nombre": f"Producto (SKU: {sku}) no encontrado",
+        # --- LISTA DE REPUESTOS PREDETERMINADOS ---
+        # ¡IMPORTANTE! Debes usar los SKUs reales de tu BD.
+        # Usaré los de tu archivo populate_data.py como ejemplo.
+        REPUESTOS_MANTENIMIENTO = {
+            "ACE-10W40": 1,  # SKU: Cantidad necesaria
+            "FIL-AIRE-01": 1,
+            "FRE-LIQ-01": 1,
+            # 'SKU-FILTRO-ACEITE': 1, # <--- Añade más aquí
+        }
+
+        skus_requeridos = list(REPUESTOS_MANTENIMIENTO.keys())
+        productos = Producto.objects.filter(sku__in=skus_requeridos)
+
+        faltantes = []
+        stock_completo = True
+
+        for sku, cantidad_necesaria in REPUESTOS_MANTENIMIENTO.items():
+            try:
+                producto = productos.get(sku=sku)
+                if producto.stock < cantidad_necesaria:
+                    stock_completo = False
+                    faltantes.append(
+                        {
+                            "nombre": producto.nombre,
                             "sku": sku,
-                            "stock_actual": 0,
+                            "stock_actual": producto.stock,
                             "necesario": cantidad_necesaria,
-                        })
+                        }
+                    )
+            except Producto.DoesNotExist:
+                stock_completo = False
+                faltantes.append(
+                    {
+                        "nombre": f"Producto (SKU: {sku}) no encontrado",
+                        "sku": sku,
+                        "stock_actual": 0,
+                        "necesario": cantidad_necesaria,
+                    }
+                )
 
-                return Response({
-                    "stock_completo": stock_completo,
-                    "faltantes": faltantes,
-                    "repuestos_revisados": REPUESTOS_MANTENIMIENTO
-                }, status=status.HTTP_200_OK)
-
-
-
+        return Response(
+            {
+                "stock_completo": stock_completo,
+                "faltantes": faltantes,
+                "repuestos_revisados": REPUESTOS_MANTENIMIENTO,
+            },
+            status=status.HTTP_200_OK,
+        )
 
     @action(
         detail=True,
@@ -746,72 +764,86 @@ class AgendamientoViewSet(viewsets.ModelViewSet):
         permission_classes=[IsSupervisor],
     )
     def confirmar_y_asignar(self, request, pk=None):
-       with transaction.atomic():
-        agendamiento = self.get_object()
-        mecanico_id_raw = request.data.get("mecanico_id")
-        fecha_hora_asignada_str = request.data.get("fecha_hora_asignada")
-        motivo_cambio = request.data.get("motivo_reagendamiento", None)
+        with transaction.atomic():
+            agendamiento = self.get_object()
+            mecanico_id_raw = request.data.get("mecanico_id")
+            fecha_hora_asignada_str = request.data.get("fecha_hora_asignada")
+            motivo_cambio = request.data.get("motivo_reagendamiento", None)
 
+            REPUESTOS_MANTENIMIENTO = {}
+            if agendamiento.es_mantenimiento:
+                REPUESTOS_MANTENIMIENTO = {
+                    "ACE-10W40": 1,
+                    "FIL-AIRE-01": 1,
+                    "FRE-LIQ-01": 1,  # <-- SKU CORREGIDO
+                }
+            try:
+                mecanico_id = int(mecanico_id_raw)
+                mecanico = User.objects.get(id=mecanico_id, groups__name="Mecanico")
+            except (TypeError, ValueError, User.DoesNotExist):
+                return Response(
+                    {"error": "El mecánico seleccionado es inválido."},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
 
-        REPUESTOS_MANTENIMIENTO = {}
-        if agendamiento.es_mantenimiento:
-            REPUESTOS_MANTENIMIENTO = {
-                'ACE-10W40': 1,
-                'FIL-AIRE-01': 1,
-                'Fre-liq': 1
-            }
-        try:
-            mecanico_id = int(mecanico_id_raw)
-            mecanico = User.objects.get(id=mecanico_id, groups__name="Mecanico")
-        except (TypeError, ValueError, User.DoesNotExist):
-            return Response(
-                {"error": "El mecánico seleccionado es inválido."},
-                status=status.HTTP_404_NOT_FOUND,
-            )
+            fecha_a_validar = None
+            hubo_cambio_fecha = False
 
+            if not fecha_hora_asignada_str:
 
-        fecha_a_validar = None
-        hubo_cambio_fecha = False
+                return Response(
+                    {"error": "Debe seleccionar una fecha y hora."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
 
-        if not fecha_hora_asignada_str:
-        
-            return Response(
-                {"error": "Debe seleccionar una fecha y hora."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+            try:
+                # fromisoformat() ya maneja el string 'Z' (UTC) de JavaScript
+                fecha_a_validar = datetime.fromisoformat(fecha_hora_asignada_str)
 
-        try:
-            # fromisoformat() ya maneja el string 'Z' (UTC) de JavaScript
-            fecha_a_validar = datetime.fromisoformat(fecha_hora_asignada_str)
+                # Comparamos la nueva fecha con la original (si existía)
+                if agendamiento.fecha_hora_programada != fecha_a_validar:
+                    hubo_cambio_fecha = True
 
-            # Comparamos la nueva fecha con la original (si existía)
-            if agendamiento.fecha_hora_programada != fecha_a_validar:
-                hubo_cambio_fecha = True
+            except (ValueError, TypeError):
+                return Response(
+                    {"error": "Formato de fecha/hora asignada es inválido."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
 
-        except (ValueError, TypeError):
-            return Response(
-                {"error": "Formato de fecha/hora asignada es inválido."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-        if agendamiento.es_mantenimiento:
+            # --- INICIO BLOQUE DE VALIDACIÓN DE STOCK MEJORADO ---
+            if agendamiento.es_mantenimiento:
                 skus_requeridos = list(REPUESTOS_MANTENIMIENTO.keys())
                 # Bloqueamos los productos para la transacción
-                productos = Producto.objects.select_for_update().filter(sku__in=skus_requeridos) 
-                
+                productos = Producto.objects.select_for_update().filter(
+                    sku__in=skus_requeridos
+                )
+
+                # Convertimos la consulta a un diccionario para mejor acceso
+                productos_encontrados = {p.sku: p for p in productos}
+
                 for sku, cantidad_necesaria in REPUESTOS_MANTENIMIENTO.items():
-                    try:
-                        producto = productos.get(sku=sku)
-                        if producto.stock < cantidad_necesaria:
-                            # Si falta stock, la transacción falla y no se confirma la cita
-                            return Response(
-                                {"error": f"Stock agotado para {producto.nombre} (quedan {producto.stock}). La cita no fue confirmada."},
-                                status=status.HTTP_400_BAD_REQUEST
-                            )
-                    except Producto.DoesNotExist:
-                         return Response(
-                                {"error": f"Producto {sku} no encontrado. Cita no confirmada."},
-                                status=status.HTTP_404_NOT_FOUND
-                                )
+
+                    producto = productos_encontrados.get(sku)
+
+                    # 1. Verificación: ¿Se encontró el producto?
+                    if not producto:
+                        # Este es el error 'DoesNotExist'.
+                        return Response(
+                            {
+                                "error": f"Producto con SKU '{sku}' no fue encontrado en la base de datos. Cita no confirmada."
+                            },
+                            status=status.HTTP_404_NOT_FOUND,
+                        )
+
+                    # 2. Verificación: ¿Hay stock?
+                    if producto.stock < cantidad_necesaria:
+                        # ¡Este es el error que SÍ muestra el nombre!
+                        return Response(
+                            {
+                                "error": f"Stock agotado para '{producto.nombre}' (SKU: {sku}). Quedan {producto.stock}. Cita no confirmada."
+                            },
+                            status=status.HTTP_400_BAD_REQUEST,
+                        )
 
         # Calculamos el fin
         fecha_fin = fecha_a_validar + timedelta(
@@ -840,23 +872,20 @@ class AgendamientoViewSet(viewsets.ModelViewSet):
             )
 
         # 5. VALIDACIÓN DE CONFLICTO (VEHÍCULO)
-        overlapping_vehiculo = (
-                Agendamiento.objects.filter(
-                    Q(vehiculo=agendamiento.vehiculo)
-                    & Q(fecha_hora_programada__lt=fecha_fin)
-                    & Q(fecha_hora_fin__gt=fecha_a_validar)
-                    & ~Q(estado__in=['Finalizado', 'Cancelado']) # <--- Lógica de la constraint
-                )
-                .exclude(pk=agendamiento.pk)
-            )
+        overlapping_vehiculo = Agendamiento.objects.filter(
+            Q(vehiculo=agendamiento.vehiculo)
+            & Q(fecha_hora_programada__lt=fecha_fin)
+            & Q(fecha_hora_fin__gt=fecha_a_validar)
+            & ~Q(estado__in=["Finalizado", "Cancelado"])  # <--- Lógica de la constraint
+        ).exclude(pk=agendamiento.pk)
 
         if overlapping_vehiculo.exists():
-                return Response(
-                    {
-                        "error": f"Conflicto de horario (Vehículo): El vehículo {agendamiento.vehiculo.patente} ya tiene OTRA cita activa en ese nuevo rango."
-                    },
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
+            return Response(
+                {
+                    "error": f"Conflicto de horario (Vehículo): El vehículo {agendamiento.vehiculo.patente} ya tiene OTRA cita activa en ese nuevo rango."
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         # 6. GUARDAR TODO (SIN chofer_asociado)
         agendamiento.mecanico_asignado = mecanico
@@ -870,13 +899,15 @@ class AgendamientoViewSet(viewsets.ModelViewSet):
             try:
                 if agendamiento.chofer_asociado:
                     # --- 1. Obtenemos la dirección del taller ---
-                    taller_direccion = "Taller no especificado. Consulte con su supervisor."
+                    taller_direccion = (
+                        "Taller no especificado. Consulte con su supervisor."
+                    )
                     if agendamiento.vehiculo and agendamiento.vehiculo.taller:
                         taller_direccion = agendamiento.vehiculo.taller.direccion
 
                     # --- 2. Creamos el mensaje con la dirección ---
-                    fecha_str = fecha_a_validar.strftime('%d-%m-%Y a las %H:%M')
-                    motivo_str = motivo_cambio or 'Asignación de taller.'
+                    fecha_str = fecha_a_validar.strftime("%d-%m-%Y a las %H:%M")
+                    motivo_str = motivo_cambio or "Asignación de taller."
                     mensaje = (
                         f"Cita Confirmada: Su cita para {agendamiento.vehiculo.patente} es el {fecha_str}. "
                         f"Dirección Taller: {taller_direccion}. Motivo: {motivo_str}"
@@ -898,7 +929,7 @@ class AgendamientoViewSet(viewsets.ModelViewSet):
             try:
                 # 1. Buscamos a todos los usuarios del grupo "Seguridad"
                 usuarios_seguridad = User.objects.filter(
-                groups__name="Seguridad", is_active=True
+                    groups__name="Seguridad", is_active=True
                 )
 
                 # 2. Creamos el mensaje
@@ -920,7 +951,7 @@ class AgendamientoViewSet(viewsets.ModelViewSet):
             except Exception as e:
                 # Si falla la notificación de seguridad, no detenemos la operación
                 print(f"Error al crear notificación para Seguridad: {e}")
-                
+
             if agendamiento.es_mantenimiento:
                 # 1. Crear la Orden de Trabajo asociada
                 nueva_orden = Orden.objects.create(
@@ -928,28 +959,28 @@ class AgendamientoViewSet(viewsets.ModelViewSet):
                     agendamiento_origen=agendamiento,
                     descripcion_falla=agendamiento.motivo_ingreso,
                     usuario_asignado=agendamiento.mecanico_asignado,
-                    estado=Orden.Estado.INGRESADO # Queda lista para cuando el auto llegue
+                    estado=Orden.Estado.INGRESADO,  # Queda lista para cuando el auto llegue
                 )
 
                 # 2. Descontar stock y crear los items (ya pre-aprobados)
                 for sku, cantidad_necesaria in REPUESTOS_MANTENIMIENTO.items():
                     # Usamos 'productos.get()' del 'select_for_update()' que hicimos arriba
-                    producto = productos.get(sku=sku) 
-                    
+                    producto = productos.get(sku=sku)
+
                     # 2a. Descontar Stock
-                    producto.stock = F('stock') - cantidad_necesaria
+                    producto.stock = F("stock") - cantidad_necesaria
                     producto.save()
-                    
+
                     # 2b. Crear el OrdenItem como APROBADO
                     OrdenItem.objects.create(
                         orden=nueva_orden,
                         producto=producto,
                         cantidad=cantidad_necesaria,
                         precio_unitario=producto.precio_venta,
-                        solicitado_por=request.user,    # Solicitado por el Supervisor
-                        gestionado_por=request.user,   # Aprobado por el Supervisor
+                        solicitado_por=request.user,  # Solicitado por el Supervisor
+                        gestionado_por=request.user,  # Aprobado por el Supervisor
                         fecha_gestion=timezone.now(),  # Aprobado ahora mismo
-                        estado_repuesto=OrdenItem.EstadoRepuesto.APROBADO # ¡Estado Aprobado!
+                        estado_repuesto=OrdenItem.EstadoRepuesto.APROBADO,  # ¡Estado Aprobado!
                     )
 
         agendamiento.save()  # Esta línea ya no dará error
@@ -963,7 +994,7 @@ class AgendamientoViewSet(viewsets.ModelViewSet):
         url_path="registrar-ingreso",
         permission_classes=[IsSupervisorOrSeguridad],
     )
-    @transaction.atomic # <--- Añadimos transacción por seguridad
+    @transaction.atomic  # <--- Añadimos transacción por seguridad
     def registrar_ingreso(self, request, pk=None):
         agendamiento = self.get_object()
         if agendamiento.estado != Agendamiento.Estado.CONFIRMADO:
@@ -976,13 +1007,13 @@ class AgendamientoViewSet(viewsets.ModelViewSet):
         # 1. Buscamos si la orden YA EXISTE (creada por el supervisor)
         try:
             # Usamos 'orden_generada' (el related_name del OneToOneField)
-            nueva_orden = agendamiento.orden_generada 
-            
+            nueva_orden = agendamiento.orden_generada
+
             # Si existe, solo actualizamos el estado (si es necesario)
             if nueva_orden.estado == Orden.Estado.INGRESADO:
                 # (Opcional: puedes cambiarlo a 'En Diagnóstico' si quieres)
-                pass # Ya está 'Ingresado', no hacemos nada.
-            
+                pass  # Ya está 'Ingresado', no hacemos nada.
+
             mensaje_respuesta = "Ingreso registrado en orden existente."
 
         except Orden.DoesNotExist:
@@ -992,7 +1023,7 @@ class AgendamientoViewSet(viewsets.ModelViewSet):
                 agendamiento_origen=agendamiento,
                 descripcion_falla=agendamiento.motivo_ingreso,
                 usuario_asignado=agendamiento.mecanico_asignado,
-                estado=Orden.Estado.INGRESADO # <--- Estado inicial
+                estado=Orden.Estado.INGRESADO,  # <--- Estado inicial
             )
             mensaje_respuesta = "Ingreso registrado y orden creada."
         # --- FIN DE LÓGICA MODIFICADA ---
@@ -1003,14 +1034,14 @@ class AgendamientoViewSet(viewsets.ModelViewSet):
             Notificacion.objects.create(
                 usuario=agendamiento.mecanico_asignado,
                 mensaje=mensaje,
-                link=f"/ordenes/{nueva_orden.id}", 
+                link=f"/ordenes/{nueva_orden.id}",
             )
 
             subject_mecanico = f"Nueva Orden Asignada: #{nueva_orden.id}"
             enviar_correo_notificacion(
                 agendamiento.mecanico_asignado, subject_mecanico, mensaje
             )
-        
+
         # Marcamos el agendamiento como FINALIZADO (ya cumplió su propósito)
         agendamiento.estado = Agendamiento.Estado.FINALIZADO
         agendamiento.save()
@@ -1022,6 +1053,7 @@ class AgendamientoViewSet(viewsets.ModelViewSet):
             },
             status=status.HTTP_201_CREATED,
         )
+
     @action(
         detail=True,
         methods=["post"],
@@ -1035,31 +1067,43 @@ class AgendamientoViewSet(viewsets.ModelViewSet):
         return Response(
             self.get_serializer(agendamiento).data, status=status.HTTP_200_OK
         )
-        
+
     @action(
-            detail=True,
-            methods=["post"],
-            url_path="enviar-grua",
-            permission_classes=[IsSupervisor], # Solo supervisores pueden despachar
-        )
+        detail=True,
+        methods=["post"],
+        url_path="enviar-grua",
+        permission_classes=[IsSupervisor],  # Solo supervisores pueden despachar
+    )
     def enviar_grua(self, request, pk=None):
         agendamiento = self.get_object()
 
         if not agendamiento.solicita_grua:
-            return Response({"error": "Esta cita no tiene una grúa solicitada."}, status=status.HTTP_400_BAD_REQUEST)
-        
+            return Response(
+                {"error": "Esta cita no tiene una grúa solicitada."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         if not agendamiento.direccion_grua:
-            return Response({"error": "No hay dirección de retiro especificada."}, status=status.HTTP_400_BAD_REQUEST)
-        
+            return Response(
+                {"error": "No hay dirección de retiro especificada."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         if agendamiento.grua_enviada:
-            return Response({"error": "La grúa para esta cita ya fue enviada."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"error": "La grúa para esta cita ya fue enviada."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         try:
             # 1. Buscamos a todos los usuarios del rol "Grua"
             # (Asegúrate de haber creado este grupo en el Admin o en grupos.json)
             usuarios_grua = User.objects.filter(groups__name="Grua", is_active=True)
             if not usuarios_grua.exists():
-                return Response({"error": "No hay usuarios en el rol 'Grua' para notificar."}, status=status.HTTP_404_NOT_FOUND)
+                return Response(
+                    {"error": "No hay usuarios en el rol 'Grua' para notificar."},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
 
             # 2. Preparamos el mensaje
             chofer_nombre = agendamiento.chofer_asociado.get_full_name()
@@ -1075,21 +1119,25 @@ class AgendamientoViewSet(viewsets.ModelViewSet):
             # 3. Enviamos notificación y email a CADA usuario de grúa
             for user_grua in usuarios_grua:
                 Notificacion.objects.create(
-                    usuario=user_grua, 
+                    usuario=user_grua,
                     mensaje=f"Nueva solicitud de grúa para {agendamiento.vehiculo.patente}. Dirección: {agendamiento.direccion_grua}",
-                    link="/panel-gruas" # Un futuro panel para ellos
+                    link="/panel-gruas",  # Un futuro panel para ellos
                 )
                 enviar_correo_notificacion(user_grua, subject, mensaje)
-        
+
             # 4. Marcamos la grúa como enviada
             agendamiento.grua_enviada = True
             agendamiento.save()
-        
-            return Response(self.get_serializer(agendamiento).data, status=status.HTTP_200_OK)
-        
-        except Exception as e:
-            return Response({"error": f"Error inesperado: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+            return Response(
+                self.get_serializer(agendamiento).data, status=status.HTTP_200_OK
+            )
+
+        except Exception as e:
+            return Response(
+                {"error": f"Error inesperado: {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
 
 
 class OrdenViewSet(viewsets.ModelViewSet):
@@ -1146,27 +1194,25 @@ class OrdenViewSet(viewsets.ModelViewSet):
 
         with transaction.atomic():
             orden.estado = nuevo_estado
-           
+
             orden.save()
             OrdenHistorialEstado.objects.create(
                 orden=orden, estado=nuevo_estado, usuario=request.user, motivo=motivo
             )
 
             try:
-            
+
                 chofer_a_notificar = None
                 if (
                     orden.agendamiento_origen
                     and orden.agendamiento_origen.chofer_asociado
                 ):
                     chofer_a_notificar = orden.agendamiento_origen.chofer_asociado
-                elif (
-                    orden.vehiculo and orden.vehiculo.chofer
-                ):  #
+                elif orden.vehiculo and orden.vehiculo.chofer:  #
                     chofer_a_notificar = orden.vehiculo.chofer
 
                 if chofer_a_notificar:
-                   
+
                     mensajes = {
                         "En Diagnostico": "está siendo diagnosticado por un mecánico.",
                         "En Proceso": "ha entrado en proceso de reparación.",
@@ -1174,7 +1220,6 @@ class OrdenViewSet(viewsets.ModelViewSet):
                         "Finalizado": "¡está listo! El trabajo en su vehículo ha finalizado.",
                     }
 
-        
                     mensaje_chofer = mensajes.get(nuevo_estado)
                     if mensaje_chofer:
                         Notificacion.objects.create(
@@ -1185,14 +1230,14 @@ class OrdenViewSet(viewsets.ModelViewSet):
                         subject_chofer_estado = (
                             f"Actualización Orden #{orden.id}: {orden.vehiculo.patente}"
                         )
-                     
+
                         mensaje_email = f"Actualización: Su vehículo {orden.vehiculo.patente} {mensaje_chofer}"
                         enviar_correo_notificacion(
                             chofer_a_notificar, subject_chofer_estado, mensaje_email
                         )
 
             except Exception as e:
-            
+
                 print(f"Error al crear notificación de cambio de estado: {e}")
 
         return Response(self.get_serializer(orden).data, status=status.HTTP_200_OK)
@@ -1371,14 +1416,12 @@ def mecanico_dashboard_stats(request):
     return Response(data, status=status.HTTP_200_OK)
 
 
-
 class OrdenesPendientesSalidaView(APIView):
     """
     Endpoint [GET] para listar todas las órdenes de trabajo que
     están en estado 'Finalizado' pero aún no tienen una
     fecha de entrega real (es decir, no han salido del taller).
     """
-
 
     def get(self, request, *args, **kwargs):
         try:
@@ -1387,18 +1430,16 @@ class OrdenesPendientesSalidaView(APIView):
                 Orden.objects.filter(
                     estado=Orden.Estado.FINALIZADO, fecha_entrega_real__isnull=True
                 )
-                .select_related( 
+                .select_related(
                     "vehiculo",
                     "agendamiento_origen__chofer_asociado",
                     "usuario_asignado",
                 )
                 .order_by("fecha_ingreso")
-            )  
-
+            )
 
             serializer = OrdenSalidaListSerializer(ordenes_listas, many=True)
 
-     
             return Response(serializer.data, status=status.HTTP_200_OK)
 
         except Exception as e:
@@ -1413,8 +1454,6 @@ class RegistrarSalidaView(APIView):
     Endpoint [POST] para registrar la salida de un vehículo.
     Recibe el ID (pk) de la Orden en la URL.
     """
-
-
 
     def post(self, request, pk, *args, **kwargs):
         try:
@@ -1443,7 +1482,6 @@ class RegistrarSalidaView(APIView):
                     orden.agendamiento_origen.estado = Agendamiento.Estado.FINALIZADO
                     orden.agendamiento_origen.save()
 
- 
             orden.save()
 
             return Response(
@@ -1459,6 +1497,7 @@ class RegistrarSalidaView(APIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
+
 class MecanicoAgendaView(generics.ListAPIView):
     serializer_class = AgendamientoSerializer
     permission_classes = [IsSupervisor]
@@ -1473,7 +1512,6 @@ class MecanicoAgendaView(generics.ListAPIView):
             estado__in=[Agendamiento.Estado.CONFIRMADO, Agendamiento.Estado.EN_TALLER],
         )
 
- 
         fecha_str = self.request.query_params.get("fecha")
         if fecha_str:
             try:
@@ -1493,10 +1531,9 @@ class MecanicoAgendaView(generics.ListAPIView):
                     fecha_hora_programada__lte=end_of_day,
                 )
             except ValueError:
-                pass 
+                pass
 
         return queryset.order_by("fecha_hora_programada")
-
 
 
 class NotificacionViewSet(viewsets.ModelViewSet):
@@ -1518,49 +1555,56 @@ class NotificacionViewSet(viewsets.ModelViewSet):
             leida=True
         )
         return Response(status=status.HTTP_204_NO_CONTENT)
-    
+
+
 class TallerViewSet(viewsets.ModelViewSet):
     """
     API para gestionar los Talleres.
     Solo Supervisores/Admin pueden crear o editar talleres.
     """
+
     queryset = Taller.objects.all()
     serializer_class = TallerSerializer
-    permission_classes = [IsSupervisor] # Protegido
-      
+    permission_classes = [IsSupervisor]  # Protegido
+
     def get_permissions(self):
-        if self.action in ['list', 'retrieve']:
+        if self.action in ["list", "retrieve"]:
             # Permite a cualquier usuario autenticado (ej. Mecánico) ver la lista
             self.permission_classes = [IsAuthenticated]
         return super().get_permissions()
 
-    
+
 class ProductoViewSet(viewsets.ModelViewSet):
     """
     API para buscar productos (repuestos) y ver stock.
     Usado por Mecánicos y Repuestos.
     """
+
     queryset = Producto.objects.all()
     serializer_class = ProductoSerializer
-    permission_classes = [IsAuthenticated] # Abierto a todos los logueados
+    permission_classes = [IsAuthenticated]  # Abierto a todos los logueados
     filter_backends = [filters.SearchFilter]
-    search_fields = ['nombre', 'sku', 'marca']
-    lookup_field = 'sku'
+    search_fields = ["nombre", "sku", "marca"]
+    lookup_field = "sku"
+
 
 class OrdenItemViewSet(viewsets.ModelViewSet):
     """
     API para gestionar los items (repuestos) de una orden.
     """
+
     queryset = OrdenItem.objects.all()
     serializer_class = OrdenItemSerializer
-    permission_classes = [IsAuthenticated] # Permisos más granulares por acción
+    permission_classes = [IsAuthenticated]  # Permisos más granulares por acción
 
     def get_queryset(self):
         """
         Filtra para que cada rol vea lo que le corresponde.
         """
         user = self.request.user
-        if user.groups.filter(name__in=["Supervisor", "Administrativo", "Repuestos"]).exists():
+        if user.groups.filter(
+            name__in=["Supervisor", "Administrativo", "Repuestos"]
+        ).exists():
             return OrdenItem.objects.all()
         if user.groups.filter(name="Mecanico").exists():
             return OrdenItem.objects.filter(solicitado_por=user)
@@ -1569,9 +1613,9 @@ class OrdenItemViewSet(viewsets.ModelViewSet):
 
     def get_permissions(self):
         """Permisos por acción"""
-        if self.action in ['aprobar_repuesto', 'rechazar_repuesto', 'list_pendientes']:
+        if self.action in ["aprobar_repuesto", "rechazar_repuesto", "list_pendientes"]:
             self.permission_classes = [IsRepuestos]
-        elif self.action in ['create', 'list', 'retrieve']:
+        elif self.action in ["create", "list", "retrieve"]:
             self.permission_classes = [IsSupervisorOrMecanico]
         return super().get_permissions()
 
@@ -1580,12 +1624,16 @@ class OrdenItemViewSet(viewsets.ModelViewSet):
         _Asigna al mecánico que solicita y notifica a Repuestos._
         """
         item = serializer.save(solicitado_por=self.request.user)
-        
+
         # Si es un producto, notificar a Repuestos
         if item.producto:
             try:
-                usuarios_repuestos = User.objects.filter(groups__name__in=["Repuestos", "Supervisor"], is_active=True)
-                mecanico_nombre = self.request.user.first_name or self.request.user.username
+                usuarios_repuestos = User.objects.filter(
+                    groups__name__in=["Repuestos", "Supervisor"], is_active=True
+                )
+                mecanico_nombre = (
+                    self.request.user.first_name or self.request.user.username
+                )
                 mensaje = (
                     f"El mecánico {mecanico_nombre} solicitó {item.cantidad}x {item.producto.nombre} "
                     f"para la Orden #{item.orden.id}."
@@ -1593,77 +1641,105 @@ class OrdenItemViewSet(viewsets.ModelViewSet):
                 subject = f"Nueva Solicitud de Repuesto: Orden #{item.orden.id}"
 
                 for user_rep in usuarios_repuestos:
-                    Notificacion.objects.create(usuario=user_rep, mensaje=mensaje, link="/panel-repuestos") # Link a la nueva página de repuestos
-                    enviar_correo_notificacion(user_rep, subject, mensaje) # Opcional si quieres email
+                    Notificacion.objects.create(
+                        usuario=user_rep, mensaje=mensaje, link="/panel-repuestos"
+                    )  # Link a la nueva página de repuestos
+                    enviar_correo_notificacion(
+                        user_rep, subject, mensaje
+                    )  # Opcional si quieres email
             except Exception as e:
                 print(f"ERROR al notificar a Repuestos: {e}")
 
-    @action(detail=False, methods=['get'], url_path='pendientes')
+    @action(detail=False, methods=["get"], url_path="pendientes")
     def list_pendientes(self, request):
         """
-_Endpoint para que el rol Repuestos vea solo lo pendiente._
-"""
+        _Endpoint para que el rol Repuestos vea solo lo pendiente._
+        """
         pendientes = OrdenItem.objects.filter(
-            producto__isnull=False, 
-            estado_repuesto=OrdenItem.EstadoRepuesto.PENDIENTE
-        ).select_related('orden', 'producto', 'solicitado_por')
-        
+            producto__isnull=False, estado_repuesto=OrdenItem.EstadoRepuesto.PENDIENTE
+        ).select_related("orden", "producto", "solicitado_por")
+
         serializer = self.get_serializer(pendientes, many=True)
         return Response(serializer.data)
 
-    @action(detail=True, methods=['post'], url_path='gestionar-repuesto')
+    @action(detail=True, methods=["post"], url_path="gestionar-repuesto")
     def gestionar_repuesto(self, request, pk=None):
         """
         _Endpoint para que Repuestos APRUEBE o RECHACE._
         """
         item = self.get_object()
-        accion = request.data.get("accion") # "aprobar" o "rechazar"
+        accion = request.data.get("accion")  # "aprobar" o "rechazar"
         motivo = request.data.get("motivo", "")
 
-        if not accion or accion not in ['aprobar', 'rechazar']:
-            return Response({"error": "Acción no válida."}, status=status.HTTP_400_BAD_REQUEST)
-            
+        if not accion or accion not in ["aprobar", "rechazar"]:
+            return Response(
+                {"error": "Acción no válida."}, status=status.HTTP_400_BAD_REQUEST
+            )
+
         if item.estado_repuesto != OrdenItem.EstadoRepuesto.PENDIENTE:
-            return Response({"error": "Esta solicitud ya fue gestionada."}, status=status.HTTP_400_BAD_REQUEST)
-        
+            return Response(
+                {"error": "Esta solicitud ya fue gestionada."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         with transaction.atomic():
             if accion == "aprobar":
                 if item.producto.stock < item.cantidad:
-                    return Response({"error": f"Stock insuficiente. Solo quedan {item.producto.stock}."}, status=status.HTTP_400_BAD_REQUEST)
-                
+                    return Response(
+                        {
+                            "error": f"Stock insuficiente. Solo quedan {item.producto.stock}."
+                        },
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+
                 # Descontar stock
-                item.producto.stock = F('stock') - item.cantidad
+                item.producto.stock = F("stock") - item.cantidad
                 item.producto.save()
                 item.producto.refresh_from_db()
-                
+
                 # Actualizar item
                 item.estado_repuesto = OrdenItem.EstadoRepuesto.APROBADO
                 item.gestionado_por = request.user
                 item.fecha_gestion = timezone.now()
                 item.save()
                 item.refresh_from_db()
-                
+
                 # Notificar al mecánico
                 subject_mec = f"Repuesto Aprobado: Orden #{item.orden.id}"
                 mensaje_mec = f"Su solicitud de {item.cantidad}x {item.producto.nombre} fue APROBADA."
-                Notificacion.objects.create(usuario=item.solicitado_por, mensaje=mensaje_mec, link=f"/ordenes/{item.orden.id}")
-                enviar_correo_notificacion(item.solicitado_por, subject_mec, mensaje_mec)
+                Notificacion.objects.create(
+                    usuario=item.solicitado_por,
+                    mensaje=mensaje_mec,
+                    link=f"/ordenes/{item.orden.id}",
+                )
+                enviar_correo_notificacion(
+                    item.solicitado_por, subject_mec, mensaje_mec
+                )
 
             elif accion == "rechazar":
                 item.estado_repuesto = OrdenItem.EstadoRepuesto.RECHAZADO
                 item.gestionado_por = request.user
                 item.fecha_gestion = timezone.now()
-                item.motivo_gestion = motivo or "Sin stock. Solicitado a proveedor (3 días aprox.)"
+                item.motivo_gestion = (
+                    motivo or "Sin stock. Solicitado a proveedor (3 días aprox.)"
+                )
                 item.save()
                 item.refresh_from_db()
-                
+
                 # Notificar al mecánico
                 subject_mec = f"Repuesto Rechazado: Orden #{item.orden.id}"
                 mensaje_mec = f"Su solicitud de {item.cantidad}x {item.producto.nombre} fue RECHAZADA. Motivo: {item.motivo_gestion}"
-                Notificacion.objects.create(usuario=item.solicitado_por, mensaje=mensaje_mec, link=f"/ordenes/{item.orden.id}")
-                enviar_correo_notificacion(item.solicitado_por, subject_mec, mensaje_mec)
+                Notificacion.objects.create(
+                    usuario=item.solicitado_por,
+                    mensaje=mensaje_mec,
+                    link=f"/ordenes/{item.orden.id}",
+                )
+                enviar_correo_notificacion(
+                    item.solicitado_por, subject_mec, mensaje_mec
+                )
 
         return Response(self.get_serializer(item).data, status=status.HTTP_200_OK)
+
 
 # ======================================================================
 # 🔑 API DE GESTIÓN DE LLAVES
@@ -1687,10 +1763,10 @@ class LlaveVehiculoViewSet(viewsets.ModelViewSet):
         Cierra un préstamo activo (RECIBIR LLAVE).
         El 'pk' aquí es el ID de la *LlaveVehiculo*.
         """
-        llave = self.get_object()  
+        llave = self.get_object()
 
         try:
-      
+
             prestamo = PrestamoLlave.objects.get(
                 llave=llave, fecha_hora_devolucion__isnull=True
             )
@@ -1700,7 +1776,6 @@ class LlaveVehiculoViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_404_NOT_FOUND,
             )
 
-      
         prestamo.fecha_hora_devolucion = timezone.now()
         prestamo.observaciones_devolucion = request.data.get("observaciones", "")
         prestamo.save()
@@ -1718,7 +1793,7 @@ class LlaveVehiculoViewSet(viewsets.ModelViewSet):
         """
         Crea un nuevo préstamo (PRESTAR LLAVE). El 'pk' es el ID de la Llave.
         """
-        llave = self.get_object() 
+        llave = self.get_object()
         usuario_id = request.data.get("usuario_id")
         observaciones = request.data.get("observaciones", "")
 
@@ -1736,17 +1811,14 @@ class LlaveVehiculoViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_404_NOT_FOUND,
             )
 
-      
         prestamo = PrestamoLlave.objects.create(
             llave=llave, usuario_retira=usuario, observaciones_retiro=observaciones
         )
 
-   
         llave.estado = LlaveVehiculo.Estado.PRESTADA
         llave.poseedor_actual = usuario
         llave.save()
 
-     
         serializer = self.get_serializer(llave)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
@@ -1823,7 +1895,6 @@ class LlaveVehiculoViewSet(viewsets.ModelViewSet):
         llave.motivo_reporte = None  # Limpiamos el motivo
         llave.save()
 
-  
         LlaveHistorialEstado.objects.create(
             llave=llave,
             usuario_reporta=request.user,
@@ -1857,7 +1928,6 @@ class PrestamoLlaveViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = PrestamoLlaveSerializer
     permission_classes = [IsControlLlaves]
 
-
     filter_backends = [filters.SearchFilter]
     search_fields = [
         "llave__vehiculo__patente",
@@ -1874,7 +1944,7 @@ class PrestamoLlaveViewSet(viewsets.ReadOnlyModelViewSet):
         El 'pk' aquí es el ID de la *LlaveVehiculo* para encontrar el préstamo activo.
         """
         try:
-            
+
             prestamo = PrestamoLlave.objects.get(
                 llave_id=pk, fecha_hora_devolucion__isnull=True
             )
@@ -1884,7 +1954,6 @@ class PrestamoLlaveViewSet(viewsets.ReadOnlyModelViewSet):
                 status=status.HTTP_404_NOT_FOUND,
             )
 
-     
         prestamo.fecha_hora_devolucion = timezone.now()
         prestamo.observaciones_devolucion = request.data.get("observaciones", "")
         prestamo.save()
@@ -1945,44 +2014,47 @@ class HistorialSeguridadViewSet(viewsets.ReadOnlyModelViewSet):
             )
             .order_by("-fecha_ingreso")
         )
-        
-        
-        
-        
+
+
 # Todos los reportes
-        
+
+
 @api_view(["GET"])
-@permission_classes([IsAdministrativo]) # Protegemos la vista
+@permission_classes([IsAdministrativo])  # Protegemos la vista
 def exportar_bitacora_seguridad(request):
     """
     Genera un reporte Excel de la bitácora de Ingresos y Salidas.
     Acepta filtros de fecha: ?fecha_inicio=YYYY-MM-DD&fecha_fin=YYYY-MM-DD
     """
-    
+
     # 1. Obtener filtros de fecha de la URL
-    fecha_inicio_str = request.query_params.get('fecha_inicio')
-    fecha_fin_str = request.query_params.get('fecha_fin')
-    
+    fecha_inicio_str = request.query_params.get("fecha_inicio")
+    fecha_fin_str = request.query_params.get("fecha_fin")
+
     # 2. Query base
-    queryset = Orden.objects.all().select_related(
-        "vehiculo", 
-        "agendamiento_origen__chofer_asociado", 
-        "vehiculo__chofer"
-    ).order_by('fecha_ingreso')
+    queryset = (
+        Orden.objects.all()
+        .select_related(
+            "vehiculo", "agendamiento_origen__chofer_asociado", "vehiculo__chofer"
+        )
+        .order_by("fecha_ingreso")
+    )
 
     # 3. Aplicar filtros de fecha si existen
     if fecha_inicio_str and fecha_fin_str:
         try:
-            fecha_inicio = datetime.strptime(fecha_inicio_str, '%Y-%m-%d').date()
+            fecha_inicio = datetime.strptime(fecha_inicio_str, "%Y-%m-%d").date()
             # Combinamos la fecha fin con la última hora del día para incluir todo el día
             fecha_fin = datetime.combine(
-                datetime.strptime(fecha_fin_str, '%Y-%m-%d').date(), 
-                time.max
+                datetime.strptime(fecha_fin_str, "%Y-%m-%d").date(), time.max
             )
             # Filtramos por el rango de fecha de INGRESO
             queryset = queryset.filter(fecha_ingreso__range=[fecha_inicio, fecha_fin])
         except ValueError:
-            return Response({"error": "Formato de fecha inválido. Usar YYYY-MM-DD."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"error": "Formato de fecha inválido. Usar YYYY-MM-DD."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
     # 4. Crear el libro de Excel en memoria
     wb = openpyxl.Workbook()
@@ -1991,168 +2063,197 @@ def exportar_bitacora_seguridad(request):
 
     # 5. Definir Títulos de las columnas
     columnas = [
-        "ID Orden", "Patente", "Chofer", "Fecha Ingreso", "Fecha Salida", "Estado Actual"
+        "ID Orden",
+        "Patente",
+        "Chofer",
+        "Fecha Ingreso",
+        "Fecha Salida",
+        "Estado Actual",
     ]
     ws.append(columnas)
-    
+
     # Añadir estilo simple a la cabecera (Negrita)
     for cell in ws[1]:
         cell.font = openpyxl.styles.Font(bold=True)
 
     # 6. Llenar el Excel con los datos
     for orden in queryset:
-        
+
         # Lógica para obtener el nombre del chofer (como en tu Serializer)
         chofer_nombre = "No asignado"
         if orden.agendamiento_origen and orden.agendamiento_origen.chofer_asociado:
             chofer_nombre = orden.agendamiento_origen.chofer_asociado.get_full_name()
         elif orden.vehiculo and orden.vehiculo.chofer:
-             chofer_nombre = orden.vehiculo.chofer.get_full_name()
+            chofer_nombre = orden.vehiculo.chofer.get_full_name()
 
         # Formatear fechas para que Excel las entienda
-        fecha_ingreso_excel = orden.fecha_ingreso.replace(tzinfo=None) if orden.fecha_ingreso else None
-        fecha_salida_excel = orden.fecha_entrega_real.replace(tzinfo=None) if orden.fecha_entrega_real else "En Taller"
-        
+        fecha_ingreso_excel = (
+            orden.fecha_ingreso.replace(tzinfo=None) if orden.fecha_ingreso else None
+        )
+        fecha_salida_excel = (
+            orden.fecha_entrega_real.replace(tzinfo=None)
+            if orden.fecha_entrega_real
+            else "En Taller"
+        )
+
         fila = [
             orden.id,
             orden.vehiculo.patente if orden.vehiculo else "S/P",
             chofer_nombre,
             fecha_ingreso_excel,
             fecha_salida_excel,
-            orden.estado
+            orden.estado,
         ]
         ws.append(fila)
-        
+
         # Aplicar formato de fecha a las celdas
         if fecha_ingreso_excel:
-            ws.cell(row=ws.max_row, column=4).number_format = 'DD/MM/YYYY HH:MM'
+            ws.cell(row=ws.max_row, column=4).number_format = "DD/MM/YYYY HH:MM"
         if isinstance(fecha_salida_excel, datetime):
-            ws.cell(row=ws.max_row, column=5).number_format = 'DD/MM/YYYY HH:MM'
+            ws.cell(row=ws.max_row, column=5).number_format = "DD/MM/YYYY HH:MM"
 
     # 7. Crear la respuesta HTTP con el archivo
     response = HttpResponse(
-        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     )
     # Definir el nombre del archivo
-    response['Content-Disposition'] = f'attachment; filename="Reporte_Seguridad_{datetime.now().strftime("%Y%m%d")}.xlsx"'
-    
+    response["Content-Disposition"] = (
+        f'attachment; filename="Reporte_Seguridad_{datetime.now().strftime("%Y%m%d")}.xlsx"'
+    )
+
     # Guardar el libro de Excel en la respuesta
     wb.save(response)
-    
+
     return response
 
+
 @api_view(["GET"])
-@permission_classes([IsAdministrativo]) # Reutilizamos el mismo permiso
+@permission_classes([IsAdministrativo])  # Reutilizamos el mismo permiso
 def exportar_snapshot_taller_pdf(request):
     """
     Genera un reporte PDF (Snapshot) de los vehículos
     actualmente en el taller.
     """
-    
+
     # 1. Query: Vehículos que NO están 'Finalizados'
-    ordenes_activas = Orden.objects.exclude(
-        estado=Orden.Estado.FINALIZADO
-    ).select_related(
-        "vehiculo", 
-        "agendamiento_origen__chofer_asociado",
-        "vehiculo__chofer"
-    ).order_by('fecha_ingreso')
+    ordenes_activas = (
+        Orden.objects.exclude(estado=Orden.Estado.FINALIZADO)
+        .select_related(
+            "vehiculo", "agendamiento_origen__chofer_asociado", "vehiculo__chofer"
+        )
+        .order_by("fecha_ingreso")
+    )
 
     # 2. Preparar el PDF en memoria
     buffer = BytesIO()
     doc = SimpleDocTemplate(buffer, pagesize=letter)
     elements = []
-    
+
     styles = getSampleStyleSheet()
-    
+
     # 3. Títulos del PDF
     fecha_actual = timezone.now().strftime("%d/%m/%Y %H:%M:%S")
-    elements.append(Paragraph("Reporte de Vehículos en Taller", styles['h1']))
-    elements.append(Paragraph(f"Generado el: {fecha_actual}", styles['Normal']))
-    elements.append(Paragraph(f"Total Vehículos: {ordenes_activas.count()}", styles['Normal']))
-    elements.append(Paragraph(" ", styles['Normal'])) # Espacio
+    elements.append(Paragraph("Reporte de Vehículos en Taller", styles["h1"]))
+    elements.append(Paragraph(f"Generado el: {fecha_actual}", styles["Normal"]))
+    elements.append(
+        Paragraph(f"Total Vehículos: {ordenes_activas.count()}", styles["Normal"])
+    )
+    elements.append(Paragraph(" ", styles["Normal"]))  # Espacio
 
     # 4. Preparar datos para la tabla
-    data = [
-        ["Patente", "Chofer", "Fecha Ingreso", "Estado Actual"]
-    ]
-    
+    data = [["Patente", "Chofer", "Fecha Ingreso", "Estado Actual"]]
+
     for orden in ordenes_activas:
         # Lógica para obtener el nombre del chofer
         chofer_nombre = "No asignado"
         if orden.agendamiento_origen and orden.agendamiento_origen.chofer_asociado:
             chofer_nombre = orden.agendamiento_origen.chofer_asociado.get_full_name()
         elif orden.vehiculo and orden.vehiculo.chofer:
-             chofer_nombre = orden.vehiculo.chofer.get_full_name()
-             
-        fecha_ingreso_str = orden.fecha_ingreso.strftime("%d/%m/%Y %H:%M") if orden.fecha_ingreso else "N/A"
-        
-        data.append([
-            orden.vehiculo.patente if orden.vehiculo else "S/P",
-            chofer_nombre,
-            fecha_ingreso_str,
-            orden.estado
-        ])
+            chofer_nombre = orden.vehiculo.chofer.get_full_name()
+
+        fecha_ingreso_str = (
+            orden.fecha_ingreso.strftime("%d/%m/%Y %H:%M")
+            if orden.fecha_ingreso
+            else "N/A"
+        )
+
+        data.append(
+            [
+                orden.vehiculo.patente if orden.vehiculo else "S/P",
+                chofer_nombre,
+                fecha_ingreso_str,
+                orden.estado,
+            ]
+        )
 
     # 5. Crear y Estilizar la Tabla
     table = Table(data)
-    style = TableStyle([
-        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor("#2d3748")), # Fondo cabecera
-        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-        ('BACKGROUND', (0, 1), (-1, -1), colors.HexColor("#4a5568")), # Fondo filas
-        ('TEXTCOLOR', (0, 1), (-1, -1), colors.whitesmoke),
-        ('GRID', (0, 0), (-1, -1), 1, colors.black)
-    ])
+    style = TableStyle(
+        [
+            (
+                "BACKGROUND",
+                (0, 0),
+                (-1, 0),
+                colors.HexColor("#2d3748"),
+            ),  # Fondo cabecera
+            ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),
+            ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+            ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+            ("BOTTOMPADDING", (0, 0), (-1, 0), 12),
+            ("BACKGROUND", (0, 1), (-1, -1), colors.HexColor("#4a5568")),  # Fondo filas
+            ("TEXTCOLOR", (0, 1), (-1, -1), colors.whitesmoke),
+            ("GRID", (0, 0), (-1, -1), 1, colors.black),
+        ]
+    )
     table.setStyle(style)
     elements.append(table)
 
     # 6. Construir el PDF
     doc.build(elements)
-    
+
     # 7. Crear la respuesta HTTP
     buffer.seek(0)
-    response = HttpResponse(buffer, content_type='application/pdf')
+    response = HttpResponse(buffer, content_type="application/pdf")
     filename = f"Snapshot_Taller_{timezone.now().strftime('%Y%m%d')}.pdf"
-    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    response["Content-Disposition"] = f'attachment; filename="{filename}"'
     return response
 
 
 @api_view(["GET"])
-@permission_classes([IsAdministrativo]) # Reutilizamos el permiso
+@permission_classes([IsAdministrativo])  # Reutilizamos el permiso
 def exportar_consumo_repuestos(request):
     """
     Genera un reporte Excel del consumo de repuestos aprobados.
     Acepta filtros de fecha: ?fecha_inicio=YYYY-MM-DD&fecha_fin=YYYY-MM-DD
     """
-    
+
     # 1. Obtener filtros de fecha de la URL
-    fecha_inicio_str = request.query_params.get('fecha_inicio')
-    fecha_fin_str = request.query_params.get('fecha_fin')
-    
+    fecha_inicio_str = request.query_params.get("fecha_inicio")
+    fecha_fin_str = request.query_params.get("fecha_fin")
+
     # 2. Query base: Filtramos solo repuestos 'Aprobados'
-    queryset = OrdenItem.objects.filter(
-        estado_repuesto=OrdenItem.EstadoRepuesto.APROBADO
-    ).select_related(
-        'orden', 
-        'producto', 
-        'solicitado_por' # El mecánico que pidió el repuesto
-    ).order_by('fecha_gestion') # Ordenamos por la fecha en que se aprobó
+    queryset = (
+        OrdenItem.objects.filter(estado_repuesto=OrdenItem.EstadoRepuesto.APROBADO)
+        .select_related(
+            "orden", "producto", "solicitado_por"  # El mecánico que pidió el repuesto
+        )
+        .order_by("fecha_gestion")
+    )  # Ordenamos por la fecha en que se aprobó
 
     # 3. Aplicar filtros de fecha (sobre la fecha de gestión/aprobación)
     if fecha_inicio_str and fecha_fin_str:
         try:
-            fecha_inicio = datetime.strptime(fecha_inicio_str, '%Y-%m-%d').date()
+            fecha_inicio = datetime.strptime(fecha_inicio_str, "%Y-%m-%d").date()
             fecha_fin = datetime.combine(
-                datetime.strptime(fecha_fin_str, '%Y-%m-%d').date(), 
-                time.max
+                datetime.strptime(fecha_fin_str, "%Y-%m-%d").date(), time.max
             )
             # Filtramos por el rango de fecha de APROBACIÓN
             queryset = queryset.filter(fecha_gestion__range=[fecha_inicio, fecha_fin])
         except ValueError:
-            return Response({"error": "Formato de fecha inválido. Usar YYYY-MM-DD."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"error": "Formato de fecha inválido. Usar YYYY-MM-DD."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
     # 4. Crear el libro de Excel
     wb = openpyxl.Workbook()
@@ -2161,24 +2262,32 @@ def exportar_consumo_repuestos(request):
 
     # 5. Definir Títulos de las columnas
     columnas = [
-        "Fecha Aprobado", "ID Orden", "Mecánico Solicitante", "SKU", "Producto", 
-        "Cantidad", "Precio Unitario", "Costo Total"
+        "Fecha Aprobado",
+        "ID Orden",
+        "Mecánico Solicitante",
+        "SKU",
+        "Producto",
+        "Cantidad",
+        "Precio Unitario",
+        "Costo Total",
     ]
     ws.append(columnas)
-    
+
     for cell in ws[1]:
         cell.font = openpyxl.styles.Font(bold=True)
 
     # 6. Llenar el Excel con los datos
     total_general = 0
     for item in queryset:
-        
+
         # Calculamos el costo total del ítem
         costo_total = item.cantidad * item.precio_unitario
         total_general += costo_total
-        
-        fecha_gestion_excel = item.fecha_gestion.replace(tzinfo=None) if item.fecha_gestion else None
-        
+
+        fecha_gestion_excel = (
+            item.fecha_gestion.replace(tzinfo=None) if item.fecha_gestion else None
+        )
+
         fila = [
             fecha_gestion_excel,
             item.orden.id if item.orden else "N/A",
@@ -2187,52 +2296,50 @@ def exportar_consumo_repuestos(request):
             item.producto.nombre if item.producto else "N/A",
             item.cantidad,
             item.precio_unitario,
-            costo_total
+            costo_total,
         ]
         ws.append(fila)
-        
+
         # Aplicar formato de fecha y moneda
-        ws.cell(row=ws.max_row, column=1).number_format = 'DD/MM/YYYY HH:MM'
-        ws.cell(row=ws.max_row, column=7).number_format = '$ #,##0'
-        ws.cell(row=ws.max_row, column=8).number_format = '$ #,##0'
+        ws.cell(row=ws.max_row, column=1).number_format = "DD/MM/YYYY HH:MM"
+        ws.cell(row=ws.max_row, column=7).number_format = "$ #,##0"
+        ws.cell(row=ws.max_row, column=8).number_format = "$ #,##0"
 
     # Añadir fila de Total General
-    ws.append([]) # Fila vacía
-    ws.append([
-        None, None, None, None, None, None, 
-        "Total General:",
-        total_general
-    ])
+    ws.append([])  # Fila vacía
+    ws.append([None, None, None, None, None, None, "Total General:", total_general])
     ws.cell(row=ws.max_row, column=7).font = openpyxl.styles.Font(bold=True)
     ws.cell(row=ws.max_row, column=8).font = openpyxl.styles.Font(bold=True)
-    ws.cell(row=ws.max_row, column=8).number_format = '$ #,##0'
-
+    ws.cell(row=ws.max_row, column=8).number_format = "$ #,##0"
 
     # 7. Crear la respuesta HTTP con el archivo
     response = HttpResponse(
-        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     )
-    response['Content-Disposition'] = f'attachment; filename="Reporte_Consumo_Repuestos_{datetime.now().strftime("%Y%m%d")}.xlsx"'
+    response["Content-Disposition"] = (
+        f'attachment; filename="Reporte_Consumo_Repuestos_{datetime.now().strftime("%Y%m%d")}.xlsx"'
+    )
     wb.save(response)
-    
+
     return response
 
-@api_view(['GET'])
+
+@api_view(["GET"])
 @permission_classes([IsAuthenticated, IsAdministrativo])
 def exportar_inventario_valorizado(request):
     """
     Exporta un snapshot del inventario actual y su valor.
     No requiere filtros de fecha.
     """
-    
+
     # 1. Obtener todos los productos
-    productos = Producto.objects.all().order_by('nombre')
-    
+    productos = Producto.objects.all().order_by("nombre")
+
     # 2. Crear el libro de Excel
     wb = openpyxl.Workbook()
     ws = wb.active
     ws.title = "Inventario Valorizado"
-    
+
     # 3. Definir las cabeceras
     headers = [
         "SKU",
@@ -2240,68 +2347,76 @@ def exportar_inventario_valorizado(request):
         "Marca",
         "Stock Actual",
         "Precio Unitario",
-        "Valor Total Inventario"
+        "Valor Total Inventario",
     ]
     ws.append(headers)
-    
+
     # 4. Añadir los datos
     for producto in productos:
         valor_total = producto.stock * producto.precio_venta
-        
-        ws.append([
-            producto.sku,
-            producto.nombre,
-            producto.marca,
-            producto.stock,
-            producto.precio_venta,
-            valor_total
-        ])
-        
+
+        ws.append(
+            [
+                producto.sku,
+                producto.nombre,
+                producto.marca,
+                producto.stock,
+                producto.precio_venta,
+                valor_total,
+            ]
+        )
+
     # 5. Preparar la respuesta HTTP
     response = HttpResponse(
-        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     )
     # Formateamos el nombre del archivo con la fecha/hora actual
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    response['Content-Disposition'] = f'attachment; filename="Reporte_Inventario_Valorizado_{timestamp}.xlsx"'
-    
+    response["Content-Disposition"] = (
+        f'attachment; filename="Reporte_Inventario_Valorizado_{timestamp}.xlsx"'
+    )
+
     # 6. Guardar el libro en la respuesta
     wb.save(response)
     return response
 
 
 # NUEVA VISTA 2: REPORTE DE QUIEBRES DE STOCK (CON FILTROS DE FECHA)
-@api_view(['GET'])
+@api_view(["GET"])
 @permission_classes([IsAuthenticated, IsAdministrativo])
 def exportar_quiebres_stock(request):
     """
     Exporta un reporte de todos los repuestos solicitados que fueron RECHAZADOS.
     Utiliza los filtros de fecha (fecha_inicio, fecha_fin) sobre 'fecha_gestion'.
     """
-    
+
     # 1. Obtener filtros de fecha (igual que en tus otras vistas)
-    fecha_inicio_str = request.query_params.get('fecha_inicio', None)
-    fecha_fin_str = request.query_params.get('fecha_fin', None)
-    
+    fecha_inicio_str = request.query_params.get("fecha_inicio", None)
+    fecha_fin_str = request.query_params.get("fecha_fin", None)
+
     if not fecha_inicio_str or not fecha_fin_str:
         return HttpResponse("Error: Faltan filtros de fecha.", status=400)
-        
+
     # Convertimos strings a objetos datetime
     # (Ajusta el formato si es necesario, pero 'YYYY-MM-DD' es estándar)
     fecha_inicio_dt = datetime.strptime(fecha_inicio_str, "%Y-%m-%d").date()
     fecha_fin_dt = datetime.strptime(fecha_fin_str, "%Y-%m-%d").date()
 
     # 2. Obtener los items rechazados en ese rango
-    items_rechazados = OrdenItem.objects.filter(
-        estado_repuesto=OrdenItem.EstadoRepuesto.RECHAZADO,
-        fecha_gestion__range=[fecha_inicio_dt, fecha_fin_dt]
-    ).select_related('producto', 'solicitado_por', 'orden').order_by('-fecha_gestion')
-    
+    items_rechazados = (
+        OrdenItem.objects.filter(
+            estado_repuesto=OrdenItem.EstadoRepuesto.RECHAZADO,
+            fecha_gestion__range=[fecha_inicio_dt, fecha_fin_dt],
+        )
+        .select_related("producto", "solicitado_por", "orden")
+        .order_by("-fecha_gestion")
+    )
+
     # 3. Crear el libro de Excel
     wb = openpyxl.Workbook()
     ws = wb.active
     ws.title = "Quiebres de Stock"
-    
+
     # 4. Definir las cabeceras
     headers = [
         "Fecha Rechazo",
@@ -2310,146 +2425,151 @@ def exportar_quiebres_stock(request):
         "Cantidad Solicitada",
         "Solicitado Por (Mecánico)",
         "ID Orden",
-        "Motivo del Rechazo"
+        "Motivo del Rechazo",
     ]
     ws.append(headers)
-    
+
     # 5. Añadir los datos
     for item in items_rechazados:
-        mecanico_nombre = item.solicitado_por.get_full_name() if item.solicitado_por else "N/A"
-        
-        ws.append([
-            item.fecha_gestion,
-            item.producto.nombre,
-            item.producto.sku,
-            item.cantidad,
-            mecanico_nombre,
-            item.orden.id,
-            item.motivo_gestion
-        ])
-        
+        mecanico_nombre = (
+            item.solicitado_por.get_full_name() if item.solicitado_por else "N/A"
+        )
+
+        ws.append(
+            [
+                item.fecha_gestion,
+                item.producto.nombre,
+                item.producto.sku,
+                item.cantidad,
+                mecanico_nombre,
+                item.orden.id,
+                item.motivo_gestion,
+            ]
+        )
+
     # 6. Preparar la respuesta HTTP
     response = HttpResponse(
-        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     )
-    response['Content-Disposition'] = f'attachment; filename="Reporte_Quiebres_Stock_{fecha_inicio_str}_a_{fecha_fin_str}.xlsx"'
+    response["Content-Disposition"] = (
+        f'attachment; filename="Reporte_Quiebres_Stock_{fecha_inicio_str}_a_{fecha_fin_str}.xlsx"'
+    )
     wb.save(response)
     return response
 
 
-
-
 # NUEVA VISTA 1: REPORTE DE PRODUCTIVIDAD POR MECÁNICO
-@api_view(['GET'])
+@api_view(["GET"])
 @permission_classes([IsAuthenticated, IsAdministrativo])
 def exportar_productividad_mecanicos(request):
     """
     Exporta un reporte de productividad (Órdenes Finalizadas)
     agrupado por mecánico, dentro de un rango de fechas.
     """
-    
+
     # 1. Obtener filtros de fecha
-    fecha_inicio_str = request.query_params.get('fecha_inicio', None)
-    fecha_fin_str = request.query_params.get('fecha_fin', None)
-    
+    fecha_inicio_str = request.query_params.get("fecha_inicio", None)
+    fecha_fin_str = request.query_params.get("fecha_fin", None)
+
     if not fecha_inicio_str or not fecha_fin_str:
         return HttpResponse("Error: Faltan filtros de fecha.", status=400)
-        
+
     try:
         fecha_inicio_dt = datetime.strptime(fecha_inicio_str, "%Y-%m-%d").date()
         # Ajustamos fecha_fin para incluir el día completo
         fecha_fin_dt = datetime.combine(
-            datetime.strptime(fecha_fin_str, "%Y-%m-%d").date(),
-            time.max
+            datetime.strptime(fecha_fin_str, "%Y-%m-%d").date(), time.max
         )
     except ValueError:
         return HttpResponse("Error: Formato de fecha inválido.", status=400)
 
     # 2. Query: Agrupar por mecánico y contar órdenes finalizadas
-    productividad = Orden.objects.filter(
-        estado=Orden.Estado.FINALIZADO,
-        fecha_entrega_real__range=[fecha_inicio_dt, fecha_fin_dt],
-        usuario_asignado__isnull=False # Asegurarnos de que tenga un mecánico
-    ).values(
-        'usuario_asignado__first_name', # Agrupar por nombre
-        'usuario_asignado__last_name',  # Agrupar por apellido
-        'usuario_asignado__rut'         # Agrupar por RUT (para ID único)
-    ).annotate(
-        ordenes_finalizadas=Count('id') # Contar las órdenes para ese grupo
-    ).order_by('-ordenes_finalizadas') # Ordenar de más productivo a menos
+    productividad = (
+        Orden.objects.filter(
+            estado=Orden.Estado.FINALIZADO,
+            fecha_entrega_real__range=[fecha_inicio_dt, fecha_fin_dt],
+            usuario_asignado__isnull=False,  # Asegurarnos de que tenga un mecánico
+        )
+        .values(
+            "usuario_asignado__first_name",  # Agrupar por nombre
+            "usuario_asignado__last_name",  # Agrupar por apellido
+            "usuario_asignado__rut",  # Agrupar por RUT (para ID único)
+        )
+        .annotate(ordenes_finalizadas=Count("id"))  # Contar las órdenes para ese grupo
+        .order_by("-ordenes_finalizadas")
+    )  # Ordenar de más productivo a menos
 
     # 3. Crear el libro de Excel
     wb = openpyxl.Workbook()
     ws = wb.active
     ws.title = "Productividad Mecánicos"
-    
+
     # 4. Definir las cabeceras
-    headers = [
-        "RUT Mecánico",
-        "Nombre Mecánico",
-        "Órdenes Finalizadas"
-    ]
+    headers = ["RUT Mecánico", "Nombre Mecánico", "Órdenes Finalizadas"]
     ws.append(headers)
-    
+
     # 5. Añadir los datos
     for data in productividad:
         nombre_completo = f"{data['usuario_asignado__first_name']} {data['usuario_asignado__last_name']}"
-        ws.append([
-            data['usuario_asignado__rut'],
-            nombre_completo,
-            data['ordenes_finalizadas']
-        ])
-        
+        ws.append(
+            [
+                data["usuario_asignado__rut"],
+                nombre_completo,
+                data["ordenes_finalizadas"],
+            ]
+        )
+
     # 6. Preparar la respuesta HTTP
     response = HttpResponse(
-        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     )
-    response['Content-Disposition'] = f'attachment; filename="Reporte_Productividad_Mecanicos_{fecha_inicio_str}_a_{fecha_fin_str}.xlsx"'
+    response["Content-Disposition"] = (
+        f'attachment; filename="Reporte_Productividad_Mecanicos_{fecha_inicio_str}_a_{fecha_fin_str}.xlsx"'
+    )
     wb.save(response)
     return response
 
 
 # NUEVA VISTA 2: REPORTE DE TIEMPOS DE TALLER
-@api_view(['GET'])
+@api_view(["GET"])
 @permission_classes([IsAuthenticated, IsAdministrativo])
 def exportar_tiempos_taller(request):
     """
     Exporta un reporte detallado de los tiempos por Orden.
     Tiempo total en taller vs Tiempo total en Pausa.
     """
-    
+
     # 1. Obtener filtros de fecha (sobre órdenes FINALIZADAS en ese rango)
-    fecha_inicio_str = request.query_params.get('fecha_inicio', None)
-    fecha_fin_str = request.query_params.get('fecha_fin', None)
-    
+    fecha_inicio_str = request.query_params.get("fecha_inicio", None)
+    fecha_fin_str = request.query_params.get("fecha_fin", None)
+
     if not fecha_inicio_str or not fecha_fin_str:
         return HttpResponse("Error: Faltan filtros de fecha.", status=400)
-        
+
     try:
         fecha_inicio_dt = datetime.strptime(fecha_inicio_str, "%Y-%m-%d").date()
         fecha_fin_dt = datetime.combine(
-            datetime.strptime(fecha_fin_str, "%Y-%m-%d").date(),
-            time.max
+            datetime.strptime(fecha_fin_str, "%Y-%m-%d").date(), time.max
         )
     except ValueError:
         return HttpResponse("Error: Formato de fecha inválido.", status=400)
 
     # 2. Query: Órdenes finalizadas en el rango
-    ordenes = Orden.objects.filter(
-        estado=Orden.Estado.FINALIZADO,
-        fecha_entrega_real__range=[fecha_inicio_dt, fecha_fin_dt]
-    ).select_related(
-        'usuario_asignado',
-        'vehiculo'
-    ).prefetch_related( # prefetch_related para las pausas (muchos a uno)
-        'pausas'
-    ).order_by('fecha_entrega_real')
+    ordenes = (
+        Orden.objects.filter(
+            estado=Orden.Estado.FINALIZADO,
+            fecha_entrega_real__range=[fecha_inicio_dt, fecha_fin_dt],
+        )
+        .select_related("usuario_asignado", "vehiculo")
+        .prefetch_related("pausas")  # prefetch_related para las pausas (muchos a uno)
+        .order_by("fecha_entrega_real")
+    )
 
     # 3. Crear el libro de Excel
     wb = openpyxl.Workbook()
     ws = wb.active
     ws.title = "Tiempos de Taller"
-    
+
     # 4. Definir las cabeceras
     headers = [
         "ID Orden",
@@ -2459,398 +2579,460 @@ def exportar_tiempos_taller(request):
         "Fecha Salida",
         "Tiempo Total Taller (Horas)",
         "Tiempo Total Pausas (Horas)",
-        "Tiempo Efectivo (Horas)"
+        "Tiempo Efectivo (Horas)",
     ]
     ws.append(headers)
-    
+
     # 5. Añadir los datos (Calculamos los tiempos)
     for orden in ordenes:
-        
+
         # Cálculo 1: Tiempo Total en Taller
         tiempo_total_taller_horas = 0
         if orden.fecha_ingreso and orden.fecha_entrega_real:
             duracion_total = orden.fecha_entrega_real - orden.fecha_ingreso
             tiempo_total_taller_horas = round(duracion_total.total_seconds() / 3600, 2)
-            
+
         # Cálculo 2: Tiempo Total en Pausas
         tiempo_total_pausas_horas = 0
         pausas = orden.pausas.all()
         for pausa in pausas:
             if pausa.fin and pausa.inicio:
                 duracion_pausa = pausa.fin - pausa.inicio
-                tiempo_total_pausas_horas += round(duracion_pausa.total_seconds() / 3600, 2)
-        
-        # Cálculo 3: Tiempo Efectivo
-        tiempo_efectivo_horas = round(tiempo_total_taller_horas - tiempo_total_pausas_horas, 2)
+                tiempo_total_pausas_horas += round(
+                    duracion_pausa.total_seconds() / 3600, 2
+                )
 
-        mecanico_nombre = orden.usuario_asignado.get_full_name() if orden.usuario_asignado else "N/A"
-        
-        ws.append([
-            orden.id,
-            orden.vehiculo.patente,
-            mecanico_nombre,
-            orden.fecha_ingreso.replace(tzinfo=None) if orden.fecha_ingreso else None, # Quitar timezone para Excel
-            orden.fecha_entrega_real.replace(tzinfo=None) if orden.fecha_entrega_real else None,
-            tiempo_total_taller_horas,
-            tiempo_total_pausas_horas,
-            tiempo_efectivo_horas
-        ])
-        
+        # Cálculo 3: Tiempo Efectivo
+        tiempo_efectivo_horas = round(
+            tiempo_total_taller_horas - tiempo_total_pausas_horas, 2
+        )
+
+        mecanico_nombre = (
+            orden.usuario_asignado.get_full_name() if orden.usuario_asignado else "N/A"
+        )
+
+        ws.append(
+            [
+                orden.id,
+                orden.vehiculo.patente,
+                mecanico_nombre,
+                (
+                    orden.fecha_ingreso.replace(tzinfo=None)
+                    if orden.fecha_ingreso
+                    else None
+                ),  # Quitar timezone para Excel
+                (
+                    orden.fecha_entrega_real.replace(tzinfo=None)
+                    if orden.fecha_entrega_real
+                    else None
+                ),
+                tiempo_total_taller_horas,
+                tiempo_total_pausas_horas,
+                tiempo_efectivo_horas,
+            ]
+        )
+
         # Formatear fechas
-        ws.cell(row=ws.max_row, column=4).number_format = 'DD/MM/YYYY HH:MM'
-        ws.cell(row=ws.max_row, column=5).number_format = 'DD/MM/YYYY HH:MM'
-        
+        ws.cell(row=ws.max_row, column=4).number_format = "DD/MM/YYYY HH:MM"
+        ws.cell(row=ws.max_row, column=5).number_format = "DD/MM/YYYY HH:MM"
+
     # 6. Preparar la respuesta HTTP
     response = HttpResponse(
-        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     )
-    response['Content-Disposition'] = f'attachment; filename="Reporte_Tiempos_Taller_{fecha_inicio_str}_a_{fecha_fin_str}.xlsx"'
+    response["Content-Disposition"] = (
+        f'attachment; filename="Reporte_Tiempos_Taller_{fecha_inicio_str}_a_{fecha_fin_str}.xlsx"'
+    )
     wb.save(response)
     return response
 
 
-
-@api_view(['GET'])
+@api_view(["GET"])
 @permission_classes([IsAuthenticated, IsAdministrativo])
 def exportar_solicitudes_grua(request):
     """
     Exporta un reporte de todas las solicitudes de grúa
     filtradas por fecha de CREACIÓN de la solicitud.
     """
-    
+
     # 1. Obtener filtros de fecha
-    fecha_inicio_str = request.query_params.get('fecha_inicio', None)
-    fecha_fin_str = request.query_params.get('fecha_fin', None)
-    
+    fecha_inicio_str = request.query_params.get("fecha_inicio", None)
+    fecha_fin_str = request.query_params.get("fecha_fin", None)
+
     if not fecha_inicio_str or not fecha_fin_str:
         return HttpResponse("Error: Faltan filtros de fecha.", status=400)
-        
+
     try:
         fecha_inicio_dt = datetime.strptime(fecha_inicio_str, "%Y-%m-%d").date()
         fecha_fin_dt = datetime.combine(
-            datetime.strptime(fecha_fin_str, "%Y-%m-%d").date(),
-            time.max
+            datetime.strptime(fecha_fin_str, "%Y-%m-%d").date(), time.max
         )
     except ValueError:
         return HttpResponse("Error: Formato de fecha inválido.", status=400)
 
     # 2. Query: Agendamientos que SÍ solicitaron grúa, en el rango de fechas
-    solicitudes = Agendamiento.objects.filter(
-        solicita_grua=True,
-        creado_en__range=[fecha_inicio_dt, fecha_fin_dt] # Filtramos por fecha de solicitud
-    ).select_related(
-        'vehiculo', 
-        'chofer_asociado'
-    ).order_by('-creado_en')
+    solicitudes = (
+        Agendamiento.objects.filter(
+            solicita_grua=True,
+            creado_en__range=[
+                fecha_inicio_dt,
+                fecha_fin_dt,
+            ],  # Filtramos por fecha de solicitud
+        )
+        .select_related("vehiculo", "chofer_asociado")
+        .order_by("-creado_en")
+    )
 
     # 3. Crear el libro de Excel
     wb = openpyxl.Workbook()
     ws = wb.active
     ws.title = "Solicitudes de Grúa"
-    
+
     # 4. Definir las cabeceras
     headers = [
         "Fecha Solicitud",
         "Patente",
         "Chofer",
         "Dirección de Retiro",
-        "Grúa Despachada"
+        "Grúa Despachada",
     ]
     ws.append(headers)
-    
+
     # 5. Añadir los datos
     for item in solicitudes:
-        
-        chofer_nombre = item.chofer_asociado.get_full_name() if item.chofer_asociado else "N/A"
+
+        chofer_nombre = (
+            item.chofer_asociado.get_full_name() if item.chofer_asociado else "N/A"
+        )
         patente_vehiculo = item.vehiculo.patente if item.vehiculo else "N/A"
         estado_grua = "Sí" if item.grua_enviada else "No"
-        
-        ws.append([
-            item.creado_en.replace(tzinfo=None), # Quitamos timezone para Excel
-            patente_vehiculo,
-            chofer_nombre,
-            item.direccion_grua,
-            estado_grua
-        ])
-        
+
+        ws.append(
+            [
+                item.creado_en.replace(tzinfo=None),  # Quitamos timezone para Excel
+                patente_vehiculo,
+                chofer_nombre,
+                item.direccion_grua,
+                estado_grua,
+            ]
+        )
+
         # Formatear fecha
-        ws.cell(row=ws.max_row, column=1).number_format = 'DD/MM/YYYY HH:MM'
-        
+        ws.cell(row=ws.max_row, column=1).number_format = "DD/MM/YYYY HH:MM"
+
     # 6. Preparar la respuesta HTTP
     response = HttpResponse(
-        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     )
-    response['Content-Disposition'] = f'attachment; filename="Reporte_Solicitudes_Grua_{fecha_inicio_str}_a_{fecha_fin_str}.xlsx"'
+    response["Content-Disposition"] = (
+        f'attachment; filename="Reporte_Solicitudes_Grua_{fecha_inicio_str}_a_{fecha_fin_str}.xlsx"'
+    )
     wb.save(response)
     return response
 
 
-@api_view(['GET'])
+@api_view(["GET"])
 @permission_classes([IsAuthenticated, IsAdministrativo])
 def exportar_historial_prestamos(request):
     """
     Exporta un historial de todos los préstamos de llaves (retiros y devoluciones)
     filtrado por la FECHA DE RETIRO.
     """
-    
+
     # 1. Obtener filtros de fecha
-    fecha_inicio_str = request.query_params.get('fecha_inicio', None)
-    fecha_fin_str = request.query_params.get('fecha_fin', None)
-    
+    fecha_inicio_str = request.query_params.get("fecha_inicio", None)
+    fecha_fin_str = request.query_params.get("fecha_fin", None)
+
     if not fecha_inicio_str or not fecha_fin_str:
         return HttpResponse("Error: Faltan filtros de fecha.", status=400)
-        
+
     try:
         fecha_inicio_dt = datetime.strptime(fecha_inicio_str, "%Y-%m-%d").date()
         fecha_fin_dt = datetime.combine(
-            datetime.strptime(fecha_fin_str, "%Y-%m-%d").date(),
-            time.max
+            datetime.strptime(fecha_fin_str, "%Y-%m-%d").date(), time.max
         )
     except ValueError:
         return HttpResponse("Error: Formato de fecha inválido.", status=400)
 
     # 2. Query: Préstamos cuyo RETIRO fue en el rango de fechas
-    prestamos = PrestamoLlave.objects.filter(
-        fecha_hora_retiro__range=[fecha_inicio_dt, fecha_fin_dt]
-    ).select_related(
-        'llave__vehiculo', 
-        'usuario_retira'
-    ).order_by('-fecha_hora_retiro')
+    prestamos = (
+        PrestamoLlave.objects.filter(
+            fecha_hora_retiro__range=[fecha_inicio_dt, fecha_fin_dt]
+        )
+        .select_related("llave__vehiculo", "usuario_retira")
+        .order_by("-fecha_hora_retiro")
+    )
 
     # 3. Crear el libro de Excel
     wb = openpyxl.Workbook()
     ws = wb.active
     ws.title = "Historial Préstamos Llaves"
-    
+
     # 4. Definir las cabeceras
     headers = [
         "Código Llave",
         "Patente",
         "Quién Retiró",
         "Fecha/Hora Retiro",
-        "Fecha/Hora Devolución"
+        "Fecha/Hora Devolución",
     ]
     ws.append(headers)
-    
+
     # 5. Añadir los datos
     for item in prestamos:
-        
-        ws.append([
-            item.llave.codigo_interno,
-            item.llave.vehiculo.patente,
-            item.usuario_retira.get_full_name(),
-            item.fecha_hora_retiro.replace(tzinfo=None),
-            item.fecha_hora_devolucion.replace(tzinfo=None) if item.fecha_hora_devolucion else "Aún Prestada"
-        ])
-        
+
+        ws.append(
+            [
+                item.llave.codigo_interno,
+                item.llave.vehiculo.patente,
+                item.usuario_retira.get_full_name(),
+                item.fecha_hora_retiro.replace(tzinfo=None),
+                (
+                    item.fecha_hora_devolucion.replace(tzinfo=None)
+                    if item.fecha_hora_devolucion
+                    else "Aún Prestada"
+                ),
+            ]
+        )
+
         # Formatear fechas
-        ws.cell(row=ws.max_row, column=4).number_format = 'DD/MM/YYYY HH:MM'
+        ws.cell(row=ws.max_row, column=4).number_format = "DD/MM/YYYY HH:MM"
         if item.fecha_hora_devolucion:
-            ws.cell(row=ws.max_row, column=5).number_format = 'DD/MM/YYYY HH:MM'
-        
+            ws.cell(row=ws.max_row, column=5).number_format = "DD/MM/YYYY HH:MM"
+
     # 6. Preparar la respuesta HTTP
     response = HttpResponse(
-        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     )
-    response['Content-Disposition'] = f'attachment; filename="Reporte_Historial_Llaves_{fecha_inicio_str}_a_{fecha_fin_str}.xlsx"'
+    response["Content-Disposition"] = (
+        f'attachment; filename="Reporte_Historial_Llaves_{fecha_inicio_str}_a_{fecha_fin_str}.xlsx"'
+    )
     wb.save(response)
     return response
 
+
 # NUEVA VISTA 2: REPORTE INVENTARIO DE LLAVES (PDF)
-@api_view(['GET'])
+@api_view(["GET"])
 @permission_classes([IsAuthenticated, IsAdministrativo])
 def exportar_inventario_llaves_pdf(request):
     """
     Genera un reporte PDF (Snapshot) del estado actual de
     todas las llaves en el inventario. No usa filtros de fecha.
     """
-    
+
     # 1. Query: TODAS las llaves
-    llaves = LlaveVehiculo.objects.all().select_related(
-        "vehiculo", 
-        "poseedor_actual"
-    ).order_by('vehiculo__patente', 'codigo_interno')
+    llaves = (
+        LlaveVehiculo.objects.all()
+        .select_related("vehiculo", "poseedor_actual")
+        .order_by("vehiculo__patente", "codigo_interno")
+    )
 
     # 2. Preparar el PDF en memoria
     buffer = BytesIO()
     doc = SimpleDocTemplate(buffer, pagesize=letter)
     elements = []
-    
+
     styles = getSampleStyleSheet()
-    
+
     # 3. Títulos del PDF
     fecha_actual = timezone.now().strftime("%d/%m/%Y %H:%M:%S")
-    elements.append(Paragraph("Reporte de Inventario de Llaves (Pañol)", styles['h1']))
-    elements.append(Paragraph(f"Generado el: {fecha_actual}", styles['Normal']))
-    elements.append(Paragraph(f"Total Llaves: {llaves.count()}", styles['Normal']))
-    elements.append(Paragraph(" ", styles['Normal'])) # Espacio
+    elements.append(Paragraph("Reporte de Inventario de Llaves (Pañol)", styles["h1"]))
+    elements.append(Paragraph(f"Generado el: {fecha_actual}", styles["Normal"]))
+    elements.append(Paragraph(f"Total Llaves: {llaves.count()}", styles["Normal"]))
+    elements.append(Paragraph(" ", styles["Normal"]))  # Espacio
 
     # 4. Preparar datos para la tabla
-    data = [
-        ["Código Interno", "Patente", "Tipo", "Estado Actual", "Poseedor Actual"]
-    ]
-    
+    data = [["Código Interno", "Patente", "Tipo", "Estado Actual", "Poseedor Actual"]]
+
     for llave in llaves:
-        
+
         poseedor = "N/A"
         if llave.estado == LlaveVehiculo.Estado.PRESTADA and llave.poseedor_actual:
             poseedor = llave.poseedor_actual.get_full_name()
         elif llave.estado == LlaveVehiculo.Estado.EN_BODEGA:
             poseedor = "En Pañol"
-        
-        data.append([
-            llave.codigo_interno,
-            llave.vehiculo.patente,
-            llave.get_tipo_display(),
-            llave.get_estado_display(),
-            poseedor
-        ])
+
+        data.append(
+            [
+                llave.codigo_interno,
+                llave.vehiculo.patente,
+                llave.get_tipo_display(),
+                llave.get_estado_display(),
+                poseedor,
+            ]
+        )
 
     # 5. Crear y Estilizar la Tabla (similar al otro PDF)
-    table = Table(data, colWidths=[100, 100, 80, 80, 140]) # Ajustar anchos
-    style = TableStyle([
-        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor("#2d3748")), # Fondo cabecera
-        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-        ('BACKGROUND', (0, 1), (-1, -1), colors.HexColor("#4a5568")), # Fondo filas
-        ('TEXTCOLOR', (0, 1), (-1, -1), colors.whitesmoke),
-        ('GRID', (0, 0), (-1, -1), 1, colors.black)
-    ])
+    table = Table(data, colWidths=[100, 100, 80, 80, 140])  # Ajustar anchos
+    style = TableStyle(
+        [
+            (
+                "BACKGROUND",
+                (0, 0),
+                (-1, 0),
+                colors.HexColor("#2d3748"),
+            ),  # Fondo cabecera
+            ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),
+            ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+            ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+            ("BOTTOMPADDING", (0, 0), (-1, 0), 12),
+            ("BACKGROUND", (0, 1), (-1, -1), colors.HexColor("#4a5568")),  # Fondo filas
+            ("TEXTCOLOR", (0, 1), (-1, -1), colors.whitesmoke),
+            ("GRID", (0, 0), (-1, -1), 1, colors.black),
+        ]
+    )
     table.setStyle(style)
     elements.append(table)
 
     # 6. Construir el PDF
     doc.build(elements)
-    
+
     # 7. Crear la respuesta HTTP
     buffer.seek(0)
-    response = HttpResponse(buffer, content_type='application/pdf')
+    response = HttpResponse(buffer, content_type="application/pdf")
     filename = f"Snapshot_Inventario_Llaves_{timezone.now().strftime('%Y%m%d')}.pdf"
-    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    response["Content-Disposition"] = f'attachment; filename="{filename}"'
     return response
 
 
 # NUEVA VISTA 1: REPORTE DE FRECUENCIA DE FALLAS (EXCEL)
-@api_view(['GET'])
+@api_view(["GET"])
 @permission_classes([IsAuthenticated, IsAdministrativo])
 def exportar_frecuencia_fallas(request):
     """
     Exporta un ranking de los vehículos que más han ingresado al taller,
     filtrado por fecha de INGRESO.
     """
-    
+
     # 1. Obtener filtros de fecha
-    fecha_inicio_str = request.query_params.get('fecha_inicio', None)
-    fecha_fin_str = request.query_params.get('fecha_fin', None)
-    
+    fecha_inicio_str = request.query_params.get("fecha_inicio", None)
+    fecha_fin_str = request.query_params.get("fecha_fin", None)
+
     if not fecha_inicio_str or not fecha_fin_str:
         return HttpResponse("Error: Faltan filtros de fecha.", status=400)
-        
+
     try:
         fecha_inicio_dt = datetime.strptime(fecha_inicio_str, "%Y-%m-%d").date()
         fecha_fin_dt = datetime.combine(
-            datetime.strptime(fecha_fin_str, "%Y-%m-%d").date(),
-            time.max
+            datetime.strptime(fecha_fin_str, "%Y-%m-%d").date(), time.max
         )
     except ValueError:
         return HttpResponse("Error: Formato de fecha inválido.", status=400)
 
     # 2. Query: Agrupar por Vehículo y contar Órdenes (ingresos)
-    frecuencia = Orden.objects.filter(
-        fecha_ingreso__range=[fecha_inicio_dt, fecha_fin_dt]
-    ).values(
-        'vehiculo__patente',
-        'vehiculo__chofer__first_name',
-        'vehiculo__chofer__last_name'
-    ).annotate(
-        numero_de_ingresos=Count('id')
-    ).order_by('-numero_de_ingresos')
+    frecuencia = (
+        Orden.objects.filter(fecha_ingreso__range=[fecha_inicio_dt, fecha_fin_dt])
+        .values(
+            "vehiculo__patente",
+            "vehiculo__chofer__first_name",
+            "vehiculo__chofer__last_name",
+        )
+        .annotate(numero_de_ingresos=Count("id"))
+        .order_by("-numero_de_ingresos")
+    )
 
     # 3. Crear el libro de Excel
     wb = openpyxl.Workbook()
     ws = wb.active
     ws.title = "Frecuencia de Fallas"
-    
+
     # 4. Definir las cabeceras
-    headers = [
-        "Patente",
-        "Chofer Asignado",
-        "Número de Ingresos al Taller"
-    ]
+    headers = ["Patente", "Chofer Asignado", "Número de Ingresos al Taller"]
     ws.append(headers)
-    
+
     # 5. Añadir los datos
     for item in frecuencia:
         chofer_nombre = f"{item['vehiculo__chofer__first_name'] or ''} {item['vehiculo__chofer__last_name'] or ''}".strip()
-        
-        ws.append([
-            item['vehiculo__patente'],
-            chofer_nombre if chofer_nombre else "N/A",
-            item['numero_de_ingresos']
-        ])
-        
+
+        ws.append(
+            [
+                item["vehiculo__patente"],
+                chofer_nombre if chofer_nombre else "N/A",
+                item["numero_de_ingresos"],
+            ]
+        )
+
     # 6. Preparar la respuesta HTTP
     response = HttpResponse(
-        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     )
-    response['Content-Disposition'] = f'attachment; filename="Reporte_Frecuencia_Fallas_{fecha_inicio_str}_a_{fecha_fin_str}.xlsx"'
+    response["Content-Disposition"] = (
+        f'attachment; filename="Reporte_Frecuencia_Fallas_{fecha_inicio_str}_a_{fecha_fin_str}.xlsx"'
+    )
     wb.save(response)
     return response
 
+
 # NUEVA VISTA 2: HOJA DE VIDA DEL VEHÍCULO (PDF)
-@api_view(['GET'])
+@api_view(["GET"])
 @permission_classes([IsAuthenticated, IsAdministrativo])
 def exportar_hoja_vida_vehiculo_pdf(request):
     """
     Genera un reporte PDF con el historial completo (Hoja de Vida)
     de un vehículo específico, usando la patente.
     """
-    
+
     # 1. Obtener filtro de PATENTE
-    patente = request.query_params.get('patente', None)
+    patente = request.query_params.get("patente", None)
     if not patente:
         return HttpResponse("Error: Debe proporcionar una patente.", status=400)
-        
+
     # 2. Obtener el vehículo y su historial
     vehiculo = get_object_or_404(Vehiculo, patente=patente)
-    ordenes = Orden.objects.filter(
-        vehiculo=vehiculo
-    ).prefetch_related(
-        'items__producto', 'items__servicio' # Optimización clave
-    ).order_by('-fecha_ingreso')
+    ordenes = (
+        Orden.objects.filter(vehiculo=vehiculo)
+        .prefetch_related("items__producto", "items__servicio")  # Optimización clave
+        .order_by("-fecha_ingreso")
+    )
 
     # 3. Preparar el PDF en memoria
     buffer = BytesIO()
-    doc = SimpleDocTemplate(buffer, pagesize=letter, topMargin=72, bottomMargin=72, leftMargin=72, rightMargin=72)
+    doc = SimpleDocTemplate(
+        buffer,
+        pagesize=letter,
+        topMargin=72,
+        bottomMargin=72,
+        leftMargin=72,
+        rightMargin=72,
+    )
     elements = []
-    
+
     styles = getSampleStyleSheet()
-    styles['h1'].alignment = 1 # Centrado
-    styles['h2'].fontSize = 14
-    styles['h2'].spaceAfter = 10
-    
+    styles["h1"].alignment = 1  # Centrado
+    styles["h2"].fontSize = 14
+    styles["h2"].spaceAfter = 10
+
     # 4. Títulos del PDF
     fecha_actual = timezone.now().strftime("%d/%m/%Y")
-    chofer_nombre = vehiculo.chofer.get_full_name() if vehiculo.chofer else "Sin chofer asignado"
-    
-    elements.append(Paragraph("Hoja de Vida del Vehículo", styles['h1']))
+    chofer_nombre = (
+        vehiculo.chofer.get_full_name() if vehiculo.chofer else "Sin chofer asignado"
+    )
+
+    elements.append(Paragraph("Hoja de Vida del Vehículo", styles["h1"]))
     elements.append(Spacer(1, 24))
-    
+
     # 5. Datos del Vehículo
     data_vehiculo = [
-        ["Patente:", vehiculo.patente, "Marca/Modelo:", f"{vehiculo.marca} {vehiculo.modelo}"],
+        [
+            "Patente:",
+            vehiculo.patente,
+            "Marca/Modelo:",
+            f"{vehiculo.marca} {vehiculo.modelo}",
+        ],
         ["Chofer Actual:", chofer_nombre, "Año:", str(vehiculo.anio)],
     ]
     table_vehiculo = Table(data_vehiculo, colWidths=[100, 150, 100, 150])
-    table_vehiculo.setStyle(TableStyle([
-        ('FONTNAME', (0, 0), (-1, -1), 'Helvetica-Bold'),
-        ('ALIGN', (0, 0), (0, -1), 'RIGHT'),
-        ('ALIGN', (2, 0), (2, -1), 'RIGHT'),
-        ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
-        ('BOX', (0, 0), (-1, -1), 1, colors.black),
-    ]))
+    table_vehiculo.setStyle(
+        TableStyle(
+            [
+                ("FONTNAME", (0, 0), (-1, -1), "Helvetica-Bold"),
+                ("ALIGN", (0, 0), (0, -1), "RIGHT"),
+                ("ALIGN", (2, 0), (2, -1), "RIGHT"),
+                ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
+                ("BOX", (0, 0), (-1, -1), 1, colors.black),
+            ]
+        )
+    )
     elements.append(table_vehiculo)
     elements.append(Spacer(1, 24))
 
@@ -2858,51 +3040,74 @@ def exportar_hoja_vida_vehiculo_pdf(request):
     for orden in ordenes:
         fecha_ingreso = orden.fecha_ingreso.strftime("%d/%m/%Y %H:%M")
         estado_orden = orden.get_estado_display()
-        
-        elements.append(Paragraph(f"Orden #{orden.id} - Ingreso: {fecha_ingreso} (Estado: {estado_orden})", styles['h2']))
-        
+
+        elements.append(
+            Paragraph(
+                f"Orden #{orden.id} - Ingreso: {fecha_ingreso} (Estado: {estado_orden})",
+                styles["h2"],
+            )
+        )
+
         # Falla y Diagnóstico
         falla_cliente = orden.descripcion_falla or "Sin descripción"
         diagnostico_tec = orden.diagnostico_tecnico or "Sin diagnóstico"
-        elements.append(Paragraph(f"<b>Falla (Cliente):</b> {falla_cliente}", styles['Normal']))
-        elements.append(Paragraph(f"<b>Diagnóstico (Técnico):</b> {diagnostico_tec}", styles['Normal']))
+        elements.append(
+            Paragraph(f"<b>Falla (Cliente):</b> {falla_cliente}", styles["Normal"])
+        )
+        elements.append(
+            Paragraph(
+                f"<b>Diagnóstico (Técnico):</b> {diagnostico_tec}", styles["Normal"]
+            )
+        )
         elements.append(Spacer(1, 12))
 
         # 7. Tabla de Items (Repuestos y Servicios) para ESTA orden
-        items_data = [["Cantidad", "Ítem (Repuesto/Servicio)", "Precio Unit.", "Subtotal"]]
-        
+        items_data = [
+            ["Cantidad", "Ítem (Repuesto/Servicio)", "Precio Unit.", "Subtotal"]
+        ]
+
         items_orden = orden.items.all()
         if not items_orden:
-            items_data.append(["-", "Esta orden no registró repuestos ni servicios.", "-", "-"])
+            items_data.append(
+                ["-", "Esta orden no registró repuestos ni servicios.", "-", "-"]
+            )
         else:
             for item in items_orden:
-                nombre_item = item.producto.nombre if item.producto else item.servicio.nombre
-                items_data.append([
-                    f"{item.cantidad:.0f}",
-                    nombre_item,
-                    f"${item.precio_unitario:,.0f}",
-                    f"${item.subtotal:,.0f}"
-                ])
-        
+                nombre_item = (
+                    item.producto.nombre if item.producto else item.servicio.nombre
+                )
+                items_data.append(
+                    [
+                        f"{item.cantidad:.0f}",
+                        nombre_item,
+                        f"${item.precio_unitario:,.0f}",
+                        f"${item.subtotal:,.0f}",
+                    ]
+                )
+
         # Estilo de la tabla de ítems
         table_items = Table(items_data, colWidths=[60, 260, 80, 80])
-        table_items.setStyle(TableStyle([
-            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor("#4a5568")),
-            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-            ('GRID', (0, 0), (-1, -1), 0.5, colors.black),
-            ('ALIGN', (0, 1), (0, -1), 'CENTER'),
-            ('ALIGN', (2, 1), (-1, -1), 'RIGHT'),
-        ]))
+        table_items.setStyle(
+            TableStyle(
+                [
+                    ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#4a5568")),
+                    ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),
+                    ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+                    ("GRID", (0, 0), (-1, -1), 0.5, colors.black),
+                    ("ALIGN", (0, 1), (0, -1), "CENTER"),
+                    ("ALIGN", (2, 1), (-1, -1), "RIGHT"),
+                ]
+            )
+        )
         elements.append(table_items)
-        elements.append(Spacer(1, 24)) # Espacio grande entre órdenes
+        elements.append(Spacer(1, 24))  # Espacio grande entre órdenes
 
     # 8. Construir el PDF
     doc.build(elements)
-    
+
     # 9. Crear la respuesta HTTP
     buffer.seek(0)
-    response = HttpResponse(buffer, content_type='application/pdf')
+    response = HttpResponse(buffer, content_type="application/pdf")
     filename = f"Hoja_De_Vida_{patente}.pdf"
-    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    response["Content-Disposition"] = f'attachment; filename="{filename}"'
     return response

@@ -12,8 +12,50 @@ import re
 # Modelos locales
 from .models import (
     Vehiculo, Agendamiento, Orden, OrdenHistorialEstado, OrdenDocumento, 
-    Notificacion, Producto, OrdenItem, LlaveVehiculo, PrestamoLlave, LlaveHistorialEstado, Taller
+    Notificacion, Producto, OrdenItem, LlaveVehiculo, PrestamoLlave, LlaveHistorialEstado, Taller,AgendamientoDocumento
 )
+
+import os
+from django.core.exceptions import ValidationError as DjangoValidationError
+
+
+
+# ======================================================================
+# 💡 VALIDADORES DE ARCHIVOS (NUEVO)
+# ======================================================================
+
+def validate_image_size(file):
+    """Validador solo para el tamaño de la imagen (10MB)."""
+    MAX_SIZE = 10 * 1024 * 1024  # 10MB
+    if file.size > MAX_SIZE:
+        # Usamos DjangoValidationError, DRF lo captura
+        raise DjangoValidationError(f"El tamaño de la imagen ({file.size // (1024*1024)}MB) supera el límite de 10MB.")
+    return file
+
+def validate_file_restrictions(file):
+    """Validador para tamaño (10MB) y tipo de archivo (Imágenes, PDF, PPT, Excel)."""
+    # 1. Validación de Tamaño (10MB)
+    MAX_SIZE = 10 * 1024 * 1024  # 10MB
+    if file.size > MAX_SIZE:
+        raise DjangoValidationError(f"El tamaño del archivo ({file.size // (1024*1024)}MB) supera el límite de 10MB.")
+
+    # 2. Validación de Extensión
+    ext = os.path.splitext(file.name)[1].lower()
+    ALLOWED_EXTENSIONS = [
+        # Imágenes
+        '.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp', '.svg',
+        # Documentos
+        '.pdf',
+        '.ppt', '.pptx',  # PowerPoint
+        '.xls', '.xlsx'   # Excel
+    ]
+    
+    if ext not in ALLOWED_EXTENSIONS:
+        raise DjangoValidationError(f"Extensión no permitida ('{ext}'). Solo se aceptan: imágenes, PDF, PowerPoint y Excel.")
+    
+    return file
+
+# ======================================================================
 
 
 User = get_user_model()
@@ -331,7 +373,15 @@ class AgendamientoSerializer(serializers.ModelSerializer):
     chofer_nombre = serializers.CharField(source='chofer_asociado.get_full_name', read_only=True)
     mecanico_nombre = serializers.CharField(source='mecanico_asignado.get_full_name', read_only=True, default='Sin asignar')
 
-    imagen_averia = serializers.ImageField(required=False, allow_null=True)
+    
+    imagen_averia = serializers.FileField( 
+        required=False, 
+        allow_null=True,
+        
+        validators=[validate_file_restrictions] 
+    )
+    
+
     vehiculo = serializers.PrimaryKeyRelatedField(queryset=Vehiculo.activos.all())
 
     class Meta:
@@ -376,6 +426,41 @@ class OrdenDocumentoSerializer(serializers.ModelSerializer):
         model = OrdenDocumento
         fields = ['id', 'tipo', 'descripcion', 'archivo', 'archivo_url', 'fecha', 'subido_por_nombre', 'estado_en_carga']
         read_only_fields = ['subido_por_nombre', 'fecha', 'archivo_url', 'estado_en_carga']
+        
+        
+        # Aplica el validador de tamaño Y extensión al campo 'archivo'
+        extra_kwargs = {
+            'archivo': {'validators': [validate_file_restrictions]}
+        }
+        
+
+    def get_archivo_url(self, obj):
+        """Devuelve la URL absoluta del archivo (si existe)."""
+        request = self.context.get('request')
+        if obj.archivo and hasattr(obj.archivo, 'url'):
+            return request.build_absolute_uri(obj.archivo.url)
+        return None
+    
+    
+class AgendamientoDocumentoSerializer(serializers.ModelSerializer):
+    """
+    Serializador para listar y subir documentos de un agendamiento.
+    """
+    subido_por_nombre = serializers.CharField(source='subido_por.get_full_name', read_only=True)
+    archivo_url = serializers.SerializerMethodField()
+
+    class Meta:
+        model = AgendamientoDocumento
+        fields = [
+            'id', 'agendamiento', 'tipo', 'descripcion', 'archivo', 
+            'archivo_url', 'fecha', 'subido_por_nombre'
+        ]
+        read_only_fields = ['subido_por_nombre', 'fecha', 'archivo_url']
+
+        # --- AQUÍ APLICAMOS LA VALIDACIÓN ---
+        extra_kwargs = {
+            'archivo': {'validators': [validate_file_restrictions]}
+        }
 
     def get_archivo_url(self, obj):
         """Devuelve la URL absoluta del archivo (si existe)."""
@@ -639,12 +724,11 @@ class HistorialSeguridadSerializer(serializers.ModelSerializer):
             'fecha_ingreso',      
             'fecha_entrega_real'  
         )
-
+ 
     def get_chofer_nombre(self, obj):
         if obj.agendamiento_origen and obj.agendamiento_origen.chofer_asociado:
             return obj.agendamiento_origen.chofer_asociado.get_full_name()
         
         if obj.vehiculo and obj.vehiculo.chofer:
              return obj.vehiculo.chofer.get_full_name()
-        return "No asignado"
-    
+        return "No asignado" 

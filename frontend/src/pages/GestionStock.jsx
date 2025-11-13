@@ -1,16 +1,15 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import apiClient from '/src/api/axios.js';
-import styles from '/src/css/gestionllaves.module.css'; 
-import { Package, Plus, Edit, Search, Save, XCircle } from 'lucide-react';
+import styles from '../css/gestionstock.module.css';
 import AlertModal from '/src/components/modals/AlertModal.jsx';
-
+import { Package, Plus, Edit, Search, Save, XCircle, Hash, Bookmark, DollarSign, Boxes } from 'lucide-react';
 
 const RepuestoModal = ({ isOpen, onClose, onSave, producto, onAlert }) => {
     const [formData, setFormData] = useState({
         sku: '',
         nombre: '',
         marca: '',
-        descripcion: '',
+        descripcion: '', // Aunque no lo mostremos, lo mantenemos
         precio_venta: 0,
         stock: 0,
     });
@@ -18,11 +17,9 @@ const RepuestoModal = ({ isOpen, onClose, onSave, producto, onAlert }) => {
 
     useEffect(() => {
         if (producto) {
-            
             setFormData(producto);
             setIsEditMode(true);
         } else {
-            
             setFormData({
                 sku: '', nombre: '', marca: '', descripcion: '', precio_venta: 0, stock: 0,
             });
@@ -35,97 +32,138 @@ const RepuestoModal = ({ isOpen, onClose, onSave, producto, onAlert }) => {
         let finalValue = value;
 
         if (type === 'number') {
-            finalValue = value === '' ? '' : parseFloat(value);
-            if (isNaN(finalValue) || finalValue < 0) finalValue = 0;
+            // Permitir campo vacío temporalmente
+            if (value === '') {
+                finalValue = '';
+            } else {
+                finalValue = parseFloat(value);
+                if (isNaN(finalValue) || finalValue < 0) finalValue = 0;
+            }
         }
 
         setFormData(prev => ({ ...prev, [name]: finalValue }));
     };
 
+    // Manejar el 'blur' para campos numéricos
+    const handleBlur = (e) => {
+        const { name, value } = e.target;
+        if (e.target.type === 'number' && value === '') {
+            setFormData(prev => ({ ...prev, [name]: 0 }));
+        }
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
-        
-        
+
         if (!formData.sku || !formData.nombre) {
             onAlert("SKU y Nombre son obligatorios.");
             return;
         }
 
+        // Asegurarnos de que los números no se envíen vacíos
+        const dataToSave = {
+            ...formData,
+            precio_venta: parseFloat(formData.precio_venta) || 0,
+            stock: parseInt(formData.stock, 10) || 0,
+        };
+
         try {
             if (isEditMode) {
-                
-                
-                await apiClient.patch(`/productos/${formData.sku}/`, formData);
+                await apiClient.patch(`/productos/${dataToSave.sku}/`, dataToSave);
             } else {
-                
-                await apiClient.post('/productos/', formData);
+                await apiClient.post('/productos/', dataToSave);
             }
-            onSave(); 
+            onSave();
         } catch (err) {
             const errorMsg = err.response?.data?.sku?.[0] || err.response?.data?.error || "Error al guardar.";
             onAlert(errorMsg);
         }
     };
 
+    // No renderizar nada si no está abierto
+    if (!isOpen) return null;
+
     return (
         <div className={styles.modalOverlay}>
             <div className={styles.modalContent}>
                 <h2>{isEditMode ? 'Editar Repuesto' : 'Añadir Nuevo Repuesto'}</h2>
+
                 <form onSubmit={handleSubmit}>
-                    <div className={styles.formField}>
-                        <label>SKU (Código Único)</label>
-                        <input
-                            type="text"
-                            name="sku"
-                            value={formData.sku}
-                            onChange={handleChange}
-                            disabled={isEditMode} 
-                            required
-                        />
-                    </div>
-                    <div className={styles.formField}>
-                        <label>Nombre del Repuesto</label>
-                        <input
-                            type="text"
-                            name="nombre"
-                            value={formData.nombre}
-                            onChange={handleChange}
-                            required
-                        />
-                    </div>
-                    <div className={styles.formField}>
-                        <label>Marca (Opcional)</label>
-                        <input
-                            type="text"
-                            name="marca"
-                            value={formData.marca}
-                            onChange={handleChange}
-                        />
-                    </div>
-                    <div className={styles.formField}>
-                        <label>Precio de Venta</label>
-                        <input
-                            type="number"
-                            name="precio_venta"
-                            value={formData.precio_venta}
-                            onChange={handleChange}
-                            min="0"
-                        />
-                    </div>
-                    <div className={styles.formField}>
-                        <label>Stock Actual</label>
-                        <input
-                            type="number"
-                            name="stock"
-                            value={formData.stock}
-                            onChange={handleChange}
-                            min="0"
-                        />
-                    </div>
-                    
+                    {/* Usamos el grid layout */}
+                    <div className={styles.formGrid}>
+
+                        {/* Campo SKU */}
+                        <div className={styles.formField}>
+                            <label><Hash size={16} /> SKU (Código Único)</label>
+                            <input
+                                type="text"
+                                name="sku"
+                                value={formData.sku}
+                                onChange={handleChange}
+                                disabled={isEditMode}
+                                required
+                                className={styles.formInput} 
+                            />
+                        </div>
+
+                        {/* Campo Nombre */}
+                        <div className={styles.formField}>
+                            <label><Package size={16} /> Nombre del Repuesto</label>
+                            <input
+                                type="text"
+                                name="nombre"
+                                value={formData.nombre}
+                                onChange={handleChange}
+                                required
+                                className={styles.formInput} 
+                            />
+                        </div>
+
+                        {/* Campo Marca (ocupando 2 columnas) */}
+                        <div className={`${styles.formField} ${styles.spanFull}`}> {/* <-- CLASE SPAN */}
+                            <label><Bookmark size={16} /> Marca (Opcional)</label>
+                            <input
+                                type="text"
+                                name="marca"
+                                value={formData.marca}
+                                Añadido onChange={handleChange}
+                                className={styles.formInput} 
+                            />
+                        </div>
+
+                        {/* Campo Precio */}
+                        <div className={styles.formField}>
+                            <label><DollarSign size={16} /> Precio de Venta</label>
+                            <input
+                                type="number"
+                                name="precio_venta"
+                                value={formData.precio_venta}
+                                onChange={handleChange}
+                                onBlur={handleBlur} 
+                                min="0"
+                                className={styles.formInput} 
+                            />
+                        </div>
+
+                        {/* Campo Stock */}
+                        <div className={styles.formField}>
+                            <label><Boxes size={16} /> Stock Actual</label>
+                            <input
+                                type="number"
+                                name="stock"
+                                value={formData.stock}
+                                onChange={handleChange}
+                                onBlur={handleBlur} 
+                                min="0"
+                                className={styles.formInput} 
+                            />
+                        </div>
+
+                    </div> {/* Fin de .formGrid */}
+
                     <div className={styles.modalActions}>
                         <button type="button" className={styles.cancelButton} onClick={onClose}>
-                            <XCircle size={16} /> Cancelar
+                <XCircle size={16} /> Cancelar
                         </button>
                         <button type="submit" className={styles.saveButton}>
                             <Save size={16} /> Guardar Repuesto
@@ -145,12 +183,12 @@ export default function GestionStock() {
     const [error, setError] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
 
-    
+
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [productoSeleccionado, setProductoSeleccionado] = useState(null);
     const [alert, setAlert] = useState({ isOpen: false, message: '', intent: 'danger' });
 
-    
+
     const fetchProductos = async () => {
         setIsLoading(true);
         try {
@@ -167,7 +205,7 @@ export default function GestionStock() {
         fetchProductos();
     }, []);
 
-    
+
     const filteredProductos = useMemo(() => {
         return productos.filter(p =>
             p.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -176,7 +214,7 @@ export default function GestionStock() {
         );
     }, [productos, searchTerm]);
 
-    
+
     const handleOpenModal = (producto = null) => {
         setProductoSeleccionado(producto);
         setIsModalOpen(true);
@@ -189,11 +227,11 @@ export default function GestionStock() {
 
     const handleSaveSuccess = () => {
         handleCloseModal();
-        fetchProductos(); 
+        fetchProductos();
         showAlert("¡Repuesto guardado con éxito!", "success");
     };
 
-    
+
     const showAlert = (message, intent = 'danger') => {
         setAlert({ isOpen: true, message, intent });
     };
@@ -247,7 +285,7 @@ export default function GestionStock() {
                                         <td>{prod.marca || '---'}</td>
                                         <td>${new Intl.NumberFormat('es-CL').format(prod.precio_venta)}</td>
                                         <td>
-                                            <span style={{fontWeight: 'bold', color: prod.stock < 5 ? '#b91c1c' : '#16a34a'}}>
+                                            <span style={{ fontWeight: 'bold', color: prod.stock < 5 ? '#b91c1c' : '#16a34a' }}>
                                                 {prod.stock}
                                             </span>
                                         </td>
@@ -276,10 +314,10 @@ export default function GestionStock() {
                     onClose={handleCloseModal}
                     onSave={handleSaveSuccess}
                     producto={productoSeleccionado}
-                    onAlert={showAlert} 
+                    onAlert={showAlert}
                 />
             )}
-            
+
             <AlertModal
                 isOpen={alert.isOpen}
                 onClose={closeAlert}

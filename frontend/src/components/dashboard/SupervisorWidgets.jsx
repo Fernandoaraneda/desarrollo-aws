@@ -171,16 +171,7 @@ export default function SupervisorWidgets() {
       <div className={styles.topRowContainer}>
 
 
-        <div className={styles.alertWidget}>
-          <Bell />
-          <div>
-            <p>
-              Tienes <strong>{pendientesAprobacion}</strong> agendamiento(s)
-              <br />
-              pendientes de aprobación.
-            </p>
-          </div>
-        </div>
+        
 
         <div className={styles.controlsToolbar}>
           <button
@@ -223,19 +214,19 @@ export default function SupervisorWidgets() {
       </div>
 
       <div className={styles.dashboardGrid}>
-
+        <KpiCard
+          title="Pendientes de Aprobación"
+          value={pendientesAprobacion}  
+          icon={<Calendar />}
+          color="#10b981"  
+        />
         <KpiCard
           title="Vehículos en Taller"
           value={kpis?.vehiculosEnTaller || 0}
           icon={<Truck />}
           color="#3b82f6"
         />
-        <KpiCard
-          title="Agendamientos para Hoy"
-          value={kpis?.agendamientosHoy || 0}
-          icon={<Calendar />}
-          color="#10b981"
-        />
+
         <KpiCard
           title="Órdenes Finalizadas (Mes)"
           value={kpis?.ordenesFinalizadasMes || 0}

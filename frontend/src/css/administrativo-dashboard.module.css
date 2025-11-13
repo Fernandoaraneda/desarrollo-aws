@@ -2,7 +2,7 @@
 .topRowContainer {
   display: flex;
   flex-wrap: wrap;
-  justify-content: space-between;
+
   align-items: flex-start;
   gap: 1.5rem;
   margin-bottom: 1.5rem;
@@ -43,11 +43,13 @@
 
 .controlsToolbar {
   flex: 1;
+  /* <-- Asegúrate de que diga '1' (no '0') */
   min-width: 300px;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
+  /* <-- CAMBIA ESTO (antes era 'space-between') */
   gap: 1rem;
   padding: 2rem;
   background-color: white;

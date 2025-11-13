@@ -54,6 +54,8 @@ class Command(BaseCommand):
         grupos_nombres = [
             'admin', 'Chofer', 'Mecanico', 'Supervisor', 
             'Seguridad', 'Administrativo', 'Control Llaves',"Repuestos",
+            # --- AÑADIDO: Asegúrate de tener el grupo 'Grua' ---
+            'Grua' 
         ]
         grupos = {}
         try:
@@ -105,6 +107,9 @@ class Command(BaseCommand):
         administrativo = crear_o_actualizar_usuario('administrativo', 'administrativo@taller.cl', 'Maria', 'Gonzalez', grupos['Administrativo'])
         control_llaves = crear_o_actualizar_usuario('llaves', 'llaves@taller.cl', 'Encargado', 'Pañol', grupos['Control Llaves'])
         repuestos_user = crear_o_actualizar_usuario('repuestos', 'repuestos@taller.cl', 'Diego', 'Muñoz', grupos['Repuestos'])
+        # --- AÑADIDO: Usuario de Grúa ---
+        crear_o_actualizar_usuario('grua1', 'grua@taller.cl', 'Pedro', 'Grúas', grupos['Grua'])
+        
         chofer1 = crear_o_actualizar_usuario('chofer1', 'chofer1@taller.cl', 'Luis', 'Rojas', grupos['Chofer'])
         chofer2 = crear_o_actualizar_usuario('chofer2', 'chofer2@taller.cl', 'Pedro', 'Araya', grupos['Chofer'])
         self.stdout.write(self.style.SUCCESS(f"Usuarios base verificados o creados (pass: '{default_password}')."))
@@ -134,6 +139,8 @@ class Command(BaseCommand):
                     'marca': v['marca'],
                     'modelo': v['modelo'],
                     'chofer': v['chofer'],
+                    # --- AÑADIDO: Asignar taller base ---
+                    'taller': taller_maipu, 
                     # Los 'defaults' solo se usan si el vehículo es NUEVO
                     'anio': random.randint(2018, 2024),
                     'kilometraje': random.randint(10000, 150000),
@@ -157,6 +164,10 @@ class Command(BaseCommand):
                 except Exception as e:
                     self.stdout.write(self.style.WARNING(f"No se pudieron crear llaves para {vehiculo.patente}: {e}"))
             else:
+                # --- AÑADIDO: Asegurarse de que los vehículos existentes también tengan taller ---
+                if not vehiculo.taller:
+                    vehiculo.taller = taller_maipu
+                    vehiculo.save()
                 vehiculos_actualizados_count += 1
         
         self.stdout.write(self.style.SUCCESS(f"{vehiculos_creados_count} vehículos nuevos creados, {vehiculos_actualizados_count} vehículos existentes verificados."))
@@ -165,10 +176,13 @@ class Command(BaseCommand):
    
         Producto.objects.get_or_create(sku='ACE-10W40', defaults={'nombre': 'Aceite Motor 10W40', 'precio_venta': 12500, 'stock': 50})
         Producto.objects.get_or_create(sku='FIL-AIRE-01', defaults={'nombre': 'Filtro de Aire Motor', 'precio_venta': 8990, 'stock': 30})
+        # --- AÑADIDO: El producto que faltaba (con un SKU más estándar) ---
+        Producto.objects.get_or_create(sku='FRE-LIQ-01', defaults={'nombre': 'Líquido de Frenos', 'precio_venta': 6500, 'stock': 40})
+        
         Servicio.objects.get_or_create(nombre='Cambio de Aceite', defaults={'precio_base': 25000})
         Servicio.objects.get_or_create(nombre='Alineación y Balanceo', defaults={'precio_base': 35000})
         self.stdout.write("Productos y Servicios de catálogo verificados o creados.")
 
         
         self.stdout.write(self.style.SUCCESS("\n¡Carga de datos BASE finalizada con éxito!"))
-        self.stdout.write("El sistema está limpio y listo para probar el flujo completo desde la App.") 
+        self.stdout.write("El sistema está limpio y listo para probar el flujo completo desde la App.")

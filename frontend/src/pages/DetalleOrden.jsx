@@ -405,7 +405,7 @@ export default function DetalleOrden() {
                                 <div className={styles.formRow}>
                                     <div className={styles.formField} style={{ flex: 1 }}>
                                         <label>Archivo</label>
-                                        <input type="file" onChange={e => setArchivo(e.target.files[0])} required />
+                                        <input type="file" onChange={e => setArchivo(e.target.files[0])} required accept=".jpg,.jpeg,.png,.gif,.pdf,.ppt,.pptx,.xls,.xlsx" />
                                     </div>
                                 </div>
                                 <div className={styles.formField}>

@@ -1,0 +1,271 @@
+.pageWrapper {
+    padding: 2rem;
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.header h1 {
+    font-size: 2rem;
+    font-weight: 700;
+}
+
+.tableCard {
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+    overflow: hidden;
+}
+
+.tableControls {
+    padding: 1rem 1.5rem;
+    background-color: #f9fafb;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.searchBox {
+    position: relative;
+    max-width: 400px;
+}
+
+.searchIcon {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #9ca3af;
+}
+
+.searchBox input {
+    width: 100%;
+    padding: 0.75rem 1rem 0.75rem 2.5rem;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 1rem;
+}
+
+.tableContainer {
+    width: 100%;
+    overflow-x: auto;
+}
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.table th,
+.table td {
+    padding: 1rem 1.5rem;
+    text-align: left;
+    border-bottom: 1px solid #e5e7eb;
+    white-space: nowrap;
+}
+
+.table th {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.table td {
+    font-size: 0.9rem;
+    color: #374151;
+}
+
+.actionButtons {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.actionButtons button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.9rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+    color: #000;
+}
+
+.actionButtons button:hover {
+    background-color: #f4f4f5;
+}
+
+.actionButtons button:disabled {
+    color: #a1a1aa;
+    cursor: not-allowed;
+    background-color: transparent;
+}
+
+
+.statusBadge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-weight: 600;
+    font-size: 0.8rem;
+    color: white;
+}
+
+.noResults {
+    text-align: center;
+    padding: 2rem;
+    color: #6b7280;
+}
+
+.centeredMessage {
+    text-align: center;
+    padding: 2rem;
+    font-size: 1.2rem;
+}
+
+
+.modalOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.6);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modalContent {
+    background-color: #fff;
+    padding: 2rem;
+    border-radius: 8px;
+    width: 90%;
+    max-width: 500px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    position: relative;
+    z-index: 1001;
+}
+
+.modalContent h2 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-top: 0;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.modalContent p {
+    font-size: 1rem;
+    line-height: 1.6;
+    color: #374151;
+}
+
+.formField {
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+}
+
+.formField label {
+    display: flex;
+    /* <-- AÑADIDO: para alinear el icono */
+    align-items: center;
+    /* <-- AÑADIDO */
+    gap: 0.5rem;
+    /* <-- AÑADIDO: espacio entre icono y texto */
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: #374151;
+}
+
+/* * ANTES tenías "select, textarea". 
+ * AHORA creamos una clase genérica ".formInput"
+ * y la aplicaremos a todos los campos.
+*/
+.formInput {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 1rem;
+    font-family: inherit;
+    background-color: #fff;
+    /* <-- AÑADIDO */
+    transition: border-color 0.2s, box-shadow 0.2s;
+    /* <-- AÑADIDO */
+}
+
+/* AÑADIDO: Estilo para cuando el campo está deshabilitado */
+.formInput:disabled {
+    background-color: #f3f4f6;
+    color: #6b7280;
+    cursor: not-allowed;
+}
+
+/* AÑADIDO: Estilo de foco para los inputs */
+.formInput:focus {
+    outline: none;
+    border-color: #004b93;
+    box-shadow: 0 0 0 2px rgba(0, 75, 147, 0.2);
+}
+
+
+/* --- NUEVAS CLASES PARA EL GRID --- */
+.formGrid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    /* 2 columnas */
+    gap: 0 1rem;
+    /* Espacio solo entre columnas */
+}
+
+/* Clase para un campo que ocupe las 2 columnas */
+.spanFull {
+    grid-column: span 2;
+}
+
+.modalActions {
+    margin-top: 2rem;
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+}
+
+.modalActions button {
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 6px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s, box-shadow 0.2s;
+}
+
+.cancelButton {
+    background-color: #e5e7eb;
+    color: #374151;
+}
+
+.cancelButton:hover {
+    background-color: #d1d5db;
+}
+
+.saveButton {
+    background-color: #004b93;
+    color: #ffffff;
+}
+
+.saveButton:hover {
+    background-color: #003a70;
+    box-shadow: 0 4px 8px rgba(0, 75, 147, 0.2);
+}

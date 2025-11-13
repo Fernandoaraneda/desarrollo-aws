@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line } from 'recharts';
 
-import { Truck, Calendar, Wrench, Clock, RefreshCw, Bell, Download, Package, Navigation, KeyRound, Clipboard, } from 'lucide-react';
+import { Truck, Calendar, Wrench, Clock, RefreshCw, Download, Package, Navigation, KeyRound, Clipboard, } from 'lucide-react';
 import apiClient from '../../api/axios.js';
 import styles from '../../css/administrativo-dashboard.module.css';
 import { useUserStore } from '../../store/authStore.js';
@@ -739,318 +739,11 @@ export default function AdministrativoWidgets() {
   return (
     <div className="w-full">
 
-      {/* --- INICIO: SECCIÓN CENTRO DE REPORTES --- */}
-      <div className={`${styles.card} ${styles.reportCard}`}>
-        <h2 className={styles.reportHeader}>Centro de Reportes Administrativos</h2>
-
-        {/* --- CORRECCIÓN CLAVE ---
-          Ahora, todas las 'reportSection' están DENTRO de 'reportGrid'
-        */}
-        <div className={styles.reportGrid}>
-
-          {/* --- ÁREA DE SEGURIDAD --- */}
-          <div className={styles.reportSection}>
-            <h3 className={styles.reportSectionTitle}>
-              <Truck size={18} />
-              Área de Seguridad
-            </h3>
-            <p className={styles.reportDescription}>
-              Genera la bitácora de todos los ingresos y salidas del taller.
-            </p>
-            <div className={styles.datePickers}>
-              <label>
-                Desde:
-                <input
-                  type="date"
-                  value={fechaInicio}
-                  onChange={(e) => setFechaInicio(e.target.value)}
-                  className={styles.dateInput}
-                />
-              </label>
-              <label>
-                Hasta:
-                <input
-                  type="date"
-                  value={fechaFin}
-                  onChange={(e) => setFechaFin(e.target.value)}
-                  className={styles.dateInput}
-                />
-              </label>
-            </div>
-
-            <button
-              onClick={handleDownloadSeguridad}
-              disabled={isDownloading}
-              className={styles.downloadButton}
-            >
-              {isDownloading ? (
-                <>
-                  <RefreshCw size={16} className="animate-spin" />
-                  Generando...
-                </>
-              ) : (
-                <>
-                  <Download size={16} />
-                  Descargar Bitácora (Excel)
-                </>
-              )}
-            </button>
-
-            <hr style={{ borderColor: '#4a5568', margin: '1rem 0' }} />
-
-            <p className={styles.reportDescription}>
-              Obtener una foto actual de todos los vehículos en taller.
-            </p>
-
-            <button
-              onClick={handleDownloadSnapshotPDF}
-              disabled={isDownloadingPDF}
-              className={styles.downloadButton}
-              style={{ backgroundColor: '#9B2C2C' }}
-            >
-              {isDownloadingPDF ? (
-                <>
-                  <RefreshCw size={16} className="animate-spin" />
-                  Generando...
-                </>
-              ) : (
-                <>
-                  <Download size={16} />
-                  Snapshot Vehículos en Taller (PDF)
-                </>
-              )}
-            </button>
-            {downloadError && <p className={styles.downloadError}>{downloadError}</p>}
-          </div>
-
-          {/* --- ÁREA DE GRÚAS --- */}
-          <div className={styles.reportSection}>
-            <h3 className={styles.reportSectionTitle}>
-              <Navigation size={18} />
-              Área de Grúas
-            </h3>
-            <p className={styles.reportDescription}>
-              Historial de solicitudes de grúa (filtrado por fecha de solicitud).
-            </p>
-            <button
-              onClick={handleDownloadGruas}
-              disabled={isDownloadingGruas || !fechaInicio || !fechaFin}
-              className={styles.downloadButton}
-              style={{ backgroundColor: '#4F46E5' }}
-            >
-              {isDownloadingGruas ? (
-                <> <RefreshCw size={16} className="animate-spin" /> Generando... </>
-              ) : (
-                <> <Download size={16} /> Solicitudes de Grúa (Excel) </>
-              )}
-            </button>
-          </div>
-
-          {/* --- ÁREA DE CONTROL DE LLAVES --- */}
-          <div className={styles.reportSection}>
-            <h3 className={styles.reportSectionTitle}>
-              <KeyRound size={18} />
-              Área de Control de Llaves (Pañol)
-            </h3>
-            <p className={styles.reportDescription}>
-              Bitácora completa de quién tuvo qué llave y cuándo (filtrado por fecha de retiro).
-            </p>
-            <button
-              onClick={handleDownloadPrestamos}
-              disabled={isDownloadingPrestamos || !fechaInicio || !fechaFin}
-              className={styles.downloadButton}
-            >
-              {isDownloadingPrestamos ? (
-                <> <RefreshCw size={16} className="animate-spin" /> Generando... </>
-              ) : (
-                <> <Download size={16} /> Historial de Préstamos (Excel) </>
-              )}
-            </button>
-            <hr className={styles.reportSeparator} />
-            <p className={styles.reportDescription}>
-              Snapshot del estado actual de todas las llaves (no usa fechas).
-            </p>
-            <button
-              onClick={handleDownloadInventarioLlaves}
-              disabled={isDownloadingInventarioLlaves}
-              className={styles.downloadButton}
-              style={{ backgroundColor: '#6B7280' }}
-            >
-              {isDownloadingInventarioLlaves ? (
-                <> <RefreshCw size={16} className="animate-spin" /> Generando... </>
-              ) : (
-                <> <Download size={16} /> Inventario de Llaves (PDF) </>
-              )}
-            </button>
-          </div>
-
-          {/* --- ÁREA DE FLOTA --- */}
-          <div className={styles.reportSection}>
-            <h3 className={styles.reportSectionTitle}>
-              <Clipboard size={18} />
-              Área de Flota (Vehículos)
-            </h3>
-            <p className={styles.reportDescription}>
-              Historial completo de un vehículo (no usa filtros de fecha).
-            </p>
-            <div className={styles.patentePicker}>
-              <label>
-                Patente del Vehículo:
-                <input
-                  type="text"
-                  value={patenteHojaVida}
-                  onChange={(e) => setPatenteHojaVida(e.target.value.toUpperCase())}
-                  className={styles.patenteInput}
-                  placeholder="BCDF10"
-                  maxLength={10}
-                />
-              </label>
-            </div>
-            <button
-              onClick={handleDownloadHojaVida}
-              disabled={isDownloadingHojaVida || !patenteHojaVida}
-              className={styles.downloadButton}
-              style={{ backgroundColor: '#DC2626' }}
-            >
-              {isDownloadingHojaVida ? (
-                <> <RefreshCw size={16} className="animate-spin" /> Generando... </>
-              ) : (
-                <> <Download size={16} /> Generar Hoja de Vida (PDF) </>
-              )}
-            </button>
-            <hr className={styles.reportSeparator} />
-            <p className={styles.reportDescription}>
-              Ranking de vehículos que más ingresan al taller (filtrado por fecha).
-            </p>
-            <button
-              onClick={handleDownloadFrecuencia}
-              disabled={isDownloadingFrecuencia || !fechaInicio || !fechaFin}
-              className={styles.downloadButton}
-            >
-              {isDownloadingFrecuencia ? (
-                <> <RefreshCw size={16} className="animate-spin" /> Generando... </>
-              ) : (
-                <> <Download size={16} /> Frecuencia de Fallas (Excel) </>
-              )}
-            </button>
-          </div>
-
-          {/* --- ÁREA DE REPUESTOS --- */}
-          <div className={styles.reportSection}>
-            <h3 className={styles.reportSectionTitle}>
-              <Package size={18} />
-              Área de Repuestos (Bodega)
-            </h3>
-            <p className={styles.reportDescription}>
-              Historial de repuestos usados por mecánicos (filtrado por fecha).
-            </p>
-            <button
-              onClick={handleDownloadRepuestos}
-              disabled={isDownloadingRepuestos || !fechaInicio || !fechaFin}
-              className={styles.downloadButton}
-            >
-              {isDownloadingRepuestos ? (
-                <> <RefreshCw size={16} className="animate-spin" /> Generando... </>
-              ) : (
-                <> <Download size={16} /> Descargar Consumo (Excel) </>
-              )}
-            </button>
-            <hr className={styles.reportSeparator} />
-            <p className={styles.reportDescription}>
-              Snapshot del inventario actual y su valor total (no usa fechas).
-            </p>
-            <button
-              onClick={handleDownloadInventario}
-              disabled={isDownloadingInventario}
-              className={styles.downloadButton}
-              style={{ backgroundColor: '#B83280' }}
-            >
-              {isDownloadingInventario ? (
-                <> <RefreshCw size={16} className="animate-spin" /> Generando... </>
-              ) : (
-                <> <Download size={16} /> Inventario Valorizado (Excel) </>
-              )}
-            </button>
-            <hr className={styles.reportSeparator} />
-            <p className={styles.reportDescription}>
-              Historial de repuestos rechazados por falta de stock (filtrado por fecha).
-            </p>
-            <button
-              onClick={handleDownloadQuiebres}
-              disabled={isDownloadingQuiebres || !fechaInicio || !fechaFin}
-              className={styles.downloadButton}
-              style={{ backgroundColor: '#D97706' }}
-            >
-              {isDownloadingQuiebres ? (
-                <> <RefreshCw size={16} className="animate-spin" /> Generando... </>
-              ) : (
-                <> <Download size={16} /> Quiebres de Stock (Excel) </>
-              )}
-            </button>
-          </div>
-
-          {/* --- ÁREA DE MECÁNICOS --- */}
-          <div className={styles.reportSection}>
-            <h3 className={styles.reportSectionTitle}>
-              <Wrench size={18} />
-              Área de Mecánicos (Productividad)
-            </h3>
-            <p className={styles.reportDescription}>
-              Órdenes finalizadas por mecánico (filtrado por fecha).
-            </p>
-            <button
-              onClick={handleDownloadProductividad}
-              disabled={isDownloadingProductividad || !fechaInicio || !fechaFin}
-              className={styles.downloadButton}
-            >
-              {isDownloadingProductividad ? (
-                <> <RefreshCw size={16} className="animate-spin" /> Generando... </>
-              ) : (
-                <> <Download size={16} /> Productividad por Mecánico (Excel) </>
-              )}
-            </button>
-            <hr className={styles.reportSeparator} />
-            <p className={styles.reportDescription}>
-              Análisis de tiempo total vs. tiempo en pausa (filtrado por fecha).
-            </p>
-            <button
-              onClick={handleDownloadTiempos}
-              disabled={isDownloadingTiempos || !fechaInicio || !fechaFin}
-              className={styles.downloadButton}
-              style={{ backgroundColor: '#0D9488' }}
-            >
-              {isDownloadingTiempos ? (
-                <> <RefreshCw size={16} className="animate-spin" /> Generando... </>
-              ) : (
-                <> <Download size={16} /> Reporte Tiempos de Taller (Excel) </>
-              )}
-            </button>
-          </div>
-
-        </div> {/* --- FIN DEL .reportGrid --- */}
-      </div> {/* --- FIN DEL .reportCard --- */}
-      {/* --- FIN: SECCIÓN CENTRO DE REPORTES --- */}
-
-
-
-
-
-
       {/* --- INICIO: SECCIÓN DE ALERTAS Y CONTROLES --- */}
+      {/* Movimos los controles y la fila de KPIs aquí arriba */}
+      
       <div className={styles.topRowContainer}>
-        <div className={styles.alertWidget}>
-          <Bell />
-          <div>
-            <p>
-              Tienes <strong>{pendientesAprobacion}</strong> agendamiento(s)
-              <br />
-              pendientes de aprobación.
-            </p>
-          </div>
-        </div>
-
         <div className={styles.controlsToolbar}>
-
           <button
             onClick={handleManualRefresh}
             disabled={isRefreshing}
@@ -1089,23 +782,22 @@ export default function AdministrativoWidgets() {
           )}
         </div>
       </div>
-      {/* --- FIN: SECCIÓN DE ALERTAS Y CONTROLES --- */}
-
-
+      
       {/* --- INICIO: SECCIÓN DE KPIS Y GRÁFICOS --- */}
       <div className={styles.dashboardGrid}>
-
+        
+        {/* Fila de KPIs */}
+        <KpiCard
+          title="Pendientes de Aprobación"
+          value={pendientesAprobacion}
+          icon={<Calendar />}
+          color="#10b981"
+        />
         <KpiCard
           title="Vehículos en Taller"
           value={kpis?.vehiculosEnTaller || 0}
           icon={<Truck />}
           color="#3b82f6"
-        />
-        <KpiCard
-          title="Agendamientos para Hoy"
-          value={kpis?.agendamientosHoy || 0}
-          icon={<Calendar />}
-          color="#10b981"
         />
         <KpiCard
           title="Órdenes Finalizadas (Mes)"
@@ -1120,9 +812,8 @@ export default function AdministrativoWidgets() {
           color="#8b5cf6"
         />
 
-
+        {/* Fila de Gráficos */}
         <div className={`${styles.card} ${styles.largeCard}`}>
-
           <h3 className={styles.chartTitle}>Carga de Trabajo Actual</h3>
           <ResponsiveContainer width="100%" height={250}>
             <BarChart data={ordenesPorEstado || []} margin={{ top: 20, right: 20, left: -10, bottom: 5 }}>
@@ -1135,9 +826,8 @@ export default function AdministrativoWidgets() {
             </BarChart>
           </ResponsiveContainer>
         </div>
-
+        
         <div className={`${styles.card} ${styles.largeCard}`}>
-
           <h3 className={styles.chartTitle}>Ingresos en la Última Semana</h3>
           <ResponsiveContainer width="100%" height={250}>
             <LineChart data={ordenesUltimaSemana || []} margin={{ top: 20, right: 20, left: -10, bottom: 5 }}>
@@ -1151,8 +841,298 @@ export default function AdministrativoWidgets() {
           </ResponsiveContainer>
         </div>
 
-        <div className={`${styles.card} ${styles.fullWidthCard}`}>
+        {/* --- INICIO: SECCIÓN CENTRO DE REPORTES (MOVIDO) --- */}
+        {/* Le añadimos 'fullWidthCard' para que ocupe todo el ancho de la grid */}
+        <div className={`${styles.card} ${styles.reportCard} ${styles.fullWidthCard}`}>
+          <h2 className={styles.reportHeader}>Centro de Reportes Administrativos</h2>
+          <div className={styles.reportGrid}>
 
+            {/* --- ÁREA DE SEGURIDAD --- */}
+            <div className={styles.reportSection}>
+              <h3 className={styles.reportSectionTitle}>
+                <Truck size={18} />
+                Área de Seguridad
+              </h3>
+              <p className={styles.reportDescription}>
+                Genera la bitácora de todos los ingresos y salidas del taller.
+              </p>
+              <div className={styles.datePickers}>
+                <label>
+                  Desde:
+                  <input
+                    type="date"
+                    value={fechaInicio}
+                    onChange={(e) => setFechaInicio(e.target.value)}
+                    className={styles.dateInput}
+                  />
+                </label>
+                <label>
+                  Hasta:
+                  <input
+                    type="date"
+                    value={fechaFin}
+                    onChange={(e) => setFechaFin(e.target.value)}
+                    className={styles.dateInput}
+                  />
+                </label>
+              </div>
+
+              <button
+                onClick={handleDownloadSeguridad}
+                disabled={isDownloading}
+                className={styles.downloadButton}
+              >
+                {isDownloading ? (
+                  <>
+                    <RefreshCw size={16} className="animate-spin" />
+                    Generando...
+                  </>
+                ) : (
+                  <>
+                    <Download size={16} />
+                    Descargar Bitácora (Excel)
+                  </>
+                )}
+              </button>
+
+              <hr style={{ borderColor: '#4a5568', margin: '1rem 0' }} />
+
+              <p className={styles.reportDescription}>
+                Obtener una foto actual de todos los vehículos en taller.
+              </p>
+
+              <button
+                onClick={handleDownloadSnapshotPDF}
+                disabled={isDownloadingPDF}
+                className={styles.downloadButton}
+                style={{ backgroundColor: '#9B2C2C' }}
+              >
+                {isDownloadingPDF ? (
+                  <>
+                    <RefreshCw size={16} className="animate-spin" />
+                    Generando...
+                  </>
+                ) : (
+                  <>
+                    <Download size={16} />
+                    Snapshot Vehículos en Taller (PDF)
+                  </>
+                )}
+              </button>
+              {downloadError && <p className={styles.downloadError}>{downloadError}</p>}
+            </div>
+
+            {/* --- ÁREA DE GRÚAS --- */}
+            <div className={styles.reportSection}>
+              <h3 className={styles.reportSectionTitle}>
+                <Navigation size={18} />
+                Área de Grúas
+              </h3>
+              <p className={styles.reportDescription}>
+                Historial de solicitudes de grúa (filtrado por fecha de solicitud).
+              </p>
+              <button
+                onClick={handleDownloadGruas}
+                disabled={isDownloadingGruas || !fechaInicio || !fechaFin}
+                className={styles.downloadButton}
+                style={{ backgroundColor: '#4F46E5' }}
+              >
+                {isDownloadingGruas ? (
+                  <> <RefreshCw size={16} className="animate-spin" /> Generando... </>
+                ) : (
+                  <> <Download size={16} /> Solicitudes de Grúa (Excel) </>
+                )}
+              </button>
+            </div>
+
+            {/* --- ÁREA DE CONTROL DE LLAVES --- */}
+            <div className={styles.reportSection}>
+              <h3 className={styles.reportSectionTitle}>
+                <KeyRound size={18} />
+                Área de Control de Llaves (Pañol)
+              </h3>
+              <p className={styles.reportDescription}>
+                Bitácora completa de quién tuvo qué llave y cuándo (filtrado por fecha de retiro).
+              </p>
+              <button
+                onClick={handleDownloadPrestamos}
+                disabled={isDownloadingPrestamos || !fechaInicio || !fechaFin}
+                className={styles.downloadButton}
+              >
+                {isDownloadingPrestamos ? (
+                  <> <RefreshCw size={16} className="animate-spin" /> Generando... </>
+                ) : (
+                  <> <Download size={16} /> Historial de Préstamos (Excel) </>
+                )}
+              </button>
+              <hr className={styles.reportSeparator} />
+              <p className={styles.reportDescription}>
+                Snapshot del estado actual de todas las llaves (no usa fechas).
+              </p>
+              <button
+                onClick={handleDownloadInventarioLlaves}
+                disabled={isDownloadingInventarioLlaves}
+                className={styles.downloadButton}
+                style={{ backgroundColor: '#6B7280' }}
+              >
+                {isDownloadingInventarioLlaves ? (
+                  <> <RefreshCw size={16} className="animate-spin" /> Generando... </>
+                ) : (
+                  <> <Download size={16} /> Inventario de Llaves (PDF) </>
+                )}
+              </button>
+            </div>
+
+            {/* --- ÁREA DE FLOTA --- */}
+            <div className={styles.reportSection}>
+              <h3 className={styles.reportSectionTitle}>
+                <Clipboard size={18} />
+                Área de Flota (Vehículos)
+              </h3>
+              <p className={styles.reportDescription}>
+                Historial completo de un vehículo (no usa filtros de fecha).
+              </p>
+              <div className={styles.patentePicker}>
+                <label>
+                  Patente del Vehículo:
+                  <input
+                    type="text"
+                    value={patenteHojaVida}
+                    onChange={(e) => setPatenteHojaVida(e.target.value.toUpperCase())}
+                    className={styles.patenteInput}
+                    placeholder="BCDF10"
+                    maxLength={10}
+                  />
+                </label>
+              </div>
+              <button
+                onClick={handleDownloadHojaVida}
+                disabled={isDownloadingHojaVida || !patenteHojaVida}
+                className={styles.downloadButton}
+                style={{ backgroundColor: '#DC2626' }}
+              >
+                {isDownloadingHojaVida ? (
+                  <> <RefreshCw size={16} className="animate-spin" /> Generando... </>
+                ) : (
+                  <> <Download size={16} /> Generar Hoja de Vida (PDF) </>
+                )}
+              </button>
+              <hr className={styles.reportSeparator} />
+              <p className={styles.reportDescription}>
+                Ranking de vehículos que más ingresan al taller (filtrado por fecha).
+              </p>
+              <button
+                onClick={handleDownloadFrecuencia}
+                disabled={isDownloadingFrecuencia || !fechaInicio || !fechaFin}
+                className={styles.downloadButton}
+              >
+                {isDownloadingFrecuencia ? (
+                  <> <RefreshCw size={16} className="animate-spin" /> Generando... </>
+                ) : (
+                  <> <Download size={16} /> Frecuencia de Fallas (Excel) </>
+                )}
+              </button>
+            </div>
+
+            {/* --- ÁREA DE REPUESTOS --- */}
+            <div className={styles.reportSection}>
+              <h3 className={styles.reportSectionTitle}>
+                <Package size={18} />
+                Área de Repuestos (Bodega)
+              </h3>
+              <p className={styles.reportDescription}>
+                Historial de repuestos usados por mecánicos (filtrado por fecha).
+              </p>
+              <button
+                onClick={handleDownloadRepuestos}
+                disabled={isDownloadingRepuestos || !fechaInicio || !fechaFin}
+                className={styles.downloadButton}
+              >
+                {isDownloadingRepuestos ? (
+                  <> <RefreshCw size={16} className="animate-spin" /> Generando... </>
+                ) : (
+                  <> <Download size={16} /> Descargar Consumo (Excel) </>
+                )}
+              </button>
+              <hr className={styles.reportSeparator} />
+              <p className={styles.reportDescription}>
+                Snapshot del inventario actual y su valor total (no usa fechas).
+              </p>
+              <button
+                onClick={handleDownloadInventario}
+                disabled={isDownloadingInventario}
+                className={styles.downloadButton}
+                style={{ backgroundColor: '#B83280' }}
+              >
+                {isDownloadingInventario ? (
+                  <> <RefreshCw size={16} className="animate-spin" /> Generando... </>
+                ) : (
+                  <> <Download size={16} /> Inventario Valorizado (Excel) </>
+                )}
+              </button>
+              <hr className={styles.reportSeparator} />
+              <p className={styles.reportDescription}>
+                Historial de repuestos rechazados por falta de stock (filtrado por fecha).
+              </p>
+              <button
+                onClick={handleDownloadQuiebres}
+                disabled={isDownloadingQuiebres || !fechaInicio || !fechaFin}
+                className={styles.downloadButton}
+                style={{ backgroundColor: '#D97706' }}
+              >
+                {isDownloadingQuiebres ? (
+                  <> <RefreshCw size={16} className="animate-spin" /> Generando... </>
+                ) : (
+                  <> <Download size={16} /> Quiebres de Stock (Excel) </>
+                )}
+              </button>
+            </div>
+
+            {/* --- ÁREA DE MECÁNICOS --- */}
+            <div className={styles.reportSection}>
+              <h3 className={styles.reportSectionTitle}>
+                <Wrench size={18} />
+                Área de Mecánicos (Productividad)
+              </h3>
+              <p className={styles.reportDescription}>
+                Órdenes finalizadas por mecánico (filtrado por fecha).
+              </p>
+              <button
+                onClick={handleDownloadProductividad}
+                disabled={isDownloadingProductividad || !fechaInicio || !fechaFin}
+                className={styles.downloadButton}
+              >
+                {isDownloadingProductividad ? (
+                  <> <RefreshCw size={16} className="animate-spin" /> Generando... </>
+                ) : (
+                  <> <Download size={16} /> Productividad por Mecánico (Excel) </>
+                )}
+              </button>
+              <hr className={styles.reportSeparator} />
+              <p className={styles.reportDescription}>
+                Análisis de tiempo total vs. tiempo en pausa (filtrado por fecha).
+              </p>
+              <button
+                onClick={handleDownloadTiempos}
+                disabled={isDownloadingTiempos || !fechaInicio || !fechaFin}
+                className={styles.downloadButton}
+                style={{ backgroundColor: '#0D9488' }}
+              >
+                {isDownloadingTiempos ? (
+                  <> <RefreshCw size={16} className="animate-spin" /> Generando... </>
+                ) : (
+                  <> <Download size={16} /> Reporte Tiempos de Taller (Excel) </>
+                )}
+              </button>
+            </div>
+
+          </div> 
+        </div> 
+        {/* --- FIN: SECCIÓN CENTRO DE REPORTES --- */}
+        
+
+        {/* Fila de Tabla */}
+        <div className={`${styles.card} ${styles.fullWidthCard}`}>
           <h3 className={styles.chartTitle}>Órdenes de Servicio Recientes</h3>
           <div className={styles.tableContainer}>
             <table className={styles.table}>
@@ -1181,6 +1161,7 @@ export default function AdministrativoWidgets() {
             </table>
           </div>
         </div>
+        
       </div>
       {/* --- FIN: SECCIÓN DE KPIS Y GRÁFICOS --- */}
 

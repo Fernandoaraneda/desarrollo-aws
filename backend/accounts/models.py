@@ -147,8 +147,8 @@ class Agendamiento(TimeStampedModel):
     fecha_hora_fin = models.DateTimeField(editable=False, null=True, blank=True)
     motivo_ingreso = models.TextField(blank=True, null=True)
     estado = models.CharField(max_length=50, choices=Estado.choices, default=Estado.PROGRAMADO, db_index=True)
-    imagen_averia = models.ImageField(
-        "Imagen de la avería", 
+    imagen_averia = models.FileField(
+        "Adjuntar archivo (Foto, PDF, etc.)", 
         upload_to='agendamientos_imagenes/%Y/%m/', 
         blank=True, 
         null=True

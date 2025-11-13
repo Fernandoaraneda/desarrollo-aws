@@ -215,7 +215,7 @@ export default function GestionAgenda() {
                                 type="file"
                                 id="imagen_averia"
                                 name="imagen_averia"
-                                accept="image/*"
+                                accept=".jpg,.jpeg,.png,.gif,.pdf,.ppt,.pptx,.xls,.xlsx"
                                 onChange={handleImageChange}
                             />
                         </div>
