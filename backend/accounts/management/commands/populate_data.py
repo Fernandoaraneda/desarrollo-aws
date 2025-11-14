@@ -164,7 +164,7 @@ class Command(BaseCommand):
                 except Exception as e:
                     self.stdout.write(self.style.WARNING(f"No se pudieron crear llaves para {vehiculo.patente}: {e}"))
             else:
-                # --- AÑADIDO: Asegurarse de que los vehículos existentes también tengan taller ---
+                
                 if not vehiculo.taller:
                     vehiculo.taller = taller_maipu
                     vehiculo.save()

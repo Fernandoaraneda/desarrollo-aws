@@ -42,7 +42,7 @@ from django.shortcuts import get_object_or_404
 from rest_framework.views import APIView
 import os
 from .permissions import IsAdministrativo
-
+import threading
 
 # Models
 from .models import (
@@ -376,7 +376,7 @@ class ChangePasswordView(generics.GenericAPIView):
 # Gestión de usuarios (Supervisor)
 # --------------------
 class UserListView(generics.ListAPIView):
-    queryset = User.objects.all().order_by("first_name")
+    queryset = User.objects.prefetch_related('groups').all().order_by("first_name")
     serializer_class = UserSerializer
     permission_classes = [IsSupervisorOrControlLlaves]
 
@@ -688,7 +688,8 @@ class AgendamientoViewSet(viewsets.ModelViewSet):
                 )
 
                 # 5. Enviamos el correo
-                enviar_correo_notificacion(supervisor, subject, mensaje)
+                thread = threading.Thread(target=enviar_correo_notificacion, args=(supervisor, subject, mensaje))
+                thread.start()
 
         except Exception as e:
 
@@ -891,9 +892,8 @@ class AgendamientoViewSet(viewsets.ModelViewSet):
                         link=f"/historial",
                     )
                     subject_chofer = f"Cita Confirmada: {agendamiento.vehiculo.patente} el {fecha_str}"
-                    enviar_correo_notificacion(
-                        agendamiento.chofer_asociado, subject_chofer, mensaje
-                    )
+                    thread_chofer = threading.Thread(target=enviar_correo_notificacion, args=(agendamiento.chofer_asociado, subject_chofer, mensaje))
+                    thread_chofer.start()
             except Exception as e:
                 print(f"Error al crear notificación de reagendamiento: {e}")
 
@@ -912,9 +912,8 @@ class AgendamientoViewSet(viewsets.ModelViewSet):
                 subject_seguridad = (
                     f"Cita Confirmada: Vehículo {agendamiento.vehiculo.patente}"
                 )
-                enviar_correo_notificacion(
-                    user_seg, subject_seguridad, mensaje_seguridad
-                )
+                thread_seg = threading.Thread(target=enviar_correo_notificacion, args=(user_seg, subject_seguridad, mensaje_seguridad))
+                thread_seg.start()
         except Exception as e:
             print(f"Error al crear notificación para Seguridad: {e}")
 
@@ -1026,9 +1025,8 @@ class AgendamientoViewSet(viewsets.ModelViewSet):
                     link=f"/ordenes/{nueva_orden.id}", # Link a la orden de servicio
                 )
                 subject_mecanico = f"Nueva Orden Asignada: #{nueva_orden.id}"
-                enviar_correo_notificacion(
-                    agendamiento.mecanico_asignado, subject_mecanico, mensaje
-                )
+                thread = threading.Thread(target=enviar_correo_notificacion, args=(agendamiento.mecanico_asignado, subject_mecanico, mensaje))
+                thread.start()
 
             # 4. Marcar el agendamiento como FINALIZADO (su propósito se cumplió)
             agendamiento.estado = Agendamiento.Estado.FINALIZADO
@@ -1135,7 +1133,9 @@ class AgendamientoViewSet(viewsets.ModelViewSet):
                     mensaje=f"Nueva solicitud de grúa para {agendamiento.vehiculo.patente}. Dirección: {agendamiento.direccion_grua}",
                     link="/panel-gruas",  # Un futuro panel para ellos
                 )
-                enviar_correo_notificacion(user_grua, subject, mensaje)
+                
+                thread = threading.Thread(target=enviar_correo_notificacion, args=(user_grua, subject, mensaje))
+                thread.start()
 
             # 4. Marcamos la grúa como enviada
             agendamiento.grua_enviada = True
@@ -1243,9 +1243,8 @@ class OrdenViewSet(viewsets.ModelViewSet):
                         )
 
                         mensaje_email = f"Actualización: Su vehículo {orden.vehiculo.patente} {mensaje_chofer}"
-                        enviar_correo_notificacion(
-                            chofer_a_notificar, subject_chofer_estado, mensaje_email
-                        )
+                        thread = threading.Thread(target=enviar_correo_notificacion, args=(chofer_a_notificar, subject_chofer_estado, mensaje_email))
+                        thread.start()
 
             except Exception as e:
 
@@ -1710,9 +1709,8 @@ class OrdenItemViewSet(viewsets.ModelViewSet):
                     Notificacion.objects.create(
                         usuario=user_rep, mensaje=mensaje, link="/panel-repuestos"
                     )  # Link a la nueva página de repuestos
-                    enviar_correo_notificacion(
-                        user_rep, subject, mensaje
-                    )  # Opcional si quieres email
+                    thread = threading.Thread(target=enviar_correo_notificacion, args=(user_rep, subject, mensaje))
+                    thread.start()
             except Exception as e:
                 print(f"ERROR al notificar a Repuestos: {e}")
 
@@ -1778,9 +1776,8 @@ class OrdenItemViewSet(viewsets.ModelViewSet):
                     mensaje=mensaje_mec,
                     link=f"/ordenes/{item.orden.id}",
                 )
-                enviar_correo_notificacion(
-                    item.solicitado_por, subject_mec, mensaje_mec
-                )
+                thread_ap = threading.Thread(target=enviar_correo_notificacion, args=(item.solicitado_por, subject_mec, mensaje_mec))
+                thread_ap.start()
 
             elif accion == "rechazar":
                 item.estado_repuesto = OrdenItem.EstadoRepuesto.RECHAZADO
@@ -1800,9 +1797,9 @@ class OrdenItemViewSet(viewsets.ModelViewSet):
                     mensaje=mensaje_mec,
                     link=f"/ordenes/{item.orden.id}",
                 )
-                enviar_correo_notificacion(
-                    item.solicitado_por, subject_mec, mensaje_mec
-                )
+                
+                thread_rec = threading.Thread(target=enviar_correo_notificacion, args=(item.solicitado_por, subject_mec, mensaje_mec))
+                thread_rec.start()
 
         return Response(self.get_serializer(item).data, status=status.HTTP_200_OK)
 

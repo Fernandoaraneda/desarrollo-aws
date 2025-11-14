@@ -112,7 +112,7 @@ const BuscadorRepuestos = ({ ordenId, onRepuestoAgregado }) => {
             } finally {
                 setIsLoading(false);
             }
-        }, 300); 
+        }, 300);
         return () => clearTimeout(timer);
     }, [searchTerm]);
 
@@ -123,7 +123,7 @@ const BuscadorRepuestos = ({ ordenId, onRepuestoAgregado }) => {
                 producto: productoSku,
                 cantidad: cantidad
             });
-            onRepuestoAgregado(); 
+            onRepuestoAgregado();
             setSearchTerm('');
             setResults([]);
             setCantidad(1);
@@ -147,9 +147,9 @@ const BuscadorRepuestos = ({ ordenId, onRepuestoAgregado }) => {
             </div>
             {isLoading && <p>Buscando...</p>}
             {results.length > 0 && (
-                <ul className={styles.resultsList}> 
+                <ul className={styles.resultsList}>
                     {results.map(prod => (
-                        <li key={prod.sku} className={styles.resultItem}> 
+                        <li key={prod.sku} className={styles.resultItem}>
                             <div>
                                 <strong>{prod.nombre}</strong> (SKU: {prod.sku})
                                 <small>Stock: {prod.stock}</small>
@@ -398,40 +398,45 @@ export default function DetalleOrden() {
                         <BuscadorRepuestos ordenId={id} onRepuestoAgregado={handleRepuestoAgregado} />
                     )}
 
-                    {puedeModificar && (
-                        <div className={styles.infoCard}>
-                            <h3><Upload /> Subir Documentos</h3>
-                            <form onSubmit={handleFileUpload} className={styles.uploadForm}>
-                                <div className={styles.formRow}>
-                                    <div className={styles.formField} style={{ flex: 1 }}>
-                                        <label>Archivo</label>
-                                        <input type="file" onChange={e => setArchivo(e.target.files[0])} required accept=".jpg,.jpeg,.png,.gif,.pdf,.ppt,.pptx,.xls,.xlsx" />
+                    <div className={styles.infoCard}>
+
+                        {puedeModificar && (
+                            <> 
+                                <h3><Upload /> Subir Documentos</h3>
+                                <form onSubmit={handleFileUpload} className={styles.uploadForm}>
+                                    <div className={styles.formRow}>
+                                        <div className={styles.formField} style={{ flex: 1 }}>
+                                            <label>Archivo</label>
+                                            <input type="file" onChange={e => setArchivo(e.target.files[0])} required accept=".jpg,.jpeg,.png,.gif,.pdf,.ppt,.pptx,.xls,.xlsx" />
+                                        </div>
                                     </div>
-                                </div>
-                                <div className={styles.formField}>
-                                    <label>Descripción (Opcional)</label>
-                                    <input type="text" className={styles.motivoInput} value={descripcionArchivo} onChange={e => setDescripcionArchivo(e.target.value)} placeholder="Ej: Foto de la reparación finalizada" />
-                                </div>
-                                <button type="submit" className={styles.submitButton} disabled={isUploading}>
-                                    {isUploading ? 'Subiendo...' : 'Subir Archivo'}
-                                </button>
-                            </form>
+                                    <div className={styles.formField}>
+                                        <label>Descripción (Opcional)</label>
+                                        <input type="text" className={styles.motivoInput} value={descripcionArchivo} onChange={e => setDescripcionArchivo(e.target.value)} placeholder="Ej: Foto de la reparación finalizada" />
+                                    </div>
+                                    <button type="submit" className={styles.submitButton} disabled={isUploading}>
+                                        {isUploading ? 'Subiendo...' : 'Subir Archivo'}
+                                    </button>
+                                </form>
+                                <hr />
+                            </>
+                        )}
 
-                            <hr />
-
-                            <h4><Paperclip /> Documentos Anexados</h4>
-                            <div className={styles.documentGroupContainer}>
-                                {orden?.documentos && orden.documentos.length > 0 ? (
-                                    Object.entries(groupedDocs).map(([state, docs]) => (
-                                        <DocumentGroup key={state} state={state} docs={docs} />
-                                    ))
-                                ) : (
-                                    <p>No hay documentos anexados a esta orden.</p>
-                                )}
-                            </div>
+         
+                        <h4><Paperclip /> Documentos Anexados</h4>
+                        <div className={styles.documentGroupContainer}>
+                            {orden?.documentos && orden.documentos.length > 0 ? (
+                                Object.entries(groupedDocs).map(([state, docs]) => (
+                                    <DocumentGroup key={state} state={state} docs={docs} />
+                                ))
+                            ) : (
+                                <p>No hay documentos anexados a esta orden.</p>
+                            )}
                         </div>
-                    )}
+
+                    </div>
                 </div>
+
 
                 <aside className={styles.sidebar}>
                     <div className={`${styles.infoCard} ${styles.statusCard}`}>

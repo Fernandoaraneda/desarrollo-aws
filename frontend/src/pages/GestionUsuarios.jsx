@@ -17,7 +17,7 @@ export default function GestionUsuarios() {
   const [modalProps, setModalProps] = useState({});
   const [userToProcess, setUserToProcess] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
-
+  const [isSubmitting, setIsSubmitting] = useState(false);
   useEffect(() => {
     const fetchUsers = async () => {
       try {
@@ -43,7 +43,10 @@ export default function GestionUsuarios() {
   }, [users, searchTerm]);
 
   const handleConfirmAction = async () => {
-    if (!userToProcess) return;
+    if (isSubmitting) return; 
+
+  
+    setIsSubmitting(true);
     const newActiveState = !userToProcess.is_active;
     try {
       await apiClient.patch(`/users/${userToProcess.id}/`, { is_active: newActiveState });
@@ -55,6 +58,7 @@ export default function GestionUsuarios() {
     } catch (err) {
       alert(`No se pudo ${newActiveState ? 'activar' : 'desactivar'} al usuario. Inténtalo de nuevo.`);
     } finally {
+      setIsSubmitting(false); 
       setIsModalOpen(false);
       setUserToProcess(null);
     }
@@ -94,7 +98,7 @@ export default function GestionUsuarios() {
           </button>
         </header>
 
-       
+
         <div className={styles.controls}>
           <div className={styles.searchBox}>
             <Search size={20} className={styles.searchIcon} />
@@ -107,7 +111,7 @@ export default function GestionUsuarios() {
           </div>
         </div>
 
-        
+
         <div className={styles.userList}>
           {filteredUsers.length > 0 ? (
             filteredUsers.map(user => (
@@ -154,12 +158,13 @@ export default function GestionUsuarios() {
           )}
         </div>
       </div>
-      
+
       <ConfirmModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onConfirm={handleConfirmAction}
         {...modalProps}
+        isConfirming={isSubmitting}
       />
     </>
   );

@@ -4,7 +4,7 @@ import styles from '/src/css/confirmmodal.module.css';
 import { AlertTriangle, CheckCircle } from 'lucide-react';
 
 // 👇 Se añaden props nuevas: 'confirmButtonText' e 'intent' para cambiar el estilo
-export default function ConfirmModal({ isOpen, onClose, onConfirm, title, message, confirmButtonText, intent = 'danger' }) {
+export default function ConfirmModal({ isOpen, onClose, onConfirm, title, message, confirmButtonText, intent = 'danger', isConfirming = false}) {
   if (!isOpen) {
     return null;
   }
@@ -23,15 +23,27 @@ export default function ConfirmModal({ isOpen, onClose, onConfirm, title, messag
         <h2>{title}</h2>
         <p>{message}</p>
         <div className={styles.modalActions}>
-          <button className={styles.cancelButton} onClick={onClose}>
+          <button 
+            className={styles.cancelButton} 
+            onClick={onClose} 
+            disabled={isConfirming} 
+          >
             Cancelar
           </button>
-          <button className={`${styles.confirmButton} ${buttonStyle}`} onClick={onConfirm}>
-            {confirmButtonText || 'Confirmar'}
+          
+          {/* 👇 3. Desactiva el botón de confirmar y cambia el texto */}
+          <button 
+            className={`${styles.confirmButton} ${buttonStyle}`} 
+            onClick={onConfirm}
+            disabled={isConfirming} // 👈 Se deshabilita aquí
+          >
+            {/* 👈 Muestra texto diferente si está confirmando */}
+            {isConfirming ? 'Procesando...' : (confirmButtonText || 'Confirmar')}
           </button>
         </div>
       </div>
     </div>
+  
   );
 }
 
