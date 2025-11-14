@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-// --- CORREGIDO: Ruta relativa ---
-import apiClient from '../../api/axios.js';
-import styles from '../../css/ConfirmarAsignarCita.module.css';
-// --- FIN CORREGIDO ---
+
+// --- Rutas relativas corregidas ---
+import apiClient from '../api/axios.js';
+import styles from '../css/ConfirmarAsignarCita.module.css';
 
 import {
     CalendarCheck,
@@ -16,19 +16,15 @@ import {
     Package,
 } from 'lucide-react';
 
-// --- AÑADIDO Y CORREGIDO: Ruta relativa ---
+// --- Componentes internos ---
 import AuthenticatedImage from '../components/AuthenticatedImage.jsx';
-// --- FIN AÑADIDO ---
-
-// --- CORREGIDO: Ruta relativa ---
 import AlertModal from '../components/modals/AlertModal.jsx';
 import ConfirmModal from '../components/modals/ConfirmModal.jsx';
-// --- FIN CORREGIDO ---
 
+// DatePicker
 import DatePicker, { registerLocale } from 'react-datepicker';
 import { es } from 'date-fns/locale/es';
 import 'react-datepicker/dist/react-datepicker.css';
-
 registerLocale('es', es);
 
 const HORA_INICIO = 9;
