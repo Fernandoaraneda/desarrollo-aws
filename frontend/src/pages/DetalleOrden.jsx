@@ -1,14 +1,22 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
-import apiClient from '../api/axios.js';
-import { useUserStore } from '../store/authStore.js';
-import styles from '../css/detalleorden.module.css';
+// --- CORREGIDO: Ruta absoluta ---
+import apiClient from '/src/api/axios.js';
+import { useUserStore } from '/src/store/authStore.js';
+import styles from '/src/css/detalleorden.module.css';
+// --- FIN CORREGIDO ---
 import {
     Wrench, User, Tag, Calendar, Image as ImageIcon, Upload,
     Paperclip, Play, Pause, ChevronDown, FileText, Download,
     Search, PlusCircle
 } from 'lucide-react';
+// --- CORREGIDO: Ruta absoluta ---
 import AlertModal from '/src/components/modals/AlertModal.jsx';
+// --- FIN CORREGIDO ---
+
+// --- AÑADIDO Y CORREGIDO: Ruta absoluta ---
+import AuthenticatedImage from '/src/components/AuthenticatedImage.jsx';
+// --- FIN AÑADIDO ---
 
 
 const DocumentGroup = ({ state, docs }) => {
@@ -20,11 +28,16 @@ const DocumentGroup = ({ state, docs }) => {
         const tipo = (doc.tipo || '').toLowerCase();
         const isImage = tipo.match(/\.(jpg|jpeg|png|gif|webp|bmp)$/i);
         if (isImage) {
+            // --- MODIFICADO ---
+            // Reemplazamos <a><img></a> por AuthenticatedImage
             return (
-                <a href={fileUrl} target="_blank" rel="noopener noreferrer">
-                    <img src={fileUrl} alt={doc.descripcion || 'Imagen'} className={styles.imagePreview} />
-                </a>
+                <AuthenticatedImage
+                    src={fileUrl}
+                    alt={doc.descripcion || 'Imagen'}
+                    className={styles.imagePreview}
+                />
             );
+            // --- FIN MODIFICADO ---
         }
         return (
             <a href={fileUrl} target="_blank" rel="noopener noreferrer" className={styles.downloadLink}>
@@ -337,9 +350,15 @@ export default function DetalleOrden() {
                     {orden?.imagen_averia_url && (
                         <div className={styles.infoCard}>
                             <h3><ImageIcon /> Imagen de la Avería</h3>
-                            <a href={orden.imagen_averia_url} target="_blank" rel="noopener noreferrer">
-                                <img src={orden.imagen_averia_url} alt="Avería reportada" className={styles.averiaImage} />
-                            </a>
+                            {/* --- MODIFICADO ---
+                                Usamos AuthenticatedImage en lugar de <img>
+                            */}
+                            <AuthenticatedImage
+                                src={orden.imagen_averia_url}
+                                alt="Avería reportada"
+                                className={styles.averiaImage}
+                            />
+                            {/* --- FIN MODIFICADO --- */}
                         </div>
                     )}
 
@@ -417,8 +436,8 @@ export default function DetalleOrden() {
                                     <button type="submit" className={styles.submitButton} disabled={isUploading}>
                                         {isUploading ? 'Subiendo...' : 'Subir Archivo'}
                                     </button>
+                                    <hr />
                                 </form>
-                                <hr />
                             </>
                         )}
 

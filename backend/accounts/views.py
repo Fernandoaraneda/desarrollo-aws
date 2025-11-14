@@ -43,6 +43,9 @@ from rest_framework.views import APIView
 import os
 from .permissions import IsAdministrativo
 import threading
+import os
+import mimetypes
+from django.http import FileResponse, Http404
 
 # Models
 from .models import (
@@ -3174,3 +3177,36 @@ def exportar_hoja_vida_vehiculo_pdf(request):
     filename = f"Hoja_De_Vida_{patente}.pdf"
     response["Content-Disposition"] = f'attachment; filename="{filename}"'
     return response
+
+
+class ProtectedMediaView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, file_path):
+        
+        file_full_path = os.path.join(settings.MEDIA_ROOT, file_path)
+        safe_path = os.path.normpath(file_full_path)
+
+        if not safe_path.startswith(os.path.normpath(settings.MEDIA_ROOT)):
+            raise Http404("Acceso no permitido.")
+
+        if not os.path.exists(safe_path):
+            raise Http404("Archivo no encontrado.")
+
+        mime_type, _ = mimetypes.guess_type(safe_path)
+
+        try:
+            response = FileResponse(
+                open(safe_path, 'rb'),
+                content_type=mime_type or 'application/octet-stream'
+            )
+            return response
+
+        except IOError:
+   
+            raise Http404("Error al leer el archivo.")
+
+        except Exception as e:
+         
+            print(f"[ProtectedMediaView] Error inesperado: {e}")
+            return HttpResponse(status=500)

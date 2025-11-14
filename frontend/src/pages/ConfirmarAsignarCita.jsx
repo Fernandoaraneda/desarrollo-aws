@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import apiClient from '/src/api/axios.js';
-import styles from '../css/ConfirmarAsignarCita.module.css';
-
+// --- CORREGIDO: Ruta relativa ---
+import apiClient from '../../api/axios.js';
+import styles from '../../css/ConfirmarAsignarCita.module.css';
+// --- FIN CORREGIDO ---
 
 import {
     CalendarCheck,
@@ -15,8 +16,14 @@ import {
     Package,
 } from 'lucide-react';
 
-import AlertModal from '/src/components/modals/AlertModal.jsx';
-import ConfirmModal from '/src/components/modals/ConfirmModal.jsx';
+// --- AÑADIDO Y CORREGIDO: Ruta relativa ---
+import AuthenticatedImage from '../components/AuthenticatedImage.jsx';
+// --- FIN AÑADIDO ---
+
+// --- CORREGIDO: Ruta relativa ---
+import AlertModal from '../components/modals/AlertModal.jsx';
+import ConfirmModal from '../components/modals/ConfirmModal.jsx';
+// --- FIN CORREGIDO ---
 
 import DatePicker, { registerLocale } from 'react-datepicker';
 import { es } from 'date-fns/locale/es';
@@ -315,17 +322,15 @@ export default function ConfirmarAsignarCita() {
                         <h4>
                             <ImageIcon /> Imagen Adjunta
                         </h4>
-                        <a
-                            href={agendamiento.imagen_averia}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                        >
-                            <img
-                                src={agendamiento.imagen_averia}
-                                alt="Avería reportada"
-                                className={styles.fullWidthImage}
-                            />
-                        </a>
+                        {/* --- MODIFICADO ---
+                            Usamos AuthenticatedImage en lugar de <img>
+                        */}
+                        <AuthenticatedImage
+                            src={agendamiento.imagen_averia}
+                            alt="Avería reportada"
+                            className={styles.fullWidthImage}
+                        />
+                        {/* --- FIN MODIFICADO --- */}
                     </div>
                 )}
                 {agendamiento.es_mantenimiento && (

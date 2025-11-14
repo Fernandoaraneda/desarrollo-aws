@@ -1,11 +1,13 @@
-import React, { useState } from 'react';
+// 1. Importar Suspense
+import React, { useState, Suspense } from 'react';
 import { NavLink, useNavigate, Outlet } from 'react-router-dom';
+// 2. Corregir rutas de importación para que sean relativas
 import { useUserStore } from '../../store/authStore.js';
 import styles from '../../css/mainlayout.module.css';
-import Notificaciones from './Notificaciones';
+import Notificaciones from './Notificaciones.jsx';
+import AccordionMenu from './AccordionMenu.jsx';
 
-import AccordionMenu from './AccordionMenu'; 
-
+// (El componente Sidebar no cambia)
 const navLinksByRole = {
   'Supervisor': [
     { type: 'link', to: '/dashboard', label: 'Inicio', icon: 'fas fa-home' },
@@ -13,7 +15,6 @@ const navLinksByRole = {
     { type: 'link', to: '/usuarios', label: 'Gestionar Usuarios', icon: 'fas fa-users-cog' },
     { type: 'link', to: '/vehiculos', label: 'Gestionar Vehículos', icon: 'fas fa-truck' },
   ],
-
   'Chofer': [
     { to: '/dashboard', label: 'Mi Estado', icon: 'fas fa-road' },
     { to: '/agenda', label: 'Agendar Ingreso', icon: 'fas fa-calendar-plus' },
@@ -26,20 +27,18 @@ const navLinksByRole = {
     { to: '/historial-mecanico', label: 'Mi Historial', icon: 'fas fa-history' }
   ],
   'Seguridad': [
-      { to: '/panel-ingresos', label: 'Registrar Ingreso', icon: 'fas fa-door-open' },
-      { to: '/panel-salidas', label: 'Registrar Salida', icon: 'fas fa-door-closed' },
-      { to: '/historial-seguridad', label: 'Historial Movimientos', icon: 'fas fa-history' },
+    { to: '/panel-ingresos', label: 'Registrar Ingreso', icon: 'fas fa-door-open' },
+    { to: '/panel-salidas', label: 'Registrar Salida', icon: 'fas fa-door-closed' },
+    { to: '/historial-seguridad', label: 'Historial Movimientos', icon: 'fas fa-history' },
   ],
   'Administrativo': [
-
     { type: 'link', to: '/dashboard', label: 'Inicio', icon: 'fas fa-home' },
     { type: 'link', to: '/panel-supervisor', label: 'Panel de Citas', icon: 'fas fa-calendar-check' },
     { type: 'link', to: '/usuarios', label: 'Gestionar Usuarios', icon: 'fas fa-users-cog' },
     { type: 'link', to: '/vehiculos', label: 'Gestionar Vehículos', icon: 'fas fa-truck' },
-    // --- Acordeón 1: mecanicop ---
-    { 
-      type: 'accordion', 
-      label: 'Gestión Mecanico', 
+    {
+      type: 'accordion',
+      label: 'Gestión Mecanico',
       icon: 'fas fa-tachometer-alt',
       links: [
         { to: '/ordenes', label: 'Órdenes de Servicio', icon: 'fas fa-clipboard-list' },
@@ -47,10 +46,9 @@ const navLinksByRole = {
         { to: '/historial-mecanico', label: 'Mi Historial', icon: 'fas fa-history' }
       ]
     },
-    // --- Acordeón 2: Seguridad ---
-    { 
-      type: 'accordion', 
-      label: 'Panel Seguridad', 
+    {
+      type: 'accordion',
+      label: 'Panel Seguridad',
       icon: 'fas fa-shield-alt',
       links: [
         { to: '/panel-ingresos', label: 'Panel de Ingresos', icon: 'fas fa-door-open' },
@@ -58,30 +56,27 @@ const navLinksByRole = {
         { to: '/historial-seguridad', label: 'Historial Movimientos', icon: 'fas fa-history' },
       ]
     },
-    // --- Acordeón 3:  chofer ---
-    { 
-      type: 'accordion', 
-      label: 'Vistas Chofer', 
+    {
+      type: 'accordion',
+      label: 'Vistas Chofer',
       icon: 'fas fa-user-friends',
       links: [
         { to: '/agenda', label: 'Agendar Ingreso', icon: 'fas fa-calendar-plus' },
         { to: '/historial', label: 'Mi Historial', icon: 'fas fa-history' }
       ]
     },
-    // --- Acordeón 4: Gestor de llaves ---
-    { 
-      type: 'accordion', 
-      label: 'Manejo de Llaves', 
+    {
+      type: 'accordion',
+      label: 'Manejo de Llaves',
       icon: 'fas fa-shield-alt',
       links: [
         { to: '/gestion-llaves', label: 'Gestión de Llaves', icon: 'fas fa-key' },
         { to: '/gestion-llaves/historial', label: 'Historial de Llaves', icon: 'fas fa-history' },
       ]
     },
-    // --- Acordeón 4: Gestor de repuestos ---
-    { 
-      type: 'accordion', 
-      label: 'Manejo Repuestos', 
+    {
+      type: 'accordion',
+      label: 'Manejo Repuestos',
       icon: 'fas fa-shield-alt',
       links: [
         { to: '/panel-repuestos', label: 'Solicitudes', icon: 'fas fa-inbox' },
@@ -97,7 +92,6 @@ const navLinksByRole = {
     { to: '/gestion-llaves', label: 'Gestión de Llaves', icon: 'fas fa-key' },
     { to: '/gestion-llaves/historial', label: 'Historial de Llaves', icon: 'fas fa-history' },
   ],
-
 };
 
 const Sidebar = ({ isOpen, toggleSidebar }) => {
@@ -108,7 +102,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
     logout();
     navigate("/");
   };
-  
+
   const handleLinkClick = () => {
     if (window.innerWidth <= 768) {
       toggleSidebar();
@@ -117,7 +111,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
 
   const userLinks = navLinksByRole[user?.rol] || [];
   const commonLinks = [{ to: '/profile', label: 'Mi Perfil', icon: 'fas fa-user' }];
-  
+
   return (
     <aside className={`${styles.sidebar} ${isOpen ? styles.isOpen : ''}`}>
       <NavLink to="/dashboard" className={styles.sidebarBrand} onClick={handleLinkClick}>
@@ -126,26 +120,20 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
       </NavLink>
 
       <nav className={styles.sidebarNav}>
-        
-        
         {userLinks.map((item, index) => {
-          
-         
           if (item.type === 'accordion') {
             return (
-              <AccordionMenu 
-                key={index} 
-                item={item} 
-                handleLinkClick={handleLinkClick} 
+              <AccordionMenu
+                key={index}
+                item={item}
+                handleLinkClick={handleLinkClick}
               />
             );
           }
-
-          
           return (
             <NavLink
-              key={item.to || index} 
-              to={item.to} 
+              key={item.to || index}
+              to={item.to}
               onClick={handleLinkClick}
               className={({ isActive }) => `${styles.navLink} ${isActive ? styles.activeLink : ''}`}
             >
@@ -153,10 +141,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
             </NavLink>
           );
         })}
-
         <hr style={{ borderColor: 'var(--border-color)', margin: '1rem' }} />
-        
-    
         {commonLinks.map(link => (
           <NavLink
             key={link.to} to={link.to} onClick={handleLinkClick}
@@ -169,7 +154,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
 
       <div className={styles.sidebarFooter}>
         <button onClick={handleLogout} className={styles.logoutButton}>
-          <i className="fas fa-sign-out-alt" style={{marginRight: '8px'}}></i>
+          <i className="fas fa-sign-out-alt" style={{ marginRight: '8px' }}></i>
           Cerrar Sesión
         </button>
       </div>
@@ -177,6 +162,14 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
   );
 };
 
+// 3. Un fallback simple para el Suspense dentro del layout
+function LayoutLoadingFallback() {
+  return (
+    <div style={{ padding: '2rem', textAlign: 'center', color: '#6b7280' }}>
+      Cargando contenido...
+    </div>
+  );
+}
 
 export default function MainLayout() {
   const { user } = useUserStore();
@@ -189,8 +182,8 @@ export default function MainLayout() {
   return (
     <div className={styles.layoutWrapper}>
       <Sidebar isOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />
-      
-      <div 
+
+      <div
         className={`${styles.overlay} ${isSidebarOpen ? styles.isOpen : ''}`}
         onClick={toggleSidebar}
       />
@@ -200,19 +193,27 @@ export default function MainLayout() {
           <button className={styles.hamburgerButton} onClick={toggleSidebar}>
             <i className="fas fa-bars"></i>
           </button>
-          
-          <div className={styles.headerRight}> 
-  <span className={styles.userInfo}>
-    Bienvenido, <strong>{user?.first_name || user?.username}</strong> ({user?.rol})
-  </span>
-  <div className={styles.notificationContainer}>
-    <Notificaciones />
-  </div>
-</div>
+
+          <div className={styles.headerRight}>
+            <span className={styles.userInfo}>
+              Bienvenido, <strong>{user?.first_name || user?.username}</strong> ({user?.rol})
+            </span>
+            <div className={styles.notificationContainer}>
+              <Notificaciones />
+            </div>
+          </div>
 
         </header>
         <main className={styles.mainContent}>
-          <Outlet />
+          {/* 4. Envolver el Outlet con Suspense.
+            El fallback de App.jsx (fondo oscuro) se muestra primero.
+            Luego, este layout (Sidebar/Header) se renderiza.
+            Finalmente, el <Outlet> espera al JS de la página específica,
+            mostrando "Cargando contenido..." mientras tanto.
+          */}
+          <Suspense fallback={<LayoutLoadingFallback />}>
+            <Outlet />
+          </Suspense>
         </main>
       </div>
     </div>
