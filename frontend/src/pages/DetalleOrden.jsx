@@ -77,11 +77,11 @@ const DocumentGroup = ({ state, docs }) => {
             // --- FIN MODIFICADO ---
         }
         const isDownloadingThis = downloadingId === doc.id;
-        
+
         return (
-            <button 
-                onClick={() => handleDownload(doc)} 
-                disabled={isDownloadingThis} 
+            <button
+                onClick={() => handleDownload(doc)}
+                disabled={isDownloadingThis}
                 className={styles.downloadLink} // Reusamos tu estilo
             >
                 <Download size={18} />
@@ -89,8 +89,8 @@ const DocumentGroup = ({ state, docs }) => {
             </button>
         );
     };
-    
-    
+
+
 
     return (
         <div className={styles.documentGroup}>
@@ -471,7 +471,7 @@ export default function DetalleOrden() {
                                     <div className={styles.formRow}>
                                         <div className={styles.formField} style={{ flex: 1 }}>
                                             <label>Archivo</label>
-                                            <input type="file" onChange={e => setArchivo(e.target.files[0])} required accept=".jpg,.jpeg,.png,.gif,.pdf,.ppt,.pptx,.xls,.xlsx" />
+                                            <input type="file" onChange={e => setArchivo(e.target.files[0])} required accept=".jpg,.jpeg,.png,.gif,.pdf,.ppt,.pptx,.xls,.xlsx,image/*" capture="environment" />
                                         </div>
                                     </div>
                                     <div className={styles.formField}>

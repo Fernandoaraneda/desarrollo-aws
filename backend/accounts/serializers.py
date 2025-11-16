@@ -11,54 +11,116 @@ import re
 
 # Modelos locales
 from .models import (
-    Vehiculo, Agendamiento, Orden, OrdenHistorialEstado, OrdenDocumento, 
-    Notificacion, Producto, OrdenItem, LlaveVehiculo, PrestamoLlave, LlaveHistorialEstado, Taller,AgendamientoDocumento
+    Vehiculo,
+    Agendamiento,
+    Orden,
+    OrdenHistorialEstado,
+    OrdenDocumento,
+    Notificacion,
+    Producto,
+    OrdenItem,
+    LlaveVehiculo,
+    PrestamoLlave,
+    LlaveHistorialEstado,
+    Taller,
+    AgendamientoDocumento,
 )
 
 import os
 from django.core.exceptions import ValidationError as DjangoValidationError
 
 
-
 # ======================================================================
 # 💡 VALIDADORES DE ARCHIVOS (NUEVO)
 # ======================================================================
+
+
+def validate_image_only(file):
+    """Validador para tamaño (10MB) y SOLO tipo de archivo (Imágenes)."""
+    # 1. Validación de Tamaño (10MB)
+    MAX_SIZE = 10 * 1024 * 1024  # 10MB
+    if file.size > MAX_SIZE:
+        raise DjangoValidationError(
+            f"El tamaño del archivo ({file.size // (1024*1024)}MB) supera el límite de 10MB."
+        )
+
+    # 2. Validación de Tipo (MIME Type)
+    # Esto asegura que solo se suban archivos que el sistema identifica como 'image/*'
+    if not file.content_type or not file.content_type.startswith("image/"):
+        raise DjangoValidationError(
+            f"Archivo no permitido. Solo se aceptan imágenes (tipo detectado: {file.content_type})."
+        )
+
+    return file
+
 
 def validate_image_size(file):
     """Validador solo para el tamaño de la imagen (10MB)."""
     MAX_SIZE = 10 * 1024 * 1024  # 10MB
     if file.size > MAX_SIZE:
         # Usamos DjangoValidationError, DRF lo captura
-        raise DjangoValidationError(f"El tamaño de la imagen ({file.size // (1024*1024)}MB) supera el límite de 10MB.")
+        raise DjangoValidationError(
+            f"El tamaño de la imagen ({file.size // (1024*1024)}MB) supera el límite de 10MB."
+        )
     return file
+
 
 def validate_file_restrictions(file):
     """Validador para tamaño (10MB) y tipo de archivo (Imágenes, PDF, PPT, Excel)."""
     # 1. Validación de Tamaño (10MB)
     MAX_SIZE = 10 * 1024 * 1024  # 10MB
     if file.size > MAX_SIZE:
-        raise DjangoValidationError(f"El tamaño del archivo ({file.size // (1024*1024)}MB) supera el límite de 10MB.")
+        raise DjangoValidationError(
+            f"El tamaño del archivo ({file.size // (1024*1024)}MB) supera el límite de 10MB."
+        )
 
-    # 2. Validación de Extensión
-    ext = os.path.splitext(file.name)[1].lower()
-    ALLOWED_EXTENSIONS = [
-        # Imágenes
-        '.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp', '.svg',
-        # Documentos
-        '.pdf',
-        '.ppt', '.pptx',  # PowerPoint
-        '.xls', '.xlsx'   # Excel
+    # 2. Validación de Tipo (MIME Type) - VERSIÓN MEJORADA
+    ALLOWED_MIME_TYPES = [
+        "image/",  # Todas las imágenes
+        "application/pdf",
+        "application/vnd.ms-powerpoint",  # ppt
+        "application/vnd.openxmlformats-officedocument.presentationml.presentation",  # pptx
+        "application/vnd.ms-excel",  # xls
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",  # xlsx
     ]
-    
-    if ext not in ALLOWED_EXTENSIONS:
-        raise DjangoValidationError(f"Extensión no permitida ('{ext}'). Solo se aceptan: imágenes, PDF, PowerPoint y Excel.")
-    
+
+    file_type_ok = False
+    if file.content_type:
+        for mime_type in ALLOWED_MIME_TYPES:
+            if file.content_type.startswith(mime_type):
+                file_type_ok = True
+                break
+
+    if not file_type_ok:
+        # Fallback a la extensión si el MIME type falla
+        ext = os.path.splitext(file.name)[1].lower()
+        ALLOWED_EXTENSIONS = [
+            ".jpg",
+            ".jpeg",
+            ".png",
+            ".gif",
+            ".bmp",
+            ".webp",
+            ".svg",
+            ".pdf",
+            ".ppt",
+            ".pptx",
+            ".xls",
+            ".xlsx",
+        ]
+        if ext not in ALLOWED_EXTENSIONS:
+            raise DjangoValidationError(
+                f"Tipo de archivo no permitido ('{file.content_type}'). Solo se aceptan imágenes, PDF, PowerPoint y Excel."
+            )
+
     return file
+
 
 # ======================================================================
 
 
 User = get_user_model()
+
 
 def validar_rut_chileno(rut):
     """
@@ -69,25 +131,25 @@ def validar_rut_chileno(rut):
         rut_limpio = str(rut).upper().replace(".", "").replace("-", "")
         if not re.match(r"^\d{7,8}[0-9K]$", rut_limpio):
             return False, "Formato de RUT inválido (ej: 12.345.678-9)."
-        
+
         cuerpo = rut_limpio[:-1]
         dv = rut_limpio[-1]
-        
+
         suma = 0
         multiplo = 2
         for c in reversed(cuerpo):
             suma += int(c) * multiplo
             multiplo = multiplo + 1 if multiplo < 7 else 2
-        
+
         dv_calculado = 11 - (suma % 11)
-        
+
         if dv_calculado == 11:
-            dv_esperado = '0'
+            dv_esperado = "0"
         elif dv_calculado == 10:
-            dv_esperado = 'K'
+            dv_esperado = "K"
         else:
             dv_esperado = str(dv_calculado)
-        
+
         if dv == dv_esperado:
             # Formatear el RUT (ej: 12.345.678-9)
             cuerpo_int = int(cuerpo)
@@ -97,24 +159,33 @@ def validar_rut_chileno(rut):
             return False, "RUT inválido (dígito verificador no coincide)."
     except Exception:
         return False, "Error al procesar el RUT."
-    
+
 
 # ======================================================================
 # 🔐 SERIALIZERS DE USUARIOS
 # ======================================================================
+
 
 class UserSerializer(serializers.ModelSerializer):
     """
     Serializador para LEER la información de los usuarios.
     Incluye el nombre del rol (primer grupo al que pertenece).
     """
+
     rol = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = User
         fields = [
-            'id', 'username', 'first_name', 'last_name',
-            'email', 'rol', 'is_active', 'rut', 'telefono'
+            "id",
+            "username",
+            "first_name",
+            "last_name",
+            "email",
+            "rol",
+            "is_active",
+            "rut",
+            "telefono",
         ]
 
     def get_rol(self, obj):
@@ -128,14 +199,22 @@ class UserCreateUpdateSerializer(serializers.ModelSerializer):
     Serializador para CREAR y ACTUALIZAR usuarios.
     Permite asignar el rol y establecer contraseña.
     """
+
     rol = serializers.CharField(write_only=True)
     password = serializers.CharField(write_only=True, required=False, allow_blank=True)
 
     class Meta:
         model = User
         fields = [
-            'username', 'first_name', 'last_name', 'email',
-            'password', 'is_active', 'rol', 'rut', 'telefono'
+            "username",
+            "first_name",
+            "last_name",
+            "email",
+            "password",
+            "is_active",
+            "rol",
+            "rut",
+            "telefono",
         ]
 
     # -----------------------
@@ -146,6 +225,7 @@ class UserCreateUpdateSerializer(serializers.ModelSerializer):
         if value:
             validate_password(value)
         return value
+
     def validate_rut(self, value):
         """
         Valida el RUT usando la función helper.
@@ -154,7 +234,7 @@ class UserCreateUpdateSerializer(serializers.ModelSerializer):
         es_valido, rut_o_error = validar_rut_chileno(value)
         if not es_valido:
             raise serializers.ValidationError(rut_o_error)
-        
+
         # Guardamos el RUT formateado (ej: 12.345.678-9)
         # Esto coincide con los datos que mostraste de tu BD.
         return rut_o_error
@@ -163,19 +243,21 @@ class UserCreateUpdateSerializer(serializers.ModelSerializer):
         """
         Valida que el teléfono tenga 9 dígitos y (opcionalmente) comience con 9.
         """
-        if not value: # Permite campos vacíos (null=True, blank=True)
+        if not value:  # Permite campos vacíos (null=True, blank=True)
             return None
-            
+
         # Limpiar cualquier caracter que no sea dígito
-        numeros = re.sub(r'\D', '', str(value))
-        
+        numeros = re.sub(r"\D", "", str(value))
+
         # Opcional: Si escriben +569... lo limpiamos a 9...
-        if len(numeros) == 11 and numeros.startswith('569'):
+        if len(numeros) == 11 and numeros.startswith("569"):
             numeros = numeros[2:]
-        
-        if not re.match(r'^[9]\d{8}$', numeros):
-            raise serializers.ValidationError("El teléfono debe ser un número celular chileno válido (9 dígitos, ej: 912345678).")
-        
+
+        if not re.match(r"^[9]\d{8}$", numeros):
+            raise serializers.ValidationError(
+                "El teléfono debe ser un número celular chileno válido (9 dígitos, ej: 912345678)."
+            )
+
         # Guardamos solo los 9 dígitos limpios
         return numeros
 
@@ -184,12 +266,16 @@ class UserCreateUpdateSerializer(serializers.ModelSerializer):
         Valida que el nombre solo contenga letras, espacios y acentos.
         """
         if not value:
-             raise serializers.ValidationError("El nombre no puede estar vacío.")
+            raise serializers.ValidationError("El nombre no puede estar vacío.")
         # Regex permite letras, acentos, ñ, espacios y apóstrofes
         if not re.match(r"^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s']+$", value):
-            raise serializers.ValidationError("El nombre solo debe contener letras y espacios.")
+            raise serializers.ValidationError(
+                "El nombre solo debe contener letras y espacios."
+            )
         if len(value) > 50:
-            raise serializers.ValidationError("El nombre no debe exceder los 50 caracteres.")
+            raise serializers.ValidationError(
+                "El nombre no debe exceder los 50 caracteres."
+            )
         return value
 
     def validate_last_name(self, value):
@@ -197,19 +283,24 @@ class UserCreateUpdateSerializer(serializers.ModelSerializer):
         Valida que el apellido solo contenga letras, espacios y acentos.
         """
         if not value:
-             raise serializers.ValidationError("El apellido no puede estar vacío.")
+            raise serializers.ValidationError("El apellido no puede estar vacío.")
         if not re.match(r"^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s']+$", value):
-            raise serializers.ValidationError("El apellido solo debe contener letras y espacios.")
+            raise serializers.ValidationError(
+                "El apellido solo debe contener letras y espacios."
+            )
         if len(value) > 50:
-            raise serializers.ValidationError("El apellido no debe exceder los 50 caracteres.")
+            raise serializers.ValidationError(
+                "El apellido no debe exceder los 50 caracteres."
+            )
         return value
+
     # -----------------------
     # Métodos CRUD
     # -----------------------
     def create(self, validated_data):
         """Crea un usuario y lo asigna a un grupo/rol."""
-        rol_name = validated_data.pop('rol')
-        password = validated_data.pop('password', None)
+        rol_name = validated_data.pop("rol")
+        password = validated_data.pop("password", None)
 
         user = User(**validated_data)
         if password:
@@ -227,8 +318,8 @@ class UserCreateUpdateSerializer(serializers.ModelSerializer):
 
     def update(self, instance, validated_data):
         """Actualiza un usuario existente (rol y contraseña incluidos)."""
-        if 'rol' in validated_data:
-            rol_name = validated_data.pop('rol')
+        if "rol" in validated_data:
+            rol_name = validated_data.pop("rol")
             instance.groups.clear()
             try:
                 group = Group.objects.get(name=rol_name)
@@ -236,7 +327,7 @@ class UserCreateUpdateSerializer(serializers.ModelSerializer):
             except Group.DoesNotExist:
                 pass
 
-        password = validated_data.pop('password', None)
+        password = validated_data.pop("password", None)
         if password:
             validate_password(password, instance)
             instance.set_password(password)
@@ -249,17 +340,20 @@ class LoginSerializer(serializers.Serializer):
     Serializador para el INICIO DE SESIÓN.
     Valida las credenciales del usuario.
     """
+
     username = serializers.CharField()
     password = serializers.CharField(write_only=True)
     user = serializers.HiddenField(default=None)
 
     def validate(self, data):
-        user = authenticate(username=data['username'], password=data['password'])
+        user = authenticate(username=data["username"], password=data["password"])
         if not user:
-            raise serializers.ValidationError("Credenciales incorrectas. Inténtalo de nuevo.")
+            raise serializers.ValidationError(
+                "Credenciales incorrectas. Inténtalo de nuevo."
+            )
         if not user.is_active:
             raise serializers.ValidationError("Esta cuenta de usuario está inactiva.")
-        data['user'] = user
+        data["user"] = user
         return data
 
 
@@ -267,12 +361,13 @@ class ChangePasswordSerializer(serializers.Serializer):
     """
     Serializador para CAMBIO DE CONTRASEÑA del propio usuario.
     """
+
     old_password = serializers.CharField(required=True)
     new_password = serializers.CharField(required=True)
 
     def validate_new_password(self, value):
         """Valida la nueva contraseña antes de guardarla."""
-        validate_password(value, self.context['request'].user)
+        validate_password(value, self.context["request"].user)
         return value
 
 
@@ -280,25 +375,27 @@ class ChangePasswordSerializer(serializers.Serializer):
 # 🚗 SERIALIZERS DE VEHÍCULOS
 # ======================================================================
 
+
 class VehiculoSerializer(serializers.ModelSerializer):
     chofer_nombre = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Vehiculo
-        fields = '__all__'
+        fields = "__all__"
 
     def get_chofer_nombre(self, obj):
         if obj.chofer:
             return f"{obj.chofer.first_name} {obj.chofer.last_name}"
         return "Sin asignar"
 
-
     def validate_patente(self, value):
-        patente_limpia = str(value).upper().replace(' ', '').replace('-', '')
-        patente_regex = r'(^[A-Z]{4}\d{2}$)|(^[A-Z]{2}\d{4}$)'
+        patente_limpia = str(value).upper().replace(" ", "").replace("-", "")
+        patente_regex = r"(^[A-Z]{4}\d{2}$)|(^[A-Z]{2}\d{4}$)"
         if not re.match(patente_regex, patente_limpia):
-            raise serializers.ValidationError("Formato de Patente inválido. Debe ser XX1111 o XXXX11.")
-        
+            raise serializers.ValidationError(
+                "Formato de Patente inválido. Debe ser XX1111 o XXXX11."
+            )
+
         if not self.instance:
             if Vehiculo.objects.filter(patente=patente_limpia).exists():
                 raise serializers.ValidationError("Esta patente ya está registrada.")
@@ -308,164 +405,212 @@ class VehiculoSerializer(serializers.ModelSerializer):
         ano_maximo = datetime.now().year + 1
         ano_minimo = 1980
         if not isinstance(value, int):
-             raise serializers.ValidationError("El año debe ser un número.")
+            raise serializers.ValidationError("El año debe ser un número.")
         if not (ano_minimo <= value <= ano_maximo):
-            raise serializers.ValidationError(f"El año debe estar entre {ano_minimo} y {ano_maximo}.")
+            raise serializers.ValidationError(
+                f"El año debe estar entre {ano_minimo} y {ano_maximo}."
+            )
         return value
 
     def validate_kilometraje(self, value):
         if not isinstance(value, int) or value < 0:
-            raise serializers.ValidationError("El kilometraje debe ser un número positivo.")
+            raise serializers.ValidationError(
+                "El kilometraje debe ser un número positivo."
+            )
         return value
 
     def validate_vin(self, value):
-        if not value: 
+        if not value:
             return value
 
-        vin_limpio = re.sub(r'[^A-HJ-NPR-Z0-9]', '', str(value).upper())
-      
-        
+        vin_limpio = re.sub(r"[^A-HJ-NPR-Z0-9]", "", str(value).upper())
+
         if len(vin_limpio) != 17:
-             raise serializers.ValidationError("El VIN debe tener 17 caracteres alfanuméricos.")
-             
+            raise serializers.ValidationError(
+                "El VIN debe tener 17 caracteres alfanuméricos."
+            )
+
         query = Vehiculo.objects.filter(vin=vin_limpio)
         if self.instance:
             query = query.exclude(pk=self.instance.pk)
-        
+
         if query.exists():
-            raise serializers.ValidationError("Este VIN ya está registrado en otro vehículo.")
-            
+            raise serializers.ValidationError(
+                "Este VIN ya está registrado en otro vehículo."
+            )
+
         return vin_limpio
 
     def _validate_texto_vehiculo(self, value, field_name="El campo"):
         """Función helper interna para validar marca, modelo, color."""
         if not value:
-            return value # Permite campos vacíos (como 'color')
+            return value  # Permite campos vacíos (como 'color')
         # Permite letras, números, acentos, ñ, espacios, y guiones
         if not re.match(r"^[a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\s'-]+$", str(value)):
-             raise serializers.ValidationError(f"{field_name} contiene caracteres inválidos.")
+            raise serializers.ValidationError(
+                f"{field_name} contiene caracteres inválidos."
+            )
         if len(str(value)) > 50:
-             raise serializers.ValidationError(f"{field_name} no debe exceder los 50 caracteres.")
+            raise serializers.ValidationError(
+                f"{field_name} no debe exceder los 50 caracteres."
+            )
         return value
 
     def validate_marca(self, value):
         if not value:
-             raise serializers.ValidationError("La Marca no puede estar vacía.")
+            raise serializers.ValidationError("La Marca no puede estar vacía.")
         return self._validate_texto_vehiculo(value, "La Marca")
 
     def validate_modelo(self, value):
         if not value:
-             raise serializers.ValidationError("El Modelo no puede estar vacío.")
+            raise serializers.ValidationError("El Modelo no puede estar vacío.")
         return self._validate_texto_vehiculo(value, "El Modelo")
 
     def validate_color(self, value):
         return self._validate_texto_vehiculo(value, "El Color")
+
+
 # ======================================================================
 # 📅 SERIALIZERS DE AGENDAMIENTOS
 # ======================================================================
+
 
 class AgendamientoSerializer(serializers.ModelSerializer):
     """
     Serializador para agendamientos (citas programadas).
     Incluye datos del vehículo, chofer y mecánico.
     """
-    vehiculo_patente = serializers.CharField(source='vehiculo.patente', read_only=True)
-    chofer_nombre = serializers.CharField(source='chofer_asociado.get_full_name', read_only=True)
-    mecanico_nombre = serializers.CharField(source='mecanico_asignado.get_full_name', read_only=True, default='Sin asignar')
 
-    
+    vehiculo_patente = serializers.CharField(source="vehiculo.patente", read_only=True)
+    chofer_nombre = serializers.CharField(
+        source="chofer_asociado.get_full_name", read_only=True
+    )
+    mecanico_nombre = serializers.CharField(
+        source="mecanico_asignado.get_full_name", read_only=True, default="Sin asignar"
+    )
+
     imagen_averia = serializers.FileField( 
         required=False, 
         allow_null=True,
-        
-        validators=[validate_file_restrictions] 
+        validators=[validate_image_only] 
     )
-    
 
     vehiculo = serializers.PrimaryKeyRelatedField(queryset=Vehiculo.activos.all())
 
     class Meta:
         model = Agendamiento
         fields = [
-            'id', 'vehiculo', 'vehiculo_patente', 'chofer_asociado', 'chofer_nombre',
-            'mecanico_asignado', 'mecanico_nombre',
-            'fecha_hora_programada', 'duracion_estimada_minutos', 'fecha_hora_fin',
-            'motivo_ingreso', 'estado', 'imagen_averia', 'creado_por', 'solicita_grua',
-            'direccion_grua', 'grua_enviada', 'es_mantenimiento'
+            "id",
+            "vehiculo",
+            "vehiculo_patente",
+            "chofer_asociado",
+            "chofer_nombre",
+            "mecanico_asignado",
+            "mecanico_nombre",
+            "fecha_hora_programada",
+            "duracion_estimada_minutos",
+            "fecha_hora_fin",
+            "motivo_ingreso",
+            "estado",
+            "imagen_averia",
+            "creado_por",
+            "solicita_grua",
+            "direccion_grua",
+            "grua_enviada",
+            "es_mantenimiento",
         ]
-        read_only_fields = ['creado_por', 'fecha_hora_fin']
+        read_only_fields = ["creado_por", "fecha_hora_fin"]
 
         extra_kwargs = {
-            'fecha_hora_programada': {'required': False, 'allow_null': True},
-            'vehiculo': {'required': True},
-            'motivo_ingreso': {'required': False, 'allow_blank': True}
+            "fecha_hora_programada": {"required": False, "allow_null": True},
+            "vehiculo": {"required": True},
+            "motivo_ingreso": {"required": False, "allow_blank": True},
         }
 
     def __init__(self, *args, **kwargs):
         """Filtra los vehículos visibles según el rol del usuario."""
         super().__init__(*args, **kwargs)
-        user = self.context.get('request').user if 'request' in self.context else None
-        if user and user.groups.filter(name='Chofer').exists():
-            self.fields['vehiculo'].queryset = Vehiculo.activos.filter(chofer=user)
-
-    
+        user = self.context.get("request").user if "request" in self.context else None
+        if user and user.groups.filter(name="Chofer").exists():
+            self.fields["vehiculo"].queryset = Vehiculo.activos.filter(chofer=user)
 
 
 # ======================================================================
 # 🧾 SERIALIZERS DE ÓRDENES DE SERVICIO
 # ======================================================================
 
+
 class OrdenDocumentoSerializer(serializers.ModelSerializer):
     """
     Serializador para listar y subir documentos asociados a una orden.
     """
-    subido_por_nombre = serializers.CharField(source='subido_por.get_full_name', read_only=True)
+
+    subido_por_nombre = serializers.CharField(
+        source="subido_por.get_full_name", read_only=True
+    )
     archivo_url = serializers.SerializerMethodField()
 
     class Meta:
         model = OrdenDocumento
-        fields = ['id', 'tipo', 'descripcion', 'archivo', 'archivo_url', 'fecha', 'subido_por_nombre', 'estado_en_carga']
-        read_only_fields = ['subido_por_nombre', 'fecha', 'archivo_url', 'estado_en_carga']
-        
-        
+        fields = [
+            "id",
+            "tipo",
+            "descripcion",
+            "archivo",
+            "archivo_url",
+            "fecha",
+            "subido_por_nombre",
+            "estado_en_carga",
+        ]
+        read_only_fields = [
+            "subido_por_nombre",
+            "fecha",
+            "archivo_url",
+            "estado_en_carga",
+        ]
+
         # Aplica el validador de tamaño Y extensión al campo 'archivo'
-        extra_kwargs = {
-            'archivo': {'validators': [validate_file_restrictions]}
-        }
-        
+        extra_kwargs = {"archivo": {"validators": [validate_file_restrictions]}}
 
     def get_archivo_url(self, obj):
         """Devuelve la URL absoluta del archivo (si existe)."""
-        request = self.context.get('request')
-        if obj.archivo and hasattr(obj.archivo, 'url'):
+        request = self.context.get("request")
+        if obj.archivo and hasattr(obj.archivo, "url"):
             return request.build_absolute_uri(obj.archivo.url)
         return None
-    
-    
+
+
 class AgendamientoDocumentoSerializer(serializers.ModelSerializer):
     """
     Serializador para listar y subir documentos de un agendamiento.
     """
-    subido_por_nombre = serializers.CharField(source='subido_por.get_full_name', read_only=True)
+
+    subido_por_nombre = serializers.CharField(
+        source="subido_por.get_full_name", read_only=True
+    )
     archivo_url = serializers.SerializerMethodField()
 
     class Meta:
         model = AgendamientoDocumento
         fields = [
-            'id', 'agendamiento', 'tipo', 'descripcion', 'archivo', 
-            'archivo_url', 'fecha', 'subido_por_nombre'
+            "id",
+            "agendamiento",
+            "tipo",
+            "descripcion",
+            "archivo",
+            "archivo_url",
+            "fecha",
+            "subido_por_nombre",
         ]
-        read_only_fields = ['subido_por_nombre', 'fecha', 'archivo_url']
+        read_only_fields = ["subido_por_nombre", "fecha", "archivo_url"]
 
         # --- AQUÍ APLICAMOS LA VALIDACIÓN ---
-        extra_kwargs = {
-            'archivo': {'validators': [validate_file_restrictions]}
-        }
+        extra_kwargs = {"archivo": {"validators": [validate_file_restrictions]}}
 
     def get_archivo_url(self, obj):
         """Devuelve la URL absoluta del archivo (si existe)."""
-        request = self.context.get('request')
-        if obj.archivo and hasattr(obj.archivo, 'url'):
+        request = self.context.get("request")
+        if obj.archivo and hasattr(obj.archivo, "url"):
             return request.build_absolute_uri(obj.archivo.url)
         return None
 
@@ -474,45 +619,67 @@ class OrdenHistorialEstadoSerializer(serializers.ModelSerializer):
     """
     Serializador para mostrar el historial de cambios de estado de una orden.
     """
-    usuario_nombre = serializers.CharField(source='usuario.get_full_name', read_only=True, default='Sistema')
+
+    usuario_nombre = serializers.CharField(
+        source="usuario.get_full_name", read_only=True, default="Sistema"
+    )
 
     class Meta:
         model = OrdenHistorialEstado
-        fields = ['id', 'estado', 'fecha', 'usuario', 'usuario_nombre', 'motivo']
+        fields = ["id", "estado", "fecha", "usuario", "usuario_nombre", "motivo"]
+
+
 class ProductoSerializer(serializers.ModelSerializer):
     """
     Serializer para el modelo Producto (Repuesto).
     """
+
     class Meta:
         model = Producto
-        fields = ['sku', 'nombre', 'descripcion', 'marca', 'precio_venta', 'stock']
+        fields = ["sku", "nombre", "descripcion", "marca", "precio_venta", "stock"]
 
 
 class OrdenItemSerializer(serializers.ModelSerializer):
     """
     Serializer para los Items de la Orden (Repuestos o Servicios).
     """
+
     # Usamos 'source' para leer la info del producto, no solo el SKU
-    producto_info = ProductoSerializer(source='producto', read_only=True)
-    servicio_info = serializers.StringRelatedField(source='servicio', read_only=True)
-    
-    solicitado_por_nombre = serializers.CharField(source='solicitado_por.get_full_name', read_only=True, default='')
-    gestionado_por_nombre = serializers.CharField(source='gestionado_por.get_full_name', read_only=True, default='')
+    producto_info = ProductoSerializer(source="producto", read_only=True)
+    servicio_info = serializers.StringRelatedField(source="servicio", read_only=True)
+
+    solicitado_por_nombre = serializers.CharField(
+        source="solicitado_por.get_full_name", read_only=True, default=""
+    )
+    gestionado_por_nombre = serializers.CharField(
+        source="gestionado_por.get_full_name", read_only=True, default=""
+    )
 
     class Meta:
         model = OrdenItem
         fields = [
-            'id', 'orden', 'producto', 'producto_info', 'servicio', 'servicio_info', 
-            'cantidad', 'precio_unitario', 'estado_repuesto', 
-            'solicitado_por_nombre', 'gestionado_por_nombre', 'motivo_gestion', 'fecha_gestion'
+            "id",
+            "orden",
+            "producto",
+            "producto_info",
+            "servicio",
+            "servicio_info",
+            "cantidad",
+            "precio_unitario",
+            "estado_repuesto",
+            "solicitado_por_nombre",
+            "gestionado_por_nombre",
+            "motivo_gestion",
+            "fecha_gestion",
         ]
         # Hacemos que 'producto' y 'servicio' sean write_only en el serializer base
         # El usuario enviará el ID, pero recibirá el objeto 'producto_info' anidado
         extra_kwargs = {
-            'producto': {'write_only': True, 'required': False, 'allow_null': True},
-            'servicio': {'write_only': True, 'required': False, 'allow_null': True},
-            'precio_unitario': {'required': False, 'allow_null': True},
+            "producto": {"write_only": True, "required": False, "allow_null": True},
+            "servicio": {"write_only": True, "required": False, "allow_null": True},
+            "precio_unitario": {"required": False, "allow_null": True},
         }
+
 
 class OrdenSerializer(serializers.ModelSerializer):
     """
@@ -523,28 +690,45 @@ class OrdenSerializer(serializers.ModelSerializer):
     - Historial de estados
     - Documentos y fotos
     """
-    vehiculo_info = serializers.StringRelatedField(source='vehiculo', read_only=True)
-    asignado_a = serializers.CharField(source='usuario_asignado.get_full_name', read_only=True, default='No asignado')
+
+    vehiculo_info = serializers.StringRelatedField(source="vehiculo", read_only=True)
+    asignado_a = serializers.CharField(
+        source="usuario_asignado.get_full_name", read_only=True, default="No asignado"
+    )
     historial_estados = OrdenHistorialEstadoSerializer(many=True, read_only=True)
     documentos = OrdenDocumentoSerializer(many=True, read_only=True)
     items = OrdenItemSerializer(many=True, read_only=True)
-    imagen_averia_url = serializers.ImageField(source='agendamiento_origen.imagen_averia', read_only=True, allow_null=True)
-    hora_agendada = serializers.DateTimeField(source='agendamiento_origen.fecha_hora_programada', read_only=True, allow_null=True)
+    imagen_averia_url = serializers.ImageField(
+        source="agendamiento_origen.imagen_averia", read_only=True, allow_null=True
+    )
+    hora_agendada = serializers.DateTimeField(
+        source="agendamiento_origen.fecha_hora_programada",
+        read_only=True,
+        allow_null=True,
+    )
 
     class Meta:
         model = Orden
         fields = [
-            'id', 'vehiculo', 'vehiculo_info', 'agendamiento_origen',
-            'fecha_ingreso', 'fecha_entrega_estimada', 'fecha_entrega_real',
-            'estado', 'descripcion_falla', 'diagnostico_tecnico',
-            'usuario_asignado', 'asignado_a',
-            'historial_estados', 'imagen_averia_url', 'hora_agendada', 'documentos','items'
+            "id",
+            "vehiculo",
+            "vehiculo_info",
+            "agendamiento_origen",
+            "fecha_ingreso",
+            "fecha_entrega_estimada",
+            "fecha_entrega_real",
+            "estado",
+            "descripcion_falla",
+            "diagnostico_tecnico",
+            "usuario_asignado",
+            "asignado_a",
+            "historial_estados",
+            "imagen_averia_url",
+            "hora_agendada",
+            "documentos",
+            "items",
         ]
-        extra_kwargs = {
-            'vehiculo': {'queryset': Vehiculo.activos.all()}
-        }
-
-
+        extra_kwargs = {"vehiculo": {"queryset": Vehiculo.activos.all()}}
 
 
 class OrdenSalidaListSerializer(serializers.ModelSerializer):
@@ -552,9 +736,10 @@ class OrdenSalidaListSerializer(serializers.ModelSerializer):
     Serializer para listar las órdenes que están 'Finalizado' pero
     pendientes de salida (fecha_entrega_real is null).
     """
+
     # Usamos SerializerMethodField para obtener datos de modelos relacionados
     # y evitar errores si alguno es Nulo.
-    
+
     vehiculo_patente = serializers.SerializerMethodField()
     chofer_nombre = serializers.SerializerMethodField()
     mecanico_nombre = serializers.SerializerMethodField()
@@ -562,14 +747,14 @@ class OrdenSalidaListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Orden
         fields = (
-            'id',
-            'estado',
-            'vehiculo_patente',
-            'chofer_nombre',
-            'mecanico_nombre',
-            'descripcion_falla',
-            'diagnostico_tecnico',
-            'fecha_ingreso',
+            "id",
+            "estado",
+            "vehiculo_patente",
+            "chofer_nombre",
+            "mecanico_nombre",
+            "descripcion_falla",
+            "diagnostico_tecnico",
+            "fecha_ingreso",
         )
 
     def get_vehiculo_patente(self, obj):
@@ -582,92 +767,103 @@ class OrdenSalidaListSerializer(serializers.ModelSerializer):
         # Accedemos al chofer a través del agendamiento de origen
         if obj.agendamiento_origen and obj.agendamiento_origen.chofer_asociado:
             return obj.agendamiento_origen.chofer_asociado.get_full_name()
-        
+
         # Si no hay agendamiento, intentamos desde el vehículo (si tienes esa lógica)
         if obj.vehiculo and obj.vehiculo.chofer:
-             return obj.vehiculo.chofer.get_full_name()
+            return obj.vehiculo.chofer.get_full_name()
         return "No asignado"
 
     def get_mecanico_nombre(self, obj):
         if obj.usuario_asignado:
             return obj.usuario_asignado.get_full_name()
-        
+
         # Fallback por si el mecánico estaba en el agendamiento
         if obj.agendamiento_origen and obj.agendamiento_origen.mecanico_asignado:
             return obj.agendamiento_origen.mecanico_asignado.get_full_name()
-            
-        return "No asignado"
-    
 
+        return "No asignado"
 
     def validate(self, data):
         """
         Validación personalizada para DRF (se ejecuta antes de crear/guardar).
         """
         # 1. Validar duplicados de vehículo
-        vehiculo = data.get('vehiculo')
-        
+        vehiculo = data.get("vehiculo")
+
         # Chequeamos si estamos creando (no hay 'instance')
         is_create = self.instance is None
-        
+
         if vehiculo and is_create:
             # Busca si este vehículo ya tiene OTRA cita que esté "activa"
-            citas_activas = Agendamiento.objects.filter(
-                vehiculo=vehiculo
-            ).exclude(
+            citas_activas = Agendamiento.objects.filter(vehiculo=vehiculo).exclude(
                 estado__in=[
                     Agendamiento.Estado.FINALIZADO,
-                    Agendamiento.Estado.CANCELADO
+                    Agendamiento.Estado.CANCELADO,
                 ]
             )
-            
+
             # Si ya existe una cita activa, lanza un error
             if citas_activas.exists():
                 raise serializers.ValidationError(
                     f"El vehículo {vehiculo.patente} ya tiene una cita activa (Programada o En Taller). "
                     "No puede agendar otra hasta que la anterior se complete."
                 )
-        
-        # (Aquí irían otras validaciones si las tuvieras)
-        
-        return data
-    
 
+        # (Aquí irían otras validaciones si las tuvieras)
+
+        return data
 
 
 class NotificacionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Notificacion
-        fields = ['id', 'mensaje', 'link', 'leida', 'fecha']
+        fields = ["id", "mensaje", "link", "leida", "fecha"]
+
 
 class TallerSerializer(serializers.ModelSerializer):
     class Meta:
-            model = Taller
-            fields = ['id', 'nombre', 'direccion']
-
+        model = Taller
+        fields = ["id", "nombre", "direccion"]
 
 
 # ======================================================================
 #  SERIALIZERS DE GESTIÓN DE LLAVES
 # ======================================================================
 
+
 class LlaveVehiculoSerializer(serializers.ModelSerializer):
     """
     Serializer para listar el inventario de llaves.
     Muestra la patente y quién la tiene ahora.
     """
-    vehiculo_patente = serializers.CharField(source='vehiculo.patente', read_only=True)
-    poseedor_info = serializers.CharField(source='poseedor_actual.get_full_name', read_only=True, default='En Bodega')
+
+    vehiculo_patente = serializers.CharField(source="vehiculo.patente", read_only=True)
+    poseedor_info = serializers.CharField(
+        source="poseedor_actual.get_full_name", read_only=True, default="En Bodega"
+    )
 
     class Meta:
         model = LlaveVehiculo
         fields = [
-            'id', 'vehiculo', 'vehiculo_patente', 'codigo_interno', 
-            'tipo', 'estado', 'poseedor_actual', 'poseedor_info','motivo_reporte'
+            "id",
+            "vehiculo",
+            "vehiculo_patente",
+            "codigo_interno",
+            "tipo",
+            "estado",
+            "poseedor_actual",
+            "poseedor_info",
+            "motivo_reporte",
         ]
-        read_only_fields = ['vehiculo_patente', 'estado', 'poseedor_actual', 'poseedor_info','motivo_reporte']
+        read_only_fields = [
+            "vehiculo_patente",
+            "estado",
+            "poseedor_actual",
+            "poseedor_info",
+            "motivo_reporte",
+        ]
         extra_kwargs = {
-            'vehiculo': {'write_only': True} # Solo necesitamos el ID para crear
+            "vehiculo": {"write_only": True}  # Solo necesitamos el ID para crear
         }
 
 
@@ -675,60 +871,82 @@ class PrestamoLlaveSerializer(serializers.ModelSerializer):
     """
     Serializer para el historial de préstamos.
     """
-    usuario_nombre = serializers.CharField(source='usuario_retira.get_full_name', read_only=True)
-    llave_info = serializers.CharField(source='llave.__str__', read_only=True)
+
+    usuario_nombre = serializers.CharField(
+        source="usuario_retira.get_full_name", read_only=True
+    )
+    llave_info = serializers.CharField(source="llave.__str__", read_only=True)
 
     class Meta:
         model = PrestamoLlave
         fields = [
-            'id', 'llave', 'llave_info', 'usuario_retira', 'usuario_nombre',
-            'fecha_hora_retiro', 'fecha_hora_devolucion',
-            'observaciones_retiro', 'observaciones_devolucion'
+            "id",
+            "llave",
+            "llave_info",
+            "usuario_retira",
+            "usuario_nombre",
+            "fecha_hora_retiro",
+            "fecha_hora_devolucion",
+            "observaciones_retiro",
+            "observaciones_devolucion",
         ]
+
 
 class LlaveHistorialEstadoSerializer(serializers.ModelSerializer):
     """
     Serializer para el historial de reportes de llaves.
     """
-    usuario_nombre = serializers.CharField(source='usuario_reporta.get_full_name', read_only=True)
-    llave_info = serializers.CharField(source='llave.__str__', read_only=True)
-    
+
+    usuario_nombre = serializers.CharField(
+        source="usuario_reporta.get_full_name", read_only=True
+    )
+    llave_info = serializers.CharField(source="llave.__str__", read_only=True)
+
     class Meta:
         model = LlaveHistorialEstado
         fields = [
-            'id', 'llave', 'llave_info', 'usuario_reporta', 'usuario_nombre',
-            'estado_anterior', 'estado_nuevo', 'motivo', 'fecha'
+            "id",
+            "llave",
+            "llave_info",
+            "usuario_reporta",
+            "usuario_nombre",
+            "estado_anterior",
+            "estado_nuevo",
+            "motivo",
+            "fecha",
         ]
 
-
     # ======================================================================
+
+
 # 📦 SERIALIZER DE HISTORIAL DE SEGURIDAD
 # ======================================================================
+
 
 class HistorialSeguridadSerializer(serializers.ModelSerializer):
     """
     Serializer de solo lectura para el historial de ingresos y salidas
     del panel de Seguridad.
     """
-    vehiculo_patente = serializers.CharField(source='vehiculo.patente', read_only=True)
-    
+
+    vehiculo_patente = serializers.CharField(source="vehiculo.patente", read_only=True)
 
     chofer_nombre = serializers.SerializerMethodField()
 
     class Meta:
         model = Orden
         fields = (
-            'id',
-            'vehiculo_patente',
-            'chofer_nombre',
-            'fecha_ingreso',      
-            'fecha_entrega_real'  
+            "id",
+            "vehiculo_patente",
+            "chofer_nombre",
+            "fecha_ingreso",
+            "fecha_entrega_real",
         )
- 
+
     def get_chofer_nombre(self, obj):
         if obj.agendamiento_origen and obj.agendamiento_origen.chofer_asociado:
             return obj.agendamiento_origen.chofer_asociado.get_full_name()
-        
+
         if obj.vehiculo and obj.vehiculo.chofer:
-             return obj.vehiculo.chofer.get_full_name()
-        return "No asignado" 
+            return obj.vehiculo.chofer.get_full_name()
+        return "No asignado"
