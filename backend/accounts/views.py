@@ -1032,7 +1032,7 @@ class AgendamientoViewSet(viewsets.ModelViewSet):
                 thread.start()
 
             # 4. Marcar el agendamiento como FINALIZADO (su propósito se cumplió)
-            agendamiento.estado = Agendamiento.Estado.FINALIZADO
+            agendamiento.estado = Agendamiento.Estado.EN_TALLER
             agendamiento.save()
             
             AgendamientoHistorial.objects.create(

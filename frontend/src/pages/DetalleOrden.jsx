@@ -21,7 +21,44 @@ import AuthenticatedImage from '/src/components/AuthenticatedImage.jsx';
 
 const DocumentGroup = ({ state, docs }) => {
     const [isOpen, setIsOpen] = useState(false);
+    const [downloadingId, setDownloadingId] = useState(null);
+    const handleDownload = async (doc) => {
+        if (downloadingId === doc.id) return; // Ya está descargando
 
+        setDownloadingId(doc.id);
+
+        try {
+            // Usa apiClient para la petición (esto AÑADE EL TOKEN)
+            const response = await apiClient.get(doc.archivo_url, {
+                responseType: 'blob', // Pide el archivo como un blob binario
+            });
+
+            // Crea una URL local en el navegador para el blob
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+
+            // Crea un enlace temporal
+            const link = document.createElement('a');
+            link.href = url;
+
+            // Intenta obtener el nombre original del archivo
+            const fileName = doc.archivo_url.split('/').pop();
+            link.setAttribute('download', fileName || doc.descripcion || 'archivo');
+
+            // Simula el clic para descargar
+            document.body.appendChild(link);
+            link.click();
+
+            // Limpia
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(url);
+
+        } catch (err) {
+            console.error("Error al descargar el archivo:", err);
+            alert('No se pudo descargar el archivo. Verifique su conexión.');
+        } finally {
+            setDownloadingId(null); // Resetea el estado de carga
+        }
+    };
     const renderFile = (doc) => {
         const fileUrl = doc.archivo_url;
         if (!fileUrl) return <p>Archivo no encontrado.</p>;
@@ -39,13 +76,21 @@ const DocumentGroup = ({ state, docs }) => {
             );
             // --- FIN MODIFICADO ---
         }
+        const isDownloadingThis = downloadingId === doc.id;
+        
         return (
-            <a href={fileUrl} target="_blank" rel="noopener noreferrer" className={styles.downloadLink}>
+            <button 
+                onClick={() => handleDownload(doc)} 
+                disabled={isDownloadingThis} 
+                className={styles.downloadLink} // Reusamos tu estilo
+            >
                 <Download size={18} />
-                Descargar: {doc.descripcion || 'Archivo'}
-            </a>
+                {isDownloadingThis ? 'Descargando...' : (doc.descripcion || 'Descargar Archivo')}
+            </button>
         );
     };
+    
+    
 
     return (
         <div className={styles.documentGroup}>
@@ -420,7 +465,7 @@ export default function DetalleOrden() {
                     <div className={styles.infoCard}>
 
                         {puedeModificar && (
-                            <> 
+                            <>
                                 <h3><Upload /> Subir Documentos</h3>
                                 <form onSubmit={handleFileUpload} className={styles.uploadForm}>
                                     <div className={styles.formRow}>
@@ -441,7 +486,7 @@ export default function DetalleOrden() {
                             </>
                         )}
 
-         
+
                         <h4><Paperclip /> Documentos Anexados</h4>
                         <div className={styles.documentGroupContainer}>
                             {orden?.documentos && orden.documentos.length > 0 ? (

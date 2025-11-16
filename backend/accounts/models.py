@@ -482,18 +482,13 @@ class LlaveVehiculo(TimeStampedModel):
         DUPLICADO = 'Duplicado', 'Duplicado'
         CONTROL_ACCESO = 'Control', 'Control de Acceso'
         TALLER = 'Taller', 'Llave de Taller'
+        
 
     class Estado(models.TextChoices):
         EN_BODEGA = 'En Bodega', 'En Bodega'
         PRESTADA = 'Prestada', 'Prestada'
         PERDIDA = 'Perdida', 'Perdida'
-        DADA_DE_BAJA = 'Dada de Baja', 'Dada de Baja'
-
-    class Estado(models.TextChoices):
-        EN_BODEGA = 'En Bodega', 'En Bodega'
-        PRESTADA = 'Prestada', 'Prestada'
-        PERDIDA = 'Perdida', 'Perdida'
-        DAÑADA = 'Dañada', 'Dañada'  # <-- AÑADIR ESTA LÍNEA
+        DAÑADA = 'Dañada', 'Dañada'  
         DADA_DE_BAJA = 'Dada de Baja', 'Dada de Baja'
 
     # "Control de llaves por patente"
