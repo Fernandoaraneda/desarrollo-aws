@@ -24,6 +24,7 @@ from .models import (
     LlaveHistorialEstado,
     Taller,
     AgendamientoDocumento,
+    ChatRoom, ChatMessage
 )
 
 import os
@@ -950,3 +951,60 @@ class HistorialSeguridadSerializer(serializers.ModelSerializer):
         if obj.vehiculo and obj.vehiculo.chofer:
             return obj.vehiculo.chofer.get_full_name()
         return "No asignado"
+# ======================================================================
+# 💬 SERIALIZERS DE CHAT (NUEVO)
+# ======================================================================
+
+class ChatMessageSerializer(serializers.ModelSerializer):
+    """
+    Serializa un mensaje individual.
+    """
+    # Usamos UserSerializer para mostrar los detalles del autor, no solo el ID
+    autor = UserSerializer(read_only=True)
+    archivo = serializers.FileField(
+        required=False, 
+        allow_null=True, 
+        validators=[validate_file_restrictions] # Reutiliza tu validador
+    )
+    
+    class Meta:
+        model = ChatMessage
+        # --- 2. AQUÍ ESTÁ LA CORRECCIÓN ---
+        # Añadir 'archivo' a la lista de fields
+        fields = ['id', 'room', 'autor', 'contenido', 'archivo', 'creado_en']
+        read_only_fields = ['id', 'room', 'autor', 'creado_en']
+        
+        
+    def validate(self, data):
+        """
+        Asegura que se envíe contenido O un archivo.
+        """
+        contenido = data.get('contenido')
+        archivo = data.get('archivo')
+        
+        if not contenido and not archivo:
+            raise serializers.ValidationError(
+                "No se puede enviar un mensaje vacío sin un archivo adjunto."
+            )
+        return data
+
+class ChatRoomSerializer(serializers.ModelSerializer):
+    """
+    Serializa una sala de chat, incluyendo sus participantes.
+    """
+    # Usamos UserSerializer para mostrar la info de los participantes
+    participantes = UserSerializer(many=True, read_only=True)
+    
+    class Meta:
+        model = ChatRoom
+        fields = ['id', 'nombre', 'participantes', 'actualizado_en']
+        read_only_fields = ['id', 'participantes', 'actualizado_en']
+        
+        
+        
+class ChatRoomCreateSerializer(serializers.Serializer):
+    """
+    Serializer para crear una nueva sala de chat.
+    Solo necesita el ID del otro participante.
+    """
+    user_id = serializers.IntegerField(required=True)

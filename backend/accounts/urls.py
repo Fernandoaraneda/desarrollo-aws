@@ -43,6 +43,9 @@ from .views import (
     exportar_inventario_llaves_pdf,
     exportar_frecuencia_fallas, 
     exportar_hoja_vida_vehiculo_pdf,
+    ChatRoomListView,
+    ChatMessageListView,
+    unread_chat_count
 )
 
 router = DefaultRouter()
@@ -104,6 +107,9 @@ urlpatterns = [
     path('reportes/llaves/inventario-pdf/', exportar_inventario_llaves_pdf, name='export-inventario-llaves-pdf'),
     path('reportes/flota/frecuencia-fallas/', exportar_frecuencia_fallas, name='export-frecuencia-fallas'),
     path('reportes/flota/hoja-vida-pdf/', exportar_hoja_vida_vehiculo_pdf, name='export-hoja-vida-pdf'),
+    path('chat/rooms/', ChatRoomListView.as_view(), name='chat-rooms-list'),
+    path('chat/rooms/<int:room_id>/messages/', ChatMessageListView.as_view(), name='chat-messages-list'),
+    path('chat/unread-count/', unread_chat_count, name='chat-unread-count'),
     
     
     

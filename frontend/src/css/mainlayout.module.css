@@ -240,3 +240,18 @@
   margin-left: auto;
   position: relative;
   flex-shrink: 0; }
+
+  .chatBadge {
+  position: absolute;
+  top: 8px; /* Ajusta la posición vertical */
+  right: 15px; /* Ajusta la posición horizontal */
+  background-color: #e53e3e; /* Rojo */
+  color: white;
+  font-size: 0.7rem;
+  font-weight: bold;
+  padding: 2px 6px;
+  border-radius: 50%;
+  line-height: 1;
+  min-width: 20px;
+  text-align: center;
+}

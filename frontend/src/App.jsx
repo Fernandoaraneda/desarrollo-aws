@@ -37,7 +37,7 @@ const HistorialMecanico = lazy(() => import('/src/pages/HistorialMecanico.jsx'))
 const HistorialSeguridad = lazy(() => import('/src/pages/HistorialSeguridad.jsx'));
 const PanelRepuestos = lazy(() => import('/src/pages/PanelRepuestos.jsx')); // <- Extensión .jsx añadida
 const GestionStock = lazy(() => import('/src/pages/GestionStock.jsx')); // <- Extensión .jsx añadida
-
+const ChatLayout = lazy(() => import('/src/pages/ChatLayout.jsx'));
 // 5. Opcional: Un componente de "Cargando..." más agradable para el fallback
 function AppLoadingFallback() {
   return (
@@ -76,6 +76,25 @@ function App() {
         {/* Todas las rutas internas y protegidas quedan igual, 
             pero ahora usan los componentes cargados con lazy() */}
         <Route element={<MainLayout />}>
+
+        <Route
+            path="/stock-repuestos"
+            element={
+              <ProtectedRoute roles={['Repuestos', 'Supervisor', 'Administrativo']}>
+                <GestionStock />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* --- AÑADE ESTA RUTA NUEVA --- */}
+          <Route
+            path="/chat"
+            element={
+              <ProtectedRoute>
+                <ChatLayout />
+              </ProtectedRoute>
+            }
+          />
 
           <Route path="/dashboard" element={
             <ProtectedRoute>

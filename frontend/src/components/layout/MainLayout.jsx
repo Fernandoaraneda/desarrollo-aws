@@ -1,12 +1,12 @@
 // 1. Importar Suspense
-import React, { useState, Suspense } from 'react';
+import React, { useState, Suspense, useEffect } from 'react';
 import { NavLink, useNavigate, Outlet } from 'react-router-dom';
 // 2. Corregir rutas de importación para que sean relativas
 import { useUserStore } from '../../store/authStore.js';
 import styles from '../../css/mainlayout.module.css';
 import Notificaciones from './Notificaciones.jsx';
 import AccordionMenu from './AccordionMenu.jsx';
-
+import apiClient from '../../api/axios.js';
 // (El componente Sidebar no cambia)
 const navLinksByRole = {
   'Supervisor': [
@@ -94,7 +94,7 @@ const navLinksByRole = {
   ],
 };
 
-const Sidebar = ({ isOpen, toggleSidebar }) => {
+const Sidebar = ({ isOpen, toggleSidebar, unreadChatCount }) => {
   const { user, logout } = useUserStore();
   const navigate = useNavigate();
 
@@ -110,7 +110,13 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
   };
 
   const userLinks = navLinksByRole[user?.rol] || [];
-  const commonLinks = [{ to: '/profile', label: 'Mi Perfil', icon: 'fas fa-user' }];
+  const commonLinks = 
+  [
+    { to: '/chat', label: 'Chat Interno', icon: 'fas fa-comments' },
+    { to: '/profile', label: 'Mi Perfil', icon: 'fas fa-user' }
+  ];
+
+
 
   return (
     <aside className={`${styles.sidebar} ${isOpen ? styles.isOpen : ''}`}>
@@ -142,14 +148,29 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
           );
         })}
         <hr style={{ borderColor: 'var(--border-color)', margin: '1rem' }} />
-        {commonLinks.map(link => (
-          <NavLink
-            key={link.to} to={link.to} onClick={handleLinkClick}
-            className={({ isActive }) => `${styles.navLink} ${isActive ? styles.activeLink : ''}`}
-          >
-            <i className={link.icon}></i> <span>{link.label}</span>
-          </NavLink>
-        ))}
+        
+        {/* --- 4. ESTA ES LA LÓGICA QUE FALTABA EN EL MAP --- */}
+        {commonLinks.map(link => {
+          const isChatLink = link.to === '/chat';
+          const showBadge = isChatLink && unreadChatCount > 0;
+
+          return (
+            <NavLink
+              key={link.to} to={link.to} onClick={handleLinkClick}
+              className={({ isActive }) => `${styles.navLink} ${isActive ? styles.activeLink : ''}`}
+              style={{ position: 'relative' }} // Necesario para el badge
+            >
+              <i className={link.icon}></i> <span>{link.label}</span>
+              
+              {/* 5. Renderizar el badge (esto faltaba) */}
+              {showBadge && (
+                <span className={styles.chatBadge}>
+                  {unreadChatCount > 9 ? '9+' : unreadChatCount}
+                </span>
+              )}
+            </NavLink>
+          );
+        })}
       </nav>
 
       <div className={styles.sidebarFooter}>
@@ -162,7 +183,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
   );
 };
 
-// 3. Un fallback simple para el Suspense dentro del layout
+// (LayoutLoadingFallback no cambia)
 function LayoutLoadingFallback() {
   return (
     <div style={{ padding: '2rem', textAlign: 'center', color: '#6b7280' }}>
@@ -175,13 +196,41 @@ export default function MainLayout() {
   const { user } = useUserStore();
   const [isSidebarOpen, setSidebarOpen] = useState(false);
 
+  // --- 6. AÑADIR ESTADO Y FETCH PARA EL CONTADOR (esto faltaba) ---
+  const [unreadChatCount, setUnreadChatCount] = useState(0);
+
+  useEffect(() => {
+    const fetchUnreadCount = async () => {
+      try {
+        const response = await apiClient.get('/chat/unread-count/');
+        setUnreadChatCount(response.data.unread_count);
+      } catch (error) {
+        // No mostramos error en consola si es 404 (endpoint aún no creado)
+        if (error.response && error.response.status !== 404) {
+            console.error("Error al cargar contador de chat:", error);
+        }
+      }
+    };
+    
+    fetchUnreadCount(); // Carga inicial
+    const interval = setInterval(fetchUnreadCount, 30000); // Refresca cada 30 seg
+
+    return () => clearInterval(interval);
+  }, []);
+  // --- Fin del paso 6 ---
+
   const toggleSidebar = () => {
     setSidebarOpen(!isSidebarOpen);
   };
 
   return (
     <div className={styles.layoutWrapper}>
-      <Sidebar isOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />
+      {/* 7. Pasar el contador al Sidebar (esto faltaba) */}
+      <Sidebar 
+        isOpen={isSidebarOpen} 
+        toggleSidebar={toggleSidebar} 
+        unreadChatCount={unreadChatCount} 
+      />
 
       <div
         className={`${styles.overlay} ${isSidebarOpen ? styles.isOpen : ''}`}
@@ -205,12 +254,6 @@ export default function MainLayout() {
 
         </header>
         <main className={styles.mainContent}>
-          {/* 4. Envolver el Outlet con Suspense.
-            El fallback de App.jsx (fondo oscuro) se muestra primero.
-            Luego, este layout (Sidebar/Header) se renderiza.
-            Finalmente, el <Outlet> espera al JS de la página específica,
-            mostrando "Cargando contenido..." mientras tanto.
-          */}
           <Suspense fallback={<LayoutLoadingFallback />}>
             <Outlet />
           </Suspense>

@@ -1,28 +1,28 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from .models import (
-    Usuario, Vehiculo, Agendamiento, Orden,
-    OrdenDocumento, OrdenHistorialEstado, OrdenItem,
-    Producto, Servicio
+    Usuario, Vehiculo, Agendamiento, Orden, OrdenHistorialEstado, 
+    OrdenPausa, OrdenDocumento, Producto, Servicio, OrdenItem, 
+    Notificacion, Taller, LlaveVehiculo, PrestamoLlave, 
+    LlaveHistorialEstado, AgendamientoHistorial, AgendamientoDocumento,
+    ChatRoom, ChatMessage
 )
-from .forms import UsuarioCreationForm
-# El formulario UsuarioCreationForm probablemente ya no es necesario
-# si no tienes campos personalizados complejos al crear un usuario.
-# Si sigue siendo necesario, asegúrate de que no haga referencia a 'rol'.
+# Asumimos que tu UsuarioCreationForm existe y funciona como esperas.
+from .forms import UsuarioCreationForm 
 
+# ======================================================================
+# 1. ADMIN DE USUARIOS (Tu código - ¡Está perfecto!)
+# ======================================================================
 @admin.register(Usuario)
 class UsuarioAdmin(UserAdmin):
-    add_form = UsuarioCreationForm  # <- formulario de creación personalizado
+    add_form = UsuarioCreationForm
     model = Usuario
-
-    # Campos que verá al crear un usuario rut obligatorio
     add_fieldsets = (
         (None, {
             'classes': ('wide',),
             'fields': ('username', 'rut', 'password1', 'password2', 'first_name', 'last_name', 'email', 'telefono', 'groups', 'is_active', 'is_staff')
         }),
     )
-
     list_display = ('username', 'get_rol', 'email', 'first_name', 'last_name', 'is_staff')
     fieldsets = (
         (None, {'fields': ('username', 'password')}),
@@ -35,25 +35,55 @@ class UsuarioAdmin(UserAdmin):
     def get_rol(self, obj):
         return obj.groups.first().name if obj.groups.exists() else 'Sin Rol'
 
-
+# ======================================================================
+# 2. ADMIN DE FLOTA (VEHÍCULOS Y TALLERES)
+# ======================================================================
 @admin.register(Vehiculo)
 class VehiculoAdmin(admin.ModelAdmin):
-    list_display = ('patente', 'marca', 'modelo', 'anio', 'kilometraje')
-    search_fields = ('patente', 'marca', 'modelo')
+    list_display = ('patente', 'marca', 'modelo', 'chofer', 'taller', 'is_active')
+    list_filter = ('is_active', 'taller', 'marca')
+    search_fields = ('patente', 'marca', 'modelo', 'chofer__username')
+    autocomplete_fields = ['chofer', 'taller'] # Facilita la asignación
+
+@admin.register(Taller)
+class TallerAdmin(admin.ModelAdmin):
+    list_display = ('nombre', 'direccion')
+    search_fields = ('nombre', 'direccion')
+
+# ======================================================================
+# 3. ADMIN DE AGENDAMIENTOS (MEJORADO CON INLINES)
+# ======================================================================
+
+# Inline para ver documentos en la vista de Agendamiento
+class AgendamientoDocumentoInline(admin.TabularInline):
+    model = AgendamientoDocumento
+    extra = 0
+    readonly_fields = ('subido_por', 'fecha', 'descripcion', 'archivo')
+
+# Inline para ver historial en la vista de Agendamiento
+class AgendamientoHistorialInline(admin.TabularInline):
+    model = AgendamientoHistorial
+    extra = 0
+    readonly_fields = ('estado', 'fecha', 'usuario', 'comentario')
 
 @admin.register(Agendamiento)
 class AgendamientoAdmin(admin.ModelAdmin):
-    list_display = ('id', 'vehiculo', 'fecha_hora_programada', 'estado', 'creado_por')
-    list_filter = ('estado', 'fecha_hora_programada')
-    search_fields = ('vehiculo__patente',)
+    list_display = ('id', 'vehiculo', 'fecha_hora_programada', 'estado', 'mecanico_asignado', 'creado_por')
+    list_filter = ('estado', 'fecha_hora_programada', 'es_mantenimiento', 'solicita_grua')
+    search_fields = ('vehiculo__patente', 'creado_por__username', 'mecanico_asignado__username')
+    autocomplete_fields = ['vehiculo', 'chofer_asociado', 'mecanico_asignado', 'creado_por']
+    inlines = [
+        AgendamientoDocumentoInline,
+        AgendamientoHistorialInline
+    ]
 
-# --- Mejoras para la gestión de Órdenes ---
-# Usamos "inlines" para ver y editar los detalles de una orden
-# directamente desde la página de la orden. ¡Mucho más práctico!
+# ======================================================================
+# 4. ADMIN DE ÓRDENES DE SERVICIO (Tu código - ¡Está perfecto!)
+# ======================================================================
 
 class OrdenItemInline(admin.TabularInline):
     model = OrdenItem
-    extra = 1  # Cuántos campos vacíos mostrar para añadir nuevos items
+    extra = 1
     autocomplete_fields = ['producto', 'servicio']
 
 class OrdenDocumentoInline(admin.TabularInline):
@@ -62,23 +92,33 @@ class OrdenDocumentoInline(admin.TabularInline):
 
 class OrdenHistorialEstadoInline(admin.TabularInline):
     model = OrdenHistorialEstado
-    extra = 0 # No mostrar campos vacíos por defecto
-    readonly_fields = ('estado', 'fecha', 'usuario', 'motivo') # Solo lectura
+    extra = 0
+    readonly_fields = ('estado', 'fecha', 'usuario', 'motivo')
+    
+# --- INLINE FALTANTE AÑADIDO ---
+class OrdenPausaInline(admin.TabularInline):
+    model = OrdenPausa
+    extra = 0
+    readonly_fields = ('inicio', 'fin', 'motivo', 'usuario')
 
 @admin.register(Orden)
 class OrdenAdmin(admin.ModelAdmin):
-    list_display = ('id', 'vehiculo', 'estado', 'fecha_ingreso', 'usuario_asignado')
+    list_display = ('id', 'vehiculo', 'estado', 'fecha_ingreso', 'usuario_asignado', 'costo_total')
     list_filter = ('estado', 'fecha_ingreso')
-    search_fields = ('id', 'vehiculo__patente')
-    readonly_fields = ('fecha_ingreso',)
+    search_fields = ('id', 'vehiculo__patente', 'usuario_asignado__username')
+    readonly_fields = ('fecha_ingreso', 'costo_total') # 'costo_total' es un @property
+    autocomplete_fields = ['vehiculo', 'agendamiento_origen', 'usuario_asignado']
     
-    # Aquí agregamos los inlines para una gestión centralizada
     inlines = [
         OrdenItemInline,
         OrdenDocumentoInline,
-        OrdenHistorialEstadoInline
+        OrdenHistorialEstadoInline,
+        OrdenPausaInline  # <-- AÑADIDO
     ]
 
+# ======================================================================
+# 5. ADMIN DE CATÁLOGO (PRODUCTOS Y SERVICIOS)
+# ======================================================================
 @admin.register(Producto)
 class ProductoAdmin(admin.ModelAdmin):
     list_display = ('sku', 'nombre', 'marca', 'precio_venta', 'stock')
@@ -88,3 +128,78 @@ class ProductoAdmin(admin.ModelAdmin):
 class ServicioAdmin(admin.ModelAdmin):
     list_display = ('id', 'nombre', 'precio_base')
     search_fields = ('nombre',)
+
+# ======================================================================
+# 6. ADMIN DE GESTIÓN DE LLAVES (NUEVO)
+# ======================================================================
+
+class PrestamoLlaveInline(admin.TabularInline):
+    """Muestra el historial de préstamos DENTRO de la llave"""
+    model = PrestamoLlave
+    extra = 0
+    readonly_fields = ('usuario_retira', 'fecha_hora_retiro', 'fecha_hora_devolucion')
+
+@admin.register(LlaveVehiculo)
+class LlaveVehiculoAdmin(admin.ModelAdmin):
+    list_display = ('codigo_interno', 'vehiculo', 'tipo', 'estado', 'poseedor_actual')
+    list_filter = ('estado', 'tipo')
+    search_fields = ('codigo_interno', 'vehiculo__patente', 'poseedor_actual__username')
+    autocomplete_fields = ['vehiculo', 'poseedor_actual']
+    inlines = [PrestamoLlaveInline]
+
+@admin.register(PrestamoLlave)
+class PrestamoLlaveAdmin(admin.ModelAdmin):
+    list_display = ('llave', 'usuario_retira', 'fecha_hora_retiro', 'fecha_hora_devolucion')
+    search_fields = ('llave__codigo_interno', 'usuario_retira__username')
+    autocomplete_fields = ['llave', 'usuario_retira']
+
+@admin.register(LlaveHistorialEstado)
+class LlaveHistorialEstadoAdmin(admin.ModelAdmin):
+    list_display = ('llave', 'estado_nuevo', 'usuario_reporta', 'fecha')
+    readonly_fields = ('fecha',)
+    
+# ======================================================================
+# 7. ADMIN DE NOTIFICACIONES (NUEVO)
+# ======================================================================
+@admin.register(Notificacion)
+class NotificacionAdmin(admin.ModelAdmin):
+    list_display = ('usuario', 'mensaje_corto', 'leida', 'fecha')
+    list_filter = ('leida', 'fecha')
+    search_fields = ('usuario__username', 'mensaje')
+    readonly_fields = ('fecha',)
+    list_per_page = 20
+    
+    @admin.display(description='Mensaje')
+    def mensaje_corto(self, obj):
+        return (obj.mensaje[:75] + '...') if len(obj.mensaje) > 75 else obj.mensaje
+
+# ======================================================================
+# 8. ADMIN DE CHAT (NUEVO - CÓDIGO DE AYER)
+# ======================================================================
+class ChatMessageInline(admin.TabularInline):
+    """Permite ver los mensajes dentro de la vista de la Sala de Chat."""
+    model = ChatMessage
+    fields = ('autor', 'contenido', 'creado_en', 'leido_por')
+    readonly_fields = ('autor', 'contenido', 'creado_en', 'leido_por')
+    extra = 0
+    ordering = ('creado_en',)
+
+@admin.register(ChatRoom)
+class ChatRoomAdmin(admin.ModelAdmin):
+    list_display = ('__str__', 'creado_en', 'actualizado_en')
+    search_fields = ('nombre', 'participantes__username')
+    filter_horizontal = ('participantes',)
+    inlines = [ChatMessageInline]
+    readonly_fields = ('creado_en', 'actualizado_en')
+
+@admin.register(ChatMessage)
+class ChatMessageAdmin(admin.ModelAdmin):
+    list_display = ('__str__', 'room', 'autor', 'creado_en', 'leido')
+    search_fields = ('contenido', 'autor__username', 'room__nombre')
+    list_filter = ('room', 'autor', 'creado_en')
+    readonly_fields = ('creado_en', 'actualizado_en')
+    
+    @admin.display(description='Leído', boolean=True)
+    def leido(self, obj):
+        # Asumimos que "leído" significa que al menos 1 persona (que no sea el autor) lo leyó
+        return obj.leido_por.exclude(id=obj.autor_id).exists()

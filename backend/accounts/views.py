@@ -63,7 +63,9 @@ from .models import (
     LlaveHistorialEstado,
     Taller,
     Usuario,
-    AgendamientoHistorial
+    AgendamientoHistorial,
+    ChatRoom,
+    ChatMessage
 )
 
 # Serializers
@@ -85,6 +87,9 @@ from .serializers import (
     HistorialSeguridadSerializer,
     OrdenSalidaListSerializer,
     TallerSerializer,
+    ChatRoomSerializer,
+    ChatMessageSerializer,
+    ChatRoomCreateSerializer,
 )
 
 User = get_user_model()
@@ -379,9 +384,9 @@ class ChangePasswordView(generics.GenericAPIView):
 # Gestión de usuarios (Supervisor)
 # --------------------
 class UserListView(generics.ListAPIView):
-    queryset = User.objects.prefetch_related('groups').all().order_by("first_name")
+    queryset = User.objects.prefetch_related("groups").all().order_by("first_name")
     serializer_class = UserSerializer
-    permission_classes = [IsSupervisorOrControlLlaves]
+    permission_classes = [IsAuthenticated]
 
 
 class UserCreateAPIView(generics.CreateAPIView):
@@ -691,7 +696,10 @@ class AgendamientoViewSet(viewsets.ModelViewSet):
                 )
 
                 # 5. Enviamos el correo
-                thread = threading.Thread(target=enviar_correo_notificacion, args=(supervisor, subject, mensaje))
+                thread = threading.Thread(
+                    target=enviar_correo_notificacion,
+                    args=(supervisor, subject, mensaje),
+                )
                 thread.start()
 
         except Exception as e:
@@ -768,7 +776,7 @@ class AgendamientoViewSet(viewsets.ModelViewSet):
         url_path="confirmar-y-asignar",
         permission_classes=[IsSupervisor],
     )
-    @transaction.atomic # <-- Se mantiene la transacción
+    @transaction.atomic  # <-- Se mantiene la transacción
     def confirmar_y_asignar(self, request, pk=None):
         agendamiento = self.get_object()
         mecanico_id_raw = request.data.get("mecanico_id")
@@ -874,13 +882,15 @@ class AgendamientoViewSet(viewsets.ModelViewSet):
         agendamiento.mecanico_asignado = mecanico
         agendamiento.estado = Agendamiento.Estado.CONFIRMADO
         agendamiento.fecha_hora_programada = fecha_a_validar
-        agendamiento.save() # Guardamos el agendamiento confirmado
+        agendamiento.save()  # Guardamos el agendamiento confirmado
 
         if hubo_cambio_fecha:
             agendamiento.motivo_reagendamiento = motivo_cambio
             try:
                 if agendamiento.chofer_asociado:
-                    taller_direccion = "Taller no especificado. Consulte con su supervisor."
+                    taller_direccion = (
+                        "Taller no especificado. Consulte con su supervisor."
+                    )
                     if agendamiento.vehiculo and agendamiento.vehiculo.taller:
                         taller_direccion = agendamiento.vehiculo.taller.direccion
                     fecha_str = fecha_a_validar.strftime("%d-%m-%Y a las %H:%M")
@@ -895,7 +905,10 @@ class AgendamientoViewSet(viewsets.ModelViewSet):
                         link=f"/historial",
                     )
                     subject_chofer = f"Cita Confirmada: {agendamiento.vehiculo.patente} el {fecha_str}"
-                    thread_chofer = threading.Thread(target=enviar_correo_notificacion, args=(agendamiento.chofer_asociado, subject_chofer, mensaje))
+                    thread_chofer = threading.Thread(
+                        target=enviar_correo_notificacion,
+                        args=(agendamiento.chofer_asociado, subject_chofer, mensaje),
+                    )
                     thread_chofer.start()
             except Exception as e:
                 print(f"Error al crear notificación de reagendamiento: {e}")
@@ -915,7 +928,10 @@ class AgendamientoViewSet(viewsets.ModelViewSet):
                 subject_seguridad = (
                     f"Cita Confirmada: Vehículo {agendamiento.vehiculo.patente}"
                 )
-                thread_seg = threading.Thread(target=enviar_correo_notificacion, args=(user_seg, subject_seguridad, mensaje_seguridad))
+                thread_seg = threading.Thread(
+                    target=enviar_correo_notificacion,
+                    args=(user_seg, subject_seguridad, mensaje_seguridad),
+                )
                 thread_seg.start()
         except Exception as e:
             print(f"Error al crear notificación para Seguridad: {e}")
@@ -929,12 +945,11 @@ class AgendamientoViewSet(viewsets.ModelViewSet):
                 Notificacion.objects.create(
                     usuario=agendamiento.mecanico_asignado,
                     mensaje=mensaje_mecanico,
-                    link="/proximas-citas", # Lo mandamos a "Próximas Asignaciones"
+                    link="/proximas-citas",  # Lo mandamos a "Próximas Asignaciones"
                 )
         except Exception as e:
             print(f"Error al notificar al mecánico sobre nueva cita: {e}")
         # --- (FIN) NUEVA NOTIFICACIÓN PARA MECÁNICO ---
-
 
         # --- LÓGICA DE CREACIÓN DE ORDEN ELIMINADA ---
         # (Aquí es donde estaba el bloque if agendamiento.es_mantenimiento: que creaba la Orden)
@@ -946,9 +961,9 @@ class AgendamientoViewSet(viewsets.ModelViewSet):
             usuario=request.user,
             comentario=motivo_cambio or "Cita confirmada y asignada.",
         )
-        
+
         # Guardamos los cambios finales al agendamiento
-        agendamiento.save() 
+        agendamiento.save()
         return Response(
             self.get_serializer(agendamiento).data, status=status.HTTP_200_OK
         )
@@ -977,7 +992,7 @@ class AgendamientoViewSet(viewsets.ModelViewSet):
                 agendamiento_origen=agendamiento,
                 descripcion_falla=agendamiento.motivo_ingreso,
                 usuario_asignado=agendamiento.mecanico_asignado,
-                estado=Orden.Estado.INGRESADO, 
+                estado=Orden.Estado.INGRESADO,
             )
             mensaje_respuesta = "Ingreso registrado y orden creada."
 
@@ -989,20 +1004,32 @@ class AgendamientoViewSet(viewsets.ModelViewSet):
                     "FRE-LIQ-01": 1,
                 }
                 skus_requeridos = list(REPUESTOS_MANTENIMIENTO.keys())
-                productos = Producto.objects.select_for_update().filter(sku__in=skus_requeridos)
+                productos = Producto.objects.select_for_update().filter(
+                    sku__in=skus_requeridos
+                )
                 productos_encontrados = {p.sku: p for p in productos}
 
                 for sku, cantidad_necesaria in REPUESTOS_MANTENIMIENTO.items():
                     producto = productos_encontrados.get(sku)
-                    
+
                     if not producto:
                         # Error crítico, revierte la transacción
-                        return Response({"error": f"Error de configuración: Producto SKU '{sku}' no encontrado."}, status=status.HTTP_400_BAD_REQUEST)
-                    
+                        return Response(
+                            {
+                                "error": f"Error de configuración: Producto SKU '{sku}' no encontrado."
+                            },
+                            status=status.HTTP_400_BAD_REQUEST,
+                        )
+
                     if producto.stock < cantidad_necesaria:
                         # Error crítico, revierte la transacción
-                        return Response({"error": f"Stock insuficiente para '{producto.nombre}' (Quedan {producto.stock}). No se pudo registrar el ingreso."}, status=status.HTTP_400_BAD_REQUEST)
-                    
+                        return Response(
+                            {
+                                "error": f"Stock insuficiente para '{producto.nombre}' (Quedan {producto.stock}). No se pudo registrar el ingreso."
+                            },
+                            status=status.HTTP_400_BAD_REQUEST,
+                        )
+
                     # Descontar Stock
                     producto.stock = F("stock") - cantidad_necesaria
                     producto.save()
@@ -1013,8 +1040,8 @@ class AgendamientoViewSet(viewsets.ModelViewSet):
                         producto=producto,
                         cantidad=cantidad_necesaria,
                         precio_unitario=producto.precio_venta,
-                        solicitado_por=agendamiento.mecanico_asignado, # Solicitado por el mecánico asignado
-                        gestionado_por=request.user, # Gestionado por quien registra el ingreso (Seguridad/Sup)
+                        solicitado_por=agendamiento.mecanico_asignado,  # Solicitado por el mecánico asignado
+                        gestionado_por=request.user,  # Gestionado por quien registra el ingreso (Seguridad/Sup)
                         fecha_gestion=timezone.now(),
                         estado_repuesto=OrdenItem.EstadoRepuesto.APROBADO,
                     )
@@ -1025,21 +1052,24 @@ class AgendamientoViewSet(viewsets.ModelViewSet):
                 Notificacion.objects.create(
                     usuario=agendamiento.mecanico_asignado,
                     mensaje=mensaje,
-                    link=f"/ordenes/{nueva_orden.id}", # Link a la orden de servicio
+                    link=f"/ordenes/{nueva_orden.id}",  # Link a la orden de servicio
                 )
                 subject_mecanico = f"Nueva Orden Asignada: #{nueva_orden.id}"
-                thread = threading.Thread(target=enviar_correo_notificacion, args=(agendamiento.mecanico_asignado, subject_mecanico, mensaje))
+                thread = threading.Thread(
+                    target=enviar_correo_notificacion,
+                    args=(agendamiento.mecanico_asignado, subject_mecanico, mensaje),
+                )
                 thread.start()
 
             # 4. Marcar el agendamiento como FINALIZADO (su propósito se cumplió)
             agendamiento.estado = Agendamiento.Estado.EN_TALLER
             agendamiento.save()
-            
+
             AgendamientoHistorial.objects.create(
                 agendamiento=agendamiento,
-                estado=agendamiento.estado, # Guardará "Finalizado"
+                estado=agendamiento.estado,  # Guardará "Finalizado"
                 usuario=request.user,
-                comentario="Vehículo ingresado al taller. Orden creada."
+                comentario="Vehículo ingresado al taller. Orden creada.",
             )
 
             # 5. Devolver respuesta de éxito
@@ -1050,12 +1080,12 @@ class AgendamientoViewSet(viewsets.ModelViewSet):
                 },
                 status=status.HTTP_201_CREATED,
             )
-        
+
         except Exception as e:
             # Captura cualquier error durante la transacción (ej. el de stock)
             return Response(
                 {"error": f"Error al registrar ingreso: {str(e)}"},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
         # --- FIN DE LÓGICA REFACTORIZADA ---
 
@@ -1069,17 +1099,16 @@ class AgendamientoViewSet(viewsets.ModelViewSet):
         agendamiento = self.get_object()
         agendamiento.estado = Agendamiento.Estado.CANCELADO
         agendamiento.save()
-        
+
         AgendamientoHistorial.objects.create(
             agendamiento=agendamiento,
-            estado=agendamiento.estado, # Guardará "Cancelado"
+            estado=agendamiento.estado,  # Guardará "Cancelado"
             usuario=request.user,
-            comentario="Cita cancelada por el supervisor."
+            comentario="Cita cancelada por el supervisor.",
         )
         return Response(
             self.get_serializer(agendamiento).data, status=status.HTTP_200_OK
         )
-
 
     @action(
         detail=True,
@@ -1136,8 +1165,11 @@ class AgendamientoViewSet(viewsets.ModelViewSet):
                     mensaje=f"Nueva solicitud de grúa para {agendamiento.vehiculo.patente}. Dirección: {agendamiento.direccion_grua}",
                     link="/panel-gruas",  # Un futuro panel para ellos
                 )
-                
-                thread = threading.Thread(target=enviar_correo_notificacion, args=(user_grua, subject, mensaje))
+
+                thread = threading.Thread(
+                    target=enviar_correo_notificacion,
+                    args=(user_grua, subject, mensaje),
+                )
                 thread.start()
 
             # 4. Marcamos la grúa como enviada
@@ -1153,6 +1185,7 @@ class AgendamientoViewSet(viewsets.ModelViewSet):
                 {"error": f"Error inesperado: {str(e)}"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
+
 
 class OrdenViewSet(viewsets.ModelViewSet):
 
@@ -1246,7 +1279,14 @@ class OrdenViewSet(viewsets.ModelViewSet):
                         )
 
                         mensaje_email = f"Actualización: Su vehículo {orden.vehiculo.patente} {mensaje_chofer}"
-                        thread = threading.Thread(target=enviar_correo_notificacion, args=(chofer_a_notificar, subject_chofer_estado, mensaje_email))
+                        thread = threading.Thread(
+                            target=enviar_correo_notificacion,
+                            args=(
+                                chofer_a_notificar,
+                                subject_chofer_estado,
+                                mensaje_email,
+                            ),
+                        )
                         thread.start()
 
             except Exception as e:
@@ -1712,7 +1752,10 @@ class OrdenItemViewSet(viewsets.ModelViewSet):
                     Notificacion.objects.create(
                         usuario=user_rep, mensaje=mensaje, link="/panel-repuestos"
                     )  # Link a la nueva página de repuestos
-                    thread = threading.Thread(target=enviar_correo_notificacion, args=(user_rep, subject, mensaje))
+                    thread = threading.Thread(
+                        target=enviar_correo_notificacion,
+                        args=(user_rep, subject, mensaje),
+                    )
                     thread.start()
             except Exception as e:
                 print(f"ERROR al notificar a Repuestos: {e}")
@@ -1779,7 +1822,10 @@ class OrdenItemViewSet(viewsets.ModelViewSet):
                     mensaje=mensaje_mec,
                     link=f"/ordenes/{item.orden.id}",
                 )
-                thread_ap = threading.Thread(target=enviar_correo_notificacion, args=(item.solicitado_por, subject_mec, mensaje_mec))
+                thread_ap = threading.Thread(
+                    target=enviar_correo_notificacion,
+                    args=(item.solicitado_por, subject_mec, mensaje_mec),
+                )
                 thread_ap.start()
 
             elif accion == "rechazar":
@@ -1800,8 +1846,11 @@ class OrdenItemViewSet(viewsets.ModelViewSet):
                     mensaje=mensaje_mec,
                     link=f"/ordenes/{item.orden.id}",
                 )
-                
-                thread_rec = threading.Thread(target=enviar_correo_notificacion, args=(item.solicitado_por, subject_mec, mensaje_mec))
+
+                thread_rec = threading.Thread(
+                    target=enviar_correo_notificacion,
+                    args=(item.solicitado_por, subject_mec, mensaje_mec),
+                )
                 thread_rec.start()
 
         return Response(self.get_serializer(item).data, status=status.HTTP_200_OK)
@@ -3183,7 +3232,7 @@ class ProtectedMediaView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, file_path):
-        
+
         file_full_path = os.path.join(settings.MEDIA_ROOT, file_path)
         safe_path = os.path.normpath(file_full_path)
 
@@ -3197,16 +3246,190 @@ class ProtectedMediaView(APIView):
 
         try:
             response = FileResponse(
-                open(safe_path, 'rb'),
-                content_type=mime_type or 'application/octet-stream'
+                open(safe_path, "rb"),
+                content_type=mime_type or "application/octet-stream",
             )
             return response
 
         except IOError:
-   
+
             raise Http404("Error al leer el archivo.")
 
         except Exception as e:
-         
+
             print(f"[ProtectedMediaView] Error inesperado: {e}")
             return HttpResponse(status=500)
+
+
+# ======================================================================
+# 💬 API DE CHAT (ACTUALIZADA Y CORREGIDA)
+# ======================================================================
+
+
+class ChatRoomListView(generics.ListCreateAPIView):
+    """
+    Endpoint [GET] para listar todas las salas de chat
+    en las que participa el usuario actual.
+    Endpoint [POST] para encontrar o crear una sala 1-a-1.
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    def get_serializer_class(self):
+        if self.request.method == "POST":
+            return ChatRoomCreateSerializer
+        return ChatRoomSerializer
+
+    def get_queryset(self):
+        # Filtra las salas donde el usuario logueado es un participante
+        return self.request.user.chat_rooms.all().order_by("-actualizado_en")
+
+    def create(self, request, *args, **kwargs):
+        """
+        Encuentra o crea una sala de chat 1-a-1.
+        """
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        other_user_id = serializer.validated_data["user_id"]
+        current_user = request.user
+
+        if other_user_id == current_user.id:
+            # Usamos serializers.ValidationError que rest_framework maneja bien
+            raise serializers.ValidationError("No puedes crear un chat contigo mismo.")
+
+        try:
+            other_user = User.objects.get(id=other_user_id)
+        except User.DoesNotExist:
+            raise serializers.ValidationError("El usuario no existe.")
+
+        # Buscar si ya existe una sala 1-a-1 (con exactamente 2 participantes)
+        existing_room = (
+            ChatRoom.objects.annotate(num_p=Count("participantes"))
+            .filter(num_p=2, participantes=current_user)
+            .filter(participantes=other_user)
+            .first()
+        )
+
+        if existing_room:
+            # Si la sala ya existe, simplemente la devolvemos
+            room_serializer = ChatRoomSerializer(existing_room)
+            return Response(room_serializer.data, status=status.HTTP_200_OK)
+
+        # Si no existe, la creamos
+        new_room = ChatRoom.objects.create(
+            nombre=f"Chat entre {current_user.username} y {other_user.username}"
+        )
+        new_room.participantes.add(current_user, other_user)
+
+        room_serializer = ChatRoomSerializer(new_room)
+        return Response(room_serializer.data, status=status.HTTP_201_CREATED)
+
+
+class ChatMessageListView(generics.ListCreateAPIView):
+    """
+    Endpoint [GET] para listar los mensajes de una sala.
+    Endpoint [POST] para crear un nuevo mensaje en una sala.
+    """
+
+    serializer_class = ChatMessageSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        """
+        Filtra los mensajes para una sala específica.
+        También actualiza el 'leido_por' del usuario.
+        """
+        room_id = self.kwargs.get("room_id")
+        user = self.request.user
+
+        # 1. Asegurarse de que el usuario pertenezca a la sala
+        if not user.chat_rooms.filter(id=room_id).exists():
+            # Usamos serializers.ValidationError que rest_framework maneja bien
+            raise serializers.ValidationError("No tienes permiso para ver esta sala.")
+
+        # 2. Obtener los mensajes
+        queryset = ChatMessage.objects.filter(room_id=room_id).order_by("creado_en")
+
+        # 3. Marcar mensajes como leídos (optimizado)
+        mensajes_no_leidos = queryset.exclude(leido_por=user).values_list(
+            "id", flat=True
+        )
+        if mensajes_no_leidos:
+            user.mensajes_leidos.add(*mensajes_no_leidos)
+
+        return queryset
+
+    def perform_create(self, serializer):
+        """
+        Asigna el autor (usuario logueado) y la sala (de la URL)
+        al crear un nuevo mensaje.
+        """
+        room_id = self.kwargs.get("room_id")
+        user = self.request.user
+
+        try:
+            room = ChatRoom.objects.get(id=room_id)
+        except ChatRoom.DoesNotExist:
+            raise serializers.ValidationError("La sala de chat no existe.")
+
+        if user not in room.participantes.all():
+            raise serializers.ValidationError("No puedes enviar mensajes a esta sala.")
+
+        mensaje = serializer.save(autor=user, room=room)
+
+        room.save()  # Esto actualiza el campo 'actualizado_en'
+        mensaje.leido_por.add(user)
+
+        # --- LÓGICA DE EMAIL (Corregida) ---
+        try:
+            destinatarios = room.participantes.exclude(id=user.id)
+
+            subject = f"Nuevo mensaje en el chat de {user.first_name}"
+            message_body = (
+                f"{user.first_name} {user.last_name} te ha enviado un mensaje:\n\n"
+                f"'{mensaje.contenido}'\n\n"
+                f"Ingresa a la plataforma para responder."
+            )
+
+            for destinatario in destinatarios:
+
+                # --- (INICIO) NUEVA LÓGICA DE NOTIFICACIÓN ---
+                Notificacion.objects.create(
+                    usuario=destinatario,
+                    # Acortamos el mensaje para que quepa en la campana
+                    mensaje=f"Chat de {user.first_name}: {mensaje.contenido[:50]}...",
+                    # Enviamos al usuario a la página de chat
+                    link="/chat",
+                )
+                # --- (FIN) NUEVA LÓGICA DE NOTIFICACIÓN ---
+
+                if destinatario.email:
+                    thread = threading.Thread(
+                        target=enviar_correo_notificacion,
+                        args=(destinatario, subject, message_body),
+                    )
+                    thread.start()
+
+        except Exception as e:
+            print(f"ERROR al enviar email y notificación de chat: {e}")
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def unread_chat_count(request):
+    """
+    Cuenta todos los mensajes no leídos para el usuario actual.
+    """
+    user = request.user
+    
+    # Contamos mensajes en salas donde participa el usuario,
+    # que no sean del propio usuario,
+    # y que no estén en la lista 'leido_por' del usuario.
+    count = ChatMessage.objects.filter(
+        room__participantes=user # En salas donde participo
+    ).exclude(
+        autor=user # Que no sean mios
+    ).exclude(
+        leido_por=user # Que no haya leído
+    ).count()
+    
+    return Response({"unread_count": count}, status=status.HTTP_200_OK)
