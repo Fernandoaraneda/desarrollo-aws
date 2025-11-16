@@ -45,7 +45,8 @@ from .views import (
     exportar_hoja_vida_vehiculo_pdf,
     ChatRoomListView,
     ChatMessageListView,
-    unread_chat_count
+    unread_chat_count,
+    ChatRoomDetailView
 )
 
 router = DefaultRouter()
@@ -110,7 +111,7 @@ urlpatterns = [
     path('chat/rooms/', ChatRoomListView.as_view(), name='chat-rooms-list'),
     path('chat/rooms/<int:room_id>/messages/', ChatMessageListView.as_view(), name='chat-messages-list'),
     path('chat/unread-count/', unread_chat_count, name='chat-unread-count'),
-    
+    path('chat/rooms/<int:pk>/', ChatRoomDetailView.as_view(), name='chat-room-detail'),
     
     
     # Incluir rutas del router (vehiculos, agendamientos, ordenes)

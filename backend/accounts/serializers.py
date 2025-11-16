@@ -77,13 +77,20 @@ def validate_file_restrictions(file):
 
     # 2. Validación de Tipo (MIME Type) - VERSIÓN MEJORADA
     ALLOWED_MIME_TYPES = [
-        "image/",  # Todas las imágenes
-        "application/pdf",
-        "application/vnd.ms-powerpoint",  # ppt
-        "application/vnd.openxmlformats-officedocument.presentationml.presentation",  # pptx
-        "application/vnd.ms-excel",  # xls
-        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",  # xlsx
+        "image/",  # Todas las imágenes (jpeg, png, gif, etc.)
+        "application/pdf", # PDF
+        
+        # --- AÑADIR ESTOS PARA WORD ---
+        "application/msword",  # .doc
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document", 
     ]
+
+    file_type_ok = False
+    if file.content_type:
+        for mime_type in ALLOWED_MIME_TYPES:
+            if file.content_type.startswith(mime_type):
+                file_type_ok = True
+                break
 
     file_type_ok = False
     if file.content_type:
@@ -95,23 +102,17 @@ def validate_file_restrictions(file):
     if not file_type_ok:
         # Fallback a la extensión si el MIME type falla
         ext = os.path.splitext(file.name)[1].lower()
+        
+        # --- ACTUALIZAR TAMBIÉN LAS EXTENSIONES ---
         ALLOWED_EXTENSIONS = [
-            ".jpg",
-            ".jpeg",
-            ".png",
-            ".gif",
-            ".bmp",
-            ".webp",
-            ".svg",
-            ".pdf",
-            ".ppt",
-            ".pptx",
-            ".xls",
-            ".xlsx",
+            ".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp", ".svg", # Imágenes
+            ".pdf", # PDF
+            ".doc", ".docx" # Word
         ]
+        
         if ext not in ALLOWED_EXTENSIONS:
             raise DjangoValidationError(
-                f"Tipo de archivo no permitido ('{file.content_type}'). Solo se aceptan imágenes, PDF, PowerPoint y Excel."
+                f"Tipo de archivo no permitido ('{file.content_type}'). Solo se aceptan imágenes, PDF y documentos de Word."
             )
 
     return file

@@ -65,7 +65,7 @@ from .models import (
     Usuario,
     AgendamientoHistorial,
     ChatRoom,
-    ChatMessage
+    ChatMessage,
 )
 
 # Serializers
@@ -3325,6 +3325,10 @@ class ChatRoomListView(generics.ListCreateAPIView):
         return Response(room_serializer.data, status=status.HTTP_201_CREATED)
 
 
+from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework import generics, permissions
+
+
 class ChatMessageListView(generics.ListCreateAPIView):
     """
     Endpoint [GET] para listar los mensajes de una sala.
@@ -3333,6 +3337,10 @@ class ChatMessageListView(generics.ListCreateAPIView):
 
     serializer_class = ChatMessageSerializer
     permission_classes = [IsAuthenticated]
+
+    # --- ¡¡AÑADE ESTA LÍNEA!! ---
+    # Esto le dice a Django que acepte archivos (multipart) y JSON
+    parser_classes = [MultiPartParser, FormParser]
 
     def get_queryset(self):
         """
@@ -3344,20 +3352,28 @@ class ChatMessageListView(generics.ListCreateAPIView):
 
         # 1. Asegurarse de que el usuario pertenezca a la sala
         if not user.chat_rooms.filter(id=room_id).exists():
-            # Usamos serializers.ValidationError que rest_framework maneja bien
             raise serializers.ValidationError("No tienes permiso para ver esta sala.")
 
         # 2. Obtener los mensajes
-        queryset = ChatMessage.objects.filter(room_id=room_id).order_by("creado_en")
+        queryset = ChatMessage.objects.filter(room_id=room_id)
 
-        # 3. Marcar mensajes como leídos (optimizado)
+        # 3. Añadir filtro 'since' para polling inteligente
+        since_timestamp = self.request.query_params.get("since")
+        if since_timestamp:
+            try:
+                # Filtramos mensajes creados DESPUÉS (gt) del timestamp
+                queryset = queryset.filter(creado_en__gt=since_timestamp)
+            except (ValueError, TypeError):
+                pass  # Ignora timestamps inválidos
+
+        # 4. Marcar mensajes como leídos (optimizado)
         mensajes_no_leidos = queryset.exclude(leido_por=user).values_list(
             "id", flat=True
         )
         if mensajes_no_leidos:
             user.mensajes_leidos.add(*mensajes_no_leidos)
 
-        return queryset
+        return queryset.order_by("creado_en")  # El orden es importante
 
     def perform_create(self, serializer):
         """
@@ -3375,34 +3391,43 @@ class ChatMessageListView(generics.ListCreateAPIView):
         if user not in room.participantes.all():
             raise serializers.ValidationError("No puedes enviar mensajes a esta sala.")
 
+        # El serializer ahora maneja 'contenido' y 'archivo'
         mensaje = serializer.save(autor=user, room=room)
 
         room.save()  # Esto actualiza el campo 'actualizado_en'
         mensaje.leido_por.add(user)
 
-        # --- LÓGICA DE EMAIL (Corregida) ---
+        # --- LÓGICA DE NOTIFICACIÓN Y EMAIL ---
         try:
             destinatarios = room.participantes.exclude(id=user.id)
 
             subject = f"Nuevo mensaje en el chat de {user.first_name}"
-            message_body = (
-                f"{user.first_name} {user.last_name} te ha enviado un mensaje:\n\n"
-                f"'{mensaje.contenido}'\n\n"
-                f"Ingresa a la plataforma para responder."
-            )
+
+            # Mensaje descriptivo si hay archivo
+            if mensaje.archivo and not mensaje.contenido:
+                message_body = (
+                    f"{user.first_name} {user.last_name} te ha enviado un archivo."
+                )
+                mensaje_notificacion = f"Chat de {user.first_name}: [Archivo adjunto]"
+            else:
+                message_body = (
+                    f"{user.first_name} {user.last_name} te ha enviado un mensaje:\n\n"
+                    f"'{mensaje.contenido}'\n\n"
+                    f"Ingresa a la plataforma para responder."
+                )
+                mensaje_notificacion = (
+                    f"Chat de {user.first_name}: {mensaje.contenido[:50]}..."
+                )
 
             for destinatario in destinatarios:
-
-                # --- (INICIO) NUEVA LÓGICA DE NOTIFICACIÓN ---
+                # Notificación en la app (campana)
                 Notificacion.objects.create(
                     usuario=destinatario,
-                    # Acortamos el mensaje para que quepa en la campana
-                    mensaje=f"Chat de {user.first_name}: {mensaje.contenido[:50]}...",
-                    # Enviamos al usuario a la página de chat
+                    mensaje=mensaje_notificacion,
                     link="/chat",
                 )
-                # --- (FIN) NUEVA LÓGICA DE NOTIFICACIÓN ---
 
+                # Email
                 if destinatario.email:
                     thread = threading.Thread(
                         target=enviar_correo_notificacion,
@@ -3413,6 +3438,7 @@ class ChatMessageListView(generics.ListCreateAPIView):
         except Exception as e:
             print(f"ERROR al enviar email y notificación de chat: {e}")
 
+
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def unread_chat_count(request):
@@ -3420,16 +3446,44 @@ def unread_chat_count(request):
     Cuenta todos los mensajes no leídos para el usuario actual.
     """
     user = request.user
-    
+
     # Contamos mensajes en salas donde participa el usuario,
     # que no sean del propio usuario,
     # y que no estén en la lista 'leido_por' del usuario.
-    count = ChatMessage.objects.filter(
-        room__participantes=user # En salas donde participo
-    ).exclude(
-        autor=user # Que no sean mios
-    ).exclude(
-        leido_por=user # Que no haya leído
-    ).count()
-    
+    count = (
+        ChatMessage.objects.filter(room__participantes=user)  # En salas donde participo
+        .exclude(autor=user)  # Que no sean mios
+        .exclude(leido_por=user)  # Que no haya leído
+        .count()
+    )
+
     return Response({"unread_count": count}, status=status.HTTP_200_OK)
+
+
+class ChatRoomDetailView(generics.DestroyAPIView):
+    """
+    Endpoint [DELETE] para eliminar (o abandonar) una sala de chat.
+    """
+
+    permission_classes = [IsAuthenticated]
+    queryset = ChatRoom.objects.all()
+    lookup_field = "pk"  # El ID de la sala vendrá en la URL
+
+    def destroy(self, request, *args, **kwargs):
+        user = request.user
+        room = self.get_object()
+
+        if user not in room.participantes.all():
+            return Response(
+                {"error": "No perteneces a esta sala."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        # Simplemente removemos al usuario de la sala
+        room.participantes.remove(user)
+
+        # Opcional: Si ya no quedan participantes, borra la sala
+        if room.participantes.count() == 0:
+            room.delete()
+
+        return Response(status=status.HTTP_204_NO_CONTENT)

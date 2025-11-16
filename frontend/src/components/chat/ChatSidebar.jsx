@@ -1,9 +1,10 @@
 import React from 'react';
 import styles from '../../css/chat.module.css';
-import { Users, PlusSquare } from 'lucide-react'; // <-- Importar PlusSquare
+import { Users, PlusSquare, X } from 'lucide-react'; // <-- 1. Importar X
+import apiClient from '../../api/axios.js'; // <-- 2. Importar apiClient
 
-// <-- 1. Recibir la nueva prop 'onNewChat'
-export default function ChatSidebar({ rooms, currentUser, onSelectRoom, selectedRoomId, isLoading, onNewChat }) {
+// 3. Recibir la nueva prop 'onRoomDeleted'
+export default function ChatSidebar({ rooms, currentUser, onSelectRoom, selectedRoomId, isLoading, onNewChat, onRoomDeleted }) {
 
     const getRoomName = (room) => {
         if (room.nombre && room.participantes.length > 2) {
@@ -23,10 +24,25 @@ export default function ChatSidebar({ rooms, currentUser, onSelectRoom, selected
         return "Chat Personal"; // Si es un chat contigo mismo
     };
 
+    // 4. Función para eliminar
+    const handleDeleteRoom = async (e, roomId) => {
+        e.stopPropagation(); // Evita que se seleccione la sala al hacer clic en 'X'
+        
+        if (window.confirm("¿Estás seguro de que quieres abandonar esta conversación?")) {
+            try {
+                await apiClient.delete(`/chat/rooms/${roomId}/`);
+                // Llamamos a la función del padre para actualizar el estado
+                onRoomDeleted(roomId);
+            } catch (error) {
+                console.error("Error al eliminar la sala:", error);
+                alert("No se pudo abandonar la conversación.");
+            }
+        }
+    };
+
     return (
         <aside className={styles.sidebar}>
-            {/* --- 2. MODIFICAR EL HEADER --- */}
-            <div className={styles.sidebarHeader} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div className={styles.sidebarHeader}>
                 <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     <Users size={20} />
                     Conversaciones
@@ -39,13 +55,11 @@ export default function ChatSidebar({ rooms, currentUser, onSelectRoom, selected
                     <PlusSquare size={20} />
                 </button>
             </div>
-            {/* --- FIN DE LA MODIFICACIÓN --- */}
 
             <div className={styles.roomList}>
                 {isLoading && <p style={{ padding: '1rem 1.5rem', color: '#6b7280' }}>Cargando...</p>}
                 
                 {!isLoading && rooms.length === 0 && (
-                    // --- 3. Mensaje actualizado ---
                     <p style={{ padding: '1rem 1.5rem', color: '#9ca3af' }}>
                         No tienes conversaciones. Haz clic en [+] para iniciar una.
                     </p>
@@ -57,7 +71,17 @@ export default function ChatSidebar({ rooms, currentUser, onSelectRoom, selected
                         className={`${styles.roomItem} ${room.id === selectedRoomId ? styles.active : ''}`}
                         onClick={() => onSelectRoom(room.id)}
                     >
-                        {getRoomName(room)}
+                        {/* 5. Nombre de la sala */}
+                        <span>{getRoomName(room)}</span>
+                        
+                        {/* 6. Botón de eliminar */}
+                        <button 
+                            className={styles.deleteRoomButton}
+                            onClick={(e) => handleDeleteRoom(e, room.id)}
+                            title="Abandonar"
+                        >
+                            <X size={16} />
+                        </button>
                     </div>
                 ))}
             </div>

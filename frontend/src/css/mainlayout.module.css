@@ -243,9 +243,9 @@
 
   .chatBadge {
   position: absolute;
-  top: 8px; /* Ajusta la posición vertical */
-  right: 15px; /* Ajusta la posición horizontal */
-  background-color: #e53e3e; /* Rojo */
+  top: 8px;
+  right: 15px; 
+  background-color: #e53e3e;
   color: white;
   font-size: 0.7rem;
   font-weight: bold;

@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import apiClient from '../../api/axios.js';
 import styles from '../../css/chat.module.css';
-// 1. AÑADIR LOS ICONOS QUE FALTABAN
 import { Send, MessageSquare, Paperclip, XCircle } from 'lucide-react';
+import AuthenticatedImage from '../AuthenticatedImage';
+// --- 1. IMPORTA EL MODAL ---
+import AlertModal from '../modals/AlertModal'; // Ajusta la ruta si es necesario
 
 export default function ChatWindow({ roomId, currentUser }) {
     const [messages, setMessages] = useState([]);
@@ -13,29 +15,35 @@ export default function ChatWindow({ roomId, currentUser }) {
     const [selectedFile, setSelectedFile] = useState(null);
     const fileInputRef = useRef(null);
 
-    // --- 2. LÓGICA DE POLLING INTELIGENTE (OPCIONAL PERO RECOMENDADO) ---
-    // Esta ref guardará el timestamp del último mensaje
+    // --- 2. AÑADE EL ESTADO PARA EL MODAL DE ERROR ---
+    const [errorModal, setErrorModal] = useState({ isOpen: false, message: "" });
+
+    // Definiciones de validación
+    const MAX_FILE_SIZE_MB = 10;
+    const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
+    const ALLOWED_FILE_TYPES = [
+        "image/*",
+        ".pdf",
+        ".doc",
+        ".docx",
+        "application/msword",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+    ].join(',');
+
+    const textInputRef = useRef(null);
     const lastFetchTimestamp = useRef(null);
 
-    // Función para hacer scroll al último mensaje
+    // ... (scrollToBottom, fetchMessages, useEffects... todo eso queda igual) ...
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     };
 
-    // --- 3. FUNCIÓN DE CARGAR MENSAJES (MODIFICADA) ---
     const fetchMessages = async (mode = 'replace') => {
         if (!roomId) return;
-
-        // Mostrar carga solo en la primera carga
-        if (mode === 'replace') {
-            setIsLoading(true);
-        }
-       
-        let url = `/chat/rooms/${roomId}/messages/`;
+        if (mode === 'replace') setIsLoading(true);
         
-        // Si es 'append' (polling), pedimos solo mensajes nuevos
+        let url = `/chat/rooms/${roomId}/messages/`;
         if (mode === 'append' && lastFetchTimestamp.current) {
-            // Pide mensajes creados DESPUÉS (greater than) del último que tenemos
             url += `?since=${lastFetchTimestamp.current}`;
         }
 
@@ -44,61 +52,48 @@ export default function ChatWindow({ roomId, currentUser }) {
             const newMessages = response.data.results || response.data;
 
             if (newMessages.length > 0) {
-                // Actualizamos el timestamp con el del último mensaje recibido
                 lastFetchTimestamp.current = newMessages[newMessages.length - 1].creado_en;
-
                 if (mode === 'replace') {
-                    setMessages(newMessages); // Reemplaza todos
+                    setMessages(newMessages);
                 } else if (mode === 'append') {
-                    // Añade solo los nuevos, evitando duplicados
                     setMessages(prev => [
                         ...prev,
                         ...newMessages.filter(nm => !prev.find(pm => pm.id === nm.id))
                     ]);
                 }
             } else if (mode === 'replace') {
-                 setMessages([]); // Si es 'replace' y no vino nada, vaciamos
+                 setMessages([]);
             }
-            
         } catch (error) {
             console.error("Error al cargar mensajes:", error);
+            // También podrías mostrar un modal aquí si la carga falla
+            setErrorModal({ isOpen: true, message: "No se pudieron cargar los mensajes." });
         } finally {
-            if (mode === 'replace') {
-                setIsLoading(false);
-            }
+            if (mode === 'replace') setIsLoading(false);
         }
     };
 
-    // --- 4. POLLING (MODIFICADO) ---
     useEffect(() => {
         if (roomId) {
-            // 1. Carga inicial
-            lastFetchTimestamp.current = null; // Resetea el timestamp
+            lastFetchTimestamp.current = null;
             fetchMessages('replace');
-
-            // 2. Inicia el "polling" (ahora pide solo nuevos)
             const interval = setInterval(() => {
                 fetchMessages('append');
-            }, 5000); // 5000ms = 5 segundos
-
-            // 3. Limpia el intervalo
+            }, 5000); 
             return () => clearInterval(interval);
         } else {
-            // Si no hay sala seleccionada, limpia todo
             setMessages([]);
             lastFetchTimestamp.current = null;
         }
-    }, [roomId]); // Este efecto se reinicia CADA VEZ que cambia el roomId
+    }, [roomId]); 
 
-    // Efecto para hacer scroll cuando llegan mensajes nuevos
     useEffect(() => {
         scrollToBottom();
-    }, [messages]); // Se ejecuta cada vez que el array 'messages' cambia
+    }, [messages]); 
 
-    // Función para enviar un mensaje
+    // --- 3. MODIFICA EL MANEJO DE ERRORES ---
     const handleSend = async (e) => {
         e.preventDefault();
-        // Permitir enviar solo archivo sin texto
         if ((newMessage.trim() === "" && !selectedFile) || isSending) return;
 
         setIsSending(true);
@@ -111,7 +106,9 @@ export default function ChatWindow({ roomId, currentUser }) {
 
         try {
             await apiClient.post(`/chat/rooms/${roomId}/messages/`, formData, {
-                // No es necesario setear 'Content-Type', el navegador lo hace
+                headers: {
+                    'Content-Type': undefined 
+                }
             });
             
             setNewMessage(""); 
@@ -120,21 +117,48 @@ export default function ChatWindow({ roomId, currentUser }) {
                 fileInputRef.current.value = null; 
             }
             
-            // Recargamos solo los mensajes nuevos (incluyendo el nuestro)
             await fetchMessages('append');
 
         } catch (error) {
             console.error("Error al enviar mensaje:", error);
-            alert("No se pudo enviar el mensaje.");
+            
+            // --- AQUÍ ESTÁ EL CAMBIO ---
+            // Intenta obtener un mensaje de error específico del backend
+            const errorMessage = 
+                error.response?.data?.archivo?.[0] || // Error de validación de Django
+                error.response?.data?.detail ||        // Error de permisos
+                error.response?.data?.error ||         // Otro error genérico
+                "No se pudo enviar el mensaje. Revisa el archivo o tu conexión."; // Fallback
+
+            setErrorModal({ isOpen: true, message: errorMessage });
+            // alert("No se pudo enviar el mensaje."); // <-- Ya no usamos esto
         } finally {
             setIsSending(false);
+            setTimeout(() => {
+                textInputRef.current?.focus();
+            }, 0); 
         }
     };
 
-    // Funciones para manejar el archivo
+    // --- 3. MODIFICA EL MANEJO DE ERRORES ---
     const handleFileChange = (e) => {
         if (e.target.files && e.target.files[0]) {
-            setSelectedFile(e.target.files[0]);
+            const file = e.target.files[0];
+
+            if (file.size > MAX_FILE_SIZE_BYTES) {
+                // --- AQUÍ ESTÁ EL CAMBIO ---
+                const message = `Error: El archivo es demasiado grande. Peso máximo: ${MAX_FILE_SIZE_MB}MB.`;
+                setErrorModal({ isOpen: true, message: message });
+                // alert(`Error: El archivo es demasiado grande....`); // <-- Ya no usamos esto
+                
+                if (fileInputRef.current) {
+                    fileInputRef.current.value = null;
+                }
+                setSelectedFile(null);
+                return; 
+            }
+            
+            setSelectedFile(file);
         }
     };
 
@@ -149,7 +173,6 @@ export default function ChatWindow({ roomId, currentUser }) {
         }
     };
 
-    // Si no hay sala seleccionada, muestra un placeholder
     if (!roomId) {
         return (
             <div className={styles.chatWindowPlaceholder}>
@@ -159,14 +182,41 @@ export default function ChatWindow({ roomId, currentUser }) {
         );
     }
 
+    // --- 3. MODIFICA EL MANEJO DE ERRORES ---
+    const handleAuthenticatedDownload = async (e, fileUrl) => {
+        e.preventDefault(); 
+        const fileName = fileUrl.split('/').pop();
+        
+        try {
+            const response = await apiClient.get(fileUrl, {
+                responseType: 'blob',
+            });
+
+            const url = window.URL.createObjectURL(response.data);
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', fileName);
+            document.body.appendChild(link);
+            link.click(); 
+            link.parentNode.removeChild(link);
+            window.URL.revokeObjectURL(url);
+
+        } catch (error) {
+            console.error("Error al descargar archivo:", error);
+            // --- AQUÍ ESTÁ EL CAMBIO ---
+            setErrorModal({ isOpen: true, message: "No se pudo descargar el archivo." });
+            // alert("No se pudo descargar el archivo."); // <-- Ya no usamos esto
+        }
+    };
+
+    // Renderizado principal
     return (
         <main className={styles.chatWindow}>
             <div className={styles.messagesContainer}>
+                {/* ... (todo tu mapeo de mensajes se mantiene igual) ... */}
                 {isLoading && messages.length === 0 && <p>Cargando mensajes...</p>}
                 
-                {/* --- 5. LÓGICA DE RENDERIZADO (CORREGIDA) --- */}
                 {messages.map(msg => {
-                    // Esta lógica va DENTRO del map
                     const isImage = msg.archivo && (
                         msg.archivo.endsWith('.jpg') || 
                         msg.archivo.endsWith('.jpeg') || 
@@ -185,20 +235,24 @@ export default function ChatWindow({ roomId, currentUser }) {
                                 {new Date(msg.creado_en).toLocaleString('es-CL', { timeStyle: 'short', dateStyle: 'short' })}
                             </div>
                             
-                            {/* Renderiza el texto (si existe) */}
                             {msg.contenido}
-
-                            {/* Renderiza el archivo (si existe) */}
                             {msg.archivo && (
                                 <div className={styles.fileAttachment}>
                                     {isImage ? (
-                                        <a href={msg.archivo} target="_blank" rel="noopener noreferrer">
-                                            <img src={msg.archivo} alt="Adjunto" style={{ maxWidth: '200px', borderRadius: '8px', marginTop: '5px' }} />
+                                        <a href={msg.archivo} onClick={(e) => handleAuthenticatedDownload(e, msg.archivo)} target="_blank" rel="noopener noreferrer">
+                                            <AuthenticatedImage 
+                                                src={msg.archivo} 
+                                                alt="Adjunto" 
+                                                className={styles.chatImage} 
+                                            />
                                         </a>
                                     ) : (
-                                        <a href={msg.archivo} target="_blank" rel="noopener noreferrer" className={styles.fileLink}>
+                                        <a 
+                                            href={msg.archivo} 
+                                            onClick={(e) => handleAuthenticatedDownload(e, msg.archivo)}
+                                            className={styles.fileLink}
+                                        >
                                             <Paperclip size={16} />
-                                            {/* Extrae el nombre del archivo de la URL */}
                                             {msg.archivo.split('/').pop()}
                                         </a>
                                     )}
@@ -207,11 +261,9 @@ export default function ChatWindow({ roomId, currentUser }) {
                         </div>
                     );
                 })}
-                {/* Este div invisible nos ayuda a hacer scroll al final */}
                 <div ref={messagesEndRef} />
             </div>
 
-            {/* Vista previa del archivo a enviar */}
             {selectedFile && (
                 <div className={styles.filePreview}>
                     <span>{selectedFile.name}</span>
@@ -219,20 +271,18 @@ export default function ChatWindow({ roomId, currentUser }) {
                 </div>
             )}
 
-            {/* --- 6. FORMULARIO (CORREGIDO) --- */}
-            {/* Solo debe haber UN formulario */}
             <form className={styles.messageForm} onSubmit={handleSend}>
-                {/* Input de archivo oculto */}
+                {/* ... (todo tu formulario se mantiene igual) ... */}
                 <input
                     type="file"
                     ref={fileInputRef}
                     onChange={handleFileChange}
                     style={{ display: 'none' }}
+                    accept={ALLOWED_FILE_TYPES}
                 />
                 
-                {/* Botón para adjuntar */}
                 <button
-                    type="button" // Importante: 'type="button"' para que no envíe el form
+                    type="button" 
                     className={styles.attachButton}
                     onClick={triggerFileInput}
                     disabled={isSending}
@@ -240,9 +290,9 @@ export default function ChatWindow({ roomId, currentUser }) {
                     <Paperclip size={18} />
                 </button>
                 
-                {/* Input de texto */}
                 <input
                     type="text"
+                    ref={textInputRef}
                     className={styles.messageInput}
                     placeholder="Escribe tu mensaje..."
                     value={newMessage}
@@ -250,16 +300,22 @@ export default function ChatWindow({ roomId, currentUser }) {
                     disabled={isSending}
                 />
                 
-                {/* Botón de enviar */}
                 <button
                     type="submit"
                     className={styles.sendButton}
-                    // Lógica de 'disabled' corregida
                     disabled={isSending || (newMessage.trim() === "" && !selectedFile)}
                 >
                     <Send size={18} />
                 </button>
             </form>
+
+            {/* --- 4. RENDERIZA EL MODAL --- */}
+            <AlertModal
+                isOpen={errorModal.isOpen}
+                onClose={() => setErrorModal({ isOpen: false, message: "" })}
+                title="Error al Enviar Mensaje"
+                message={errorModal.message}
+            />
         </main>
     );
 }

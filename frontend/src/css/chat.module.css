@@ -1,25 +1,18 @@
-/*
- * ======================================================
- * src/css/chat.module.css
- * Estilos para el nuevo módulo de Chat
- * ======================================================
- */
-
 .chatLayout {
     display: grid;
-    grid-template-columns: 300px 1fr; /* Sidebar de 300px y el resto para la ventana */
-    height: calc(100vh - 80px); /* Ocupa toda la altura menos el header */
-    background-color: #1f2937; /* Fondo oscuro principal */
+    grid-template-columns: 300px 1fr;
+    height: calc(100vh - 80px);
+    background-color: #1f2937;
     color: #f9fafb;
     border-radius: 12px;
     overflow: hidden;
-    margin: 1rem;
+    margin: 0.1rem;
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
 }
 
-/* --- Sidebar (Lista de Chats) --- */
+
 .sidebar {
-    background-color: #374151; /* Un gris un poco más claro */
+    background-color: #374151;
     border-right: 1px solid #4b5563;
     display: flex;
     flex-direction: column;
@@ -44,6 +37,7 @@
     padding: 4px;
     border-radius: 6px;
 }
+
 .newChatButton:hover {
     background-color: #4b5563;
     color: #fff;
@@ -74,41 +68,41 @@
 }
 
 .roomItem.active {
-    background-color: #0d9488; /* Color "teal" para el activo */
+    background-color: #0d9488;
     color: white;
 }
+
 
 .deleteRoomButton {
     background: none;
     border: none;
-    color: #9ca3af; /* Gris */
+    color: #e53e3e;
     cursor: pointer;
     padding: 4px;
     border-radius: 50%;
-    display: none; /* Oculto por defecto */
-}
-
-.roomItem:hover .deleteRoomButton {
-    display: block; /* Mostrar solo al hacer hover sobre el item */
+    display: block;
+    transition: all 0.2s ease;
 }
 
 .deleteRoomButton:hover {
-    background-color: #f3f4f6; /* Gris claro hover */
-    color: #e53e3e; /* Rojo */
+    background-color: #4b5563;
+    color: #f87171;
 }
 
 
-/* --- Ventana de Chat --- */
+
 .chatWindow {
     display: flex;
     flex-direction: column;
     height: 100%;
+    min-height: 0;
 }
 
 .chatWindowPlaceholder {
     flex: 1;
     display: flex;
-    flex-direction: column; /* Para poner el texto debajo del ícono */
+    flex-direction: column;
+    /* Para poner el texto debajo del ícono */
     justify-content: center;
     align-items: center;
     gap: 1rem;
@@ -123,6 +117,7 @@
     display: flex;
     flex-direction: column;
     gap: 1rem;
+    min-height: 0;
 }
 
 /* --- Burbujas de Mensaje --- */
@@ -152,7 +147,8 @@
 
 /* Mensaje MÍO */
 .mine {
-    background-color: #0d9488; /* Mismo color "teal" */
+    background-color: #0d9488;
+    /* Mismo color "teal" */
     color: white;
     align-self: flex-end;
     border-bottom-right-radius: 4px;
@@ -211,140 +207,154 @@
 /* --- Estilos para Adjuntar Archivos --- */
 
 .attachButton {
-  background: none;
-  border: none;
-  padding: 0.5rem;
-  cursor: pointer;
-  color: #9ca3af; /* Gris (claro, para fondo oscuro) */
-  display: flex;
-  align-items: center;
-  margin-left: -0.5rem; /* Ajuste para que esté más pegado */
+    background: none;
+    border: none;
+    padding: 0.5rem;
+    cursor: pointer;
+    color: #9ca3af;
+    /* Gris (claro, para fondo oscuro) */
+    display: flex;
+    align-items: center;
+    margin-left: -0.5rem;
+    /* Ajuste para que esté más pegado */
 }
+
 .attachButton:hover {
-  color: #f9fafb; /* Blanco */
+    color: #f9fafb;
+    /* Blanco */
 }
+
 .attachButton:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
+    opacity: 0.5;
+    cursor: not-allowed;
 }
 
 .filePreview {
-  background-color: #4b5563; /* Gris medio */
-  padding: 0.5rem 1.5rem; /* Alinear con padding del form */
-  font-size: 0.8rem;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border-top: 1px solid #4b5563;
-  color: #f3f4f6; /* Texto claro */
+    background-color: #4b5563;
+    /* Gris medio */
+    padding: 0.5rem 1.5rem;
+    /* Alinear con padding del form */
+    font-size: 0.8rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid #4b5563;
+    color: #f3f4f6;
+    /* Texto claro */
 }
+
 .filePreview span {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  padding-right: 1rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    padding-right: 1rem;
 }
+
 .filePreview button {
-  background: none;
-  border: none;
-  color: #f87171; /* Rojo claro */
-  cursor: pointer;
-  padding: 0 0 0 0.5rem;
+    background: none;
+    border: none;
+    color: #f87171;
+    /* Rojo claro */
+    cursor: pointer;
+    padding: 0 0 0 0.5rem;
 }
 
 .fileAttachment {
-  margin-top: 8px;
+    margin-top: 8px;
 }
 
 .fileLink {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  background-color: rgba(255, 255, 255, 0.1); /* Blanco traslúcido */
-  padding: 8px 12px;
-  border-radius: 8px;
-  text-decoration: none;
-  color: #f9fafb; /* Texto blanco */
-  font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background-color: rgba(255, 255, 255, 0.1);
+    padding: 8px 12px;
+    border-radius: 8px;
+    text-decoration: none;
+    color: #f9fafb;
+    /* Texto blanco */
+    font-weight: 500;
 }
+
 .fileLink:hover {
-  background-color: rgba(255, 255, 255, 0.2);
+    background-color: rgba(255, 255, 255, 0.2);
 }
 
 
-/* --- Estilos del Modal (Fondo oscuro) --- */
+
 
 .modalOverlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.6);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  opacity: 0;
-  animation: fadeIn 0.3s ease forwards;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    opacity: 0;
+    animation: fadeIn 0.3s ease forwards;
 }
 
 .modalContent {
-  background: #374151; /* Fondo gris oscuro para el modal */
-  color: #f9fafb; /* Texto claro */
-  padding: 2rem;
-  border-radius: 12px;
-  max-width: 500px;
-  width: 90%;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-  position: relative;
-  opacity: 0;
-  transform: scale(0.95);
-  animation: scaleUp 0.3s ease 0.1s forwards;
+    background: #374151;
+    color: #f9fafb;
+    padding: 2rem;
+    border-radius: 12px;
+    max-width: 500px;
+    width: 90%;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    position: relative;
+    opacity: 0;
+    transform: scale(0.95);
+    animation: scaleUp 0.3s ease 0.1s forwards;
 }
 
 @keyframes fadeIn {
-  to {
-    opacity: 1;
-  }
+    to {
+        opacity: 1;
+    }
 }
 
 @keyframes scaleUp {
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
 }
 
 .modalCloseButton {
-  position: absolute;
-  top: 1rem;
-  right: 1rem;
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: #9ca3af; /* Gris */
-  border-radius: 50%;
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #9ca3af;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
+
 .modalCloseButton:hover {
-  background-color: #4b5563; /* Gris más oscuro hover */
-  color: #f9fafb; /* Blanco */
+    background-color: #4b5563;
+    color: #f9fafb;
 }
 
 .modalTitle {
-  margin-top: 0;
-  margin-bottom: 1.5rem;
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: #f9fafb; /* Blanco */
+    margin-top: 0;
+    margin-bottom: 1.5rem;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #f9fafb;
 }
 
-/* Estilos del modal (Buscador y Lista) */
+
 .searchBox {
     position: relative;
     margin-bottom: 1rem;
@@ -358,44 +368,53 @@
     color: #9ca3af;
 }
 
-/* Reutilizamos el estilo del input del chat, pero lo adaptamos */
+
 .modalContent .messageInput {
-    padding-left: 2.5rem; /* Espacio para el ícono de búsqueda */
+    padding-left: 2.5rem;
     width: 100%;
     margin-right: 0;
 }
 
-/* Reutilizamos .roomList y .roomItem del sidebar */
+
 .modalContent .roomList {
     max-height: 400px;
     margin-top: 1rem;
-    padding: 0; /* Quitamos padding para que encaje */
+    padding: 0;
 }
+
 .modalContent .roomItem {
     margin-bottom: 0.5rem;
 }
+
 .modalContent .roomItem small {
-    color: #d1d5db; /* Un gris más claro para el @username */
+    color: #d1d5db;
 }
 
 /* --- Media Query para Móviles --- */
 @media (max-width: 768px) {
     .chatLayout {
-        grid-template-columns: 1fr; /* Una sola columna */
-        height: calc(100vh - 60px); /* Ajusta la altura si es necesario */
+        grid-template-columns: 1fr;
+        height: calc(100vh - 60px);
         margin: 0;
         border-radius: 0;
     }
-    
+
     .sidebar {
-        /* En móvil, la sidebar podría ocultarse o ser un modal */
-        /* Por ahora, la dejamos, pero ocultamos la ventana si no hay sala */
         height: 250px;
         flex: none;
     }
 
-    /* Si no hay sala seleccionada, oculta el placeholder en móvil */
     .chatWindowPlaceholder {
         display: none;
     }
+}
+
+.chatImage {
+
+    max-width: 100%;
+    max-height: 400px;
+    width: auto;
+    height: auto;
+    border-radius: 8px;
+    display: block;
 }
