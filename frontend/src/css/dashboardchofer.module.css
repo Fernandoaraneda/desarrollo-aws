@@ -1,23 +1,159 @@
-.mainTitle { font-size: 2rem; font-weight: bold; margin-bottom: 1.5rem; }
-.cardsContainer { display: grid; gap: 2rem; }
+/* ======================================================
+ * src/css/dashboardchofer.module.css
+ * ¡VERSIÓN CORREGIDA CON TEXTO NEGRO Y EFECTO HOVER!
+ * ======================================================
+ */
 
-.statusCard { background-color: white; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); padding: 1.5rem; }
-.cardHeader { display: flex; align-items: center; gap: 1rem; border-bottom: 1px solid #f3f4f6; padding-bottom: 1rem; margin-bottom: 1rem; }
-.cardHeader h3 { font-size: 1.5rem; font-weight: 600; }
-.cardBody h4 { font-weight: 500; color: #6b7280; font-size: 0.9rem; }
-.cardBody p { font-size: 1.1rem; }
+.mainTitle {
+  font-size: 2rem;
+  font-weight: bold;
+  margin-bottom: 1.5rem;
+  /* --- AÑADIDO: Asegura color de texto --- */
+  color: #f9fafb; /* Color claro para el título principal de la página */
+}
 
-.timeline { display: flex; justify-content: space-between; margin-top: 2rem; position: relative; }
-.timeline::before { content: ''; position: absolute; top: 8px; left: 5%; width: 90%; height: 2px; background-color: #e5e7eb; }
-.timelineStep { display: flex; flex-direction: column; align-items: center; position: relative; width: 20%; text-align: center; }
-.timelineDot { width: 18px; height: 18px; background-color: #e5e7eb; border-radius: 50%; border: 3px solid white; z-index: 1; }
-.timelineLabel { margin-top: 0.5rem; font-size: 0.75rem; font-weight: 500; color: #9ca3af; }
+.cardsContainer {
+  display: grid;
+  gap: 2rem;
+}
 
-.timelineStep.completed .timelineDot { background-color: #3b82f6; }
-.timelineStep.completed .timelineLabel { color: #1f2937; }
-.timelineStep.completed::before { content: ''; position: absolute; top: 8px; left: -50%; width: 100%; height: 2px; background-color: #3b82f6; z-index: 0; }
-.timelineStep:first-child::before { content: none; }
+.statusCard {
+  background-color: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  padding: 1.5rem;
+  /* --- AÑADIDO: Mejoras de botón --- */
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  text-align: left;
+  width: 100%;
+}
 
-.noVehiclesMessage { text-align: center; padding: 4rem 2rem; background-color: white; border-radius: 12px; display: flex; flex-direction: column; align-items: center; gap: 1rem; }
-.noVehiclesMessage h2 { font-size: 1.5rem; font-weight: 600; }
-.noVehiclesMessage p { color: #6b7280; }
+/* --- AÑADIDO: Efecto hover --- */
+.statusCard:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  border-color: #3b82f6;
+}
+
+.cardHeader {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  border-bottom: 1px solid #f3f4f6;
+  padding-bottom: 1rem;
+  margin-bottom: 1rem;
+  /* --- AÑADIDO: Color de texto --- */
+  color: #1f2937;
+}
+
+.cardHeader h3 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  /* --- AÑADIDO: Color de texto --- */
+  color: #1f2937;
+}
+
+.cardBody h4 {
+  font-weight: 500;
+  color: #6b7280; /* Este ya estaba bien */
+  font-size: 0.9rem;
+}
+
+.cardBody p {
+  font-size: 1.1rem;
+  /* --- AÑADIDO: Color de texto --- */
+  color: #374151;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.timeline {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 2rem;
+  position: relative;
+}
+
+.timeline::before {
+  content: '';
+  position: absolute;
+  top: 8px;
+  left: 5%;
+  width: 90%;
+  height: 2px;
+  background-color: #e5e7eb;
+}
+
+.timelineStep {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  width: 20%;
+  text-align: center;
+}
+
+.timelineDot {
+  width: 18px;
+  height: 18px;
+  background-color: #e5e7eb;
+  border-radius: 50%;
+  border: 3px solid white;
+  z-index: 1;
+}
+
+.timelineLabel {
+  margin-top: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #9ca3af;
+}
+
+.timelineStep.completed .timelineDot {
+  background-color: #3b82f6;
+}
+
+.timelineStep.completed .timelineLabel {
+  color: #1f2937;
+}
+
+.timelineStep.completed::before {
+  content: '';
+  position: absolute;
+  top: 8px;
+  left: -50%;
+  width: 100%;
+  height: 2px;
+  background-color: #3b82f6;
+  z-index: 0;
+}
+
+.timelineStep:first-child::before {
+  content: none;
+}
+
+.noVehiclesMessage {
+  text-align: center;
+  padding: 4rem 2rem;
+  background-color: white;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  /* --- AÑADIDO: Color de texto --- */
+  color: #1f2937;
+}
+
+.noVehiclesMessage h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  /* --- AÑADIDO: Color de texto --- */
+  color: #1f2937;
+}
+
+.noVehiclesMessage p {
+  color: #6b7280; /* Este ya estaba bien */
+}

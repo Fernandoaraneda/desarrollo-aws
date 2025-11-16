@@ -1,12 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line } from 'recharts';
-
-import { Truck, Calendar, Wrench, Clock, RefreshCw, Download, Package, Navigation, KeyRound, Clipboard, } from 'lucide-react';
+import { Truck, Calendar, Wrench, Clock, RefreshCw, Download, Package, Navigation, KeyRound, Clipboard } from 'lucide-react';
 import apiClient from '../../api/axios.js';
 import styles from '../../css/administrativo-dashboard.module.css';
 import { useUserStore } from '../../store/authStore.js';
 
-
+// --- COMPONENTE DE KPI (SIN CAMBIOS) ---
 const KpiCard = ({ title, value, icon, color }) => (
   <div className={styles.card}>
     <div className={styles.cardIcon} style={{ backgroundColor: color }}>
@@ -19,9 +18,32 @@ const KpiCard = ({ title, value, icon, color }) => (
   </div>
 );
 
+// --- 1. NUEVO COMPONENTE REUTILIZABLE PARA FECHAS ---
+const DateRangePicker = ({ fechas, onFechasChange }) => (
+  <div className={styles.datePickers}>
+    <label>
+      Desde:
+      <input
+        type="date"
+        value={fechas.inicio}
+        onChange={(e) => onFechasChange({ ...fechas, inicio: e.target.value })}
+        className={styles.dateInput}
+      />
+    </label>
+    <label>
+      Hasta:
+      <input
+        type="date"
+        value={fechas.fin}
+        onChange={(e) => onFechasChange({ ...fechas, fin: e.target.value })}
+        className={styles.dateInput}
+      />
+    </label>
+  </div>
+);
+
 
 export default function AdministrativoWidgets() {
-
   const [data, setData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState(null);
@@ -30,11 +52,20 @@ export default function AdministrativoWidgets() {
   const [error, setError] = useState(null);
   const { user } = useUserStore();
 
-
-
   const today = new Date().toISOString().split('T')[0];
-  const [fechaInicio, setFechaInicio] = useState(today);
-  const [fechaFin, setFechaFin] = useState(today);
+
+  // --- 2. ELIMINAMOS EL ESTADO DE FECHA ÚNICO ---
+  // const [fechaInicio, setFechaInicio] = useState(today);
+  // const [fechaFin, setFechaFin] = useState(today);
+
+  // --- 3. AÑADIMOS ESTADOS DE FECHA INDIVIDUALES ---
+  const [fechasSeguridad, setFechasSeguridad] = useState({ inicio: today, fin: today });
+  const [fechasGruas, setFechasGruas] = useState({ inicio: today, fin: today });
+  const [fechasLlaves, setFechasLlaves] = useState({ inicio: today, fin: today });
+  const [fechasFlota, setFechasFlota] = useState({ inicio: today, fin: today });
+  const [fechasRepuestos, setFechasRepuestos] = useState({ inicio: today, fin: today });
+  const [fechasMecanicos, setFechasMecanicos] = useState({ inicio: today, fin: today });
+  
   const [isDownloading, setIsDownloading] = useState(false);
   const [downloadError, setDownloadError] = useState(null);
   const [isDownloadingPDF, setIsDownloadingPDF] = useState(false);
@@ -47,17 +78,12 @@ export default function AdministrativoWidgets() {
   const [isDownloadingPrestamos, setIsDownloadingPrestamos] = useState(false);
   const [isDownloadingInventarioLlaves, setIsDownloadingInventarioLlaves] = useState(false);
   const [patenteHojaVida, setPatenteHojaVida] = useState('');
-
-
   const [isDownloadingFrecuencia, setIsDownloadingFrecuencia] = useState(false);
   const [isDownloadingHojaVida, setIsDownloadingHojaVida] = useState(false);
 
-
-
-
+  // --- (fetchData y useEffects sin cambios) ---
   const fetchData = useCallback(async (showRefreshIndicator = false) => {
-
-
+    // ... (sin cambios) ...
     if (!user) return;
     try {
       if (showRefreshIndicator) {
@@ -99,9 +125,10 @@ export default function AdministrativoWidgets() {
   const toggleAutoRefresh = () => {
     setAutoRefresh(!autoRefresh);
   };
-
+  
+  // --- (handleDownloadCSV sin cambios) ---
   const handleDownloadCSV = () => {
-
+    // ... (sin cambios) ...
     if (!data) return;
     const { kpis, ordenesPorEstado, ordenesUltimaSemana, ordenesRecientes, alertas } = data;
     const exportData = {
@@ -142,11 +169,11 @@ export default function AdministrativoWidgets() {
     document.body.removeChild(link);
   };
 
-
-
+  // --- 4. ACTUALIZAMOS LAS FUNCIONES DE DESCARGA ---
 
   const handleDownloadSeguridad = async () => {
-    if (!fechaInicio || !fechaFin) {
+    // Usa el estado 'fechasSeguridad'
+    if (!fechasSeguridad.inicio || !fechasSeguridad.fin) {
       setDownloadError("Por favor, seleccione ambas fechas.");
       return;
     }
@@ -154,25 +181,21 @@ export default function AdministrativoWidgets() {
     setIsDownloading(true);
 
     try {
-
       const params = new URLSearchParams({
-        fecha_inicio: fechaInicio,
-        fecha_fin: fechaFin,
+        fecha_inicio: fechasSeguridad.inicio,
+        fecha_fin: fechasSeguridad.fin,
       });
-
 
       const response = await apiClient.get(`/reportes/seguridad/?${params.toString()}`, {
         responseType: 'blob',
       });
-
-
+      
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
       link.href = url;
-
-
+      
       const contentDisposition = response.headers['content-disposition'];
-      let fileName = `Reporte_Seguridad_${fechaInicio}_a_${fechaFin}.xlsx`;
+      let fileName = `Reporte_Seguridad_${fechasSeguridad.inicio}_a_${fechasSeguridad.fin}.xlsx`;
       if (contentDisposition) {
         const fileNameMatch = contentDisposition.match(/filename="(.+)"/);
         if (fileNameMatch && fileNameMatch.length > 1) {
@@ -183,8 +206,6 @@ export default function AdministrativoWidgets() {
       link.setAttribute('download', fileName);
       document.body.appendChild(link);
       link.click();
-
-
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
 
@@ -196,22 +217,20 @@ export default function AdministrativoWidgets() {
     }
   };
 
-
+  // (Sin cambios, no usa fecha)
   const handleDownloadSnapshotPDF = async () => {
+    // ... (sin cambios) ...
     setDownloadError(null);
     setIsDownloadingPDF(true);
 
     try {
-
       const response = await apiClient.get('/reportes/seguridad/snapshot-pdf/', {
         responseType: 'blob',
       });
 
-
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
       link.href = url;
-
 
       const contentDisposition = response.headers['content-disposition'];
       let fileName = "Snapshot_Taller.pdf";
@@ -225,8 +244,6 @@ export default function AdministrativoWidgets() {
       link.setAttribute('download', fileName);
       document.body.appendChild(link);
       link.click();
-
-
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
 
@@ -239,7 +256,8 @@ export default function AdministrativoWidgets() {
   };
 
   const handleDownloadRepuestos = async () => {
-    if (!fechaInicio || !fechaFin) {
+    // Usa el estado 'fechasRepuestos'
+    if (!fechasRepuestos.inicio || !fechasRepuestos.fin) {
       setDownloadError("Por favor, seleccione ambas fechas.");
       return;
     }
@@ -248,16 +266,14 @@ export default function AdministrativoWidgets() {
 
     try {
       const params = new URLSearchParams({
-        fecha_inicio: fechaInicio,
-        fecha_fin: fechaFin,
+        fecha_inicio: fechasRepuestos.inicio,
+        fecha_fin: fechasRepuestos.fin,
       });
-
 
       const response = await apiClient.get(`/reportes/repuestos/consumo/?${params.toString()}`, {
         responseType: 'blob',
       });
-
-
+      
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
       link.href = url;
@@ -285,16 +301,16 @@ export default function AdministrativoWidgets() {
     }
   };
 
+  // (Sin cambios, no usa fecha)
   const handleDownloadInventario = async () => {
+    // ... (sin cambios) ...
     setDownloadError(null);
     setIsDownloadingInventario(true);
 
     try {
-
       const response = await apiClient.get('/reportes/repuestos/inventario-valorizado/', {
         responseType: 'blob',
       });
-
 
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
@@ -323,10 +339,9 @@ export default function AdministrativoWidgets() {
     }
   };
 
-
-
   const handleDownloadQuiebres = async () => {
-    if (!fechaInicio || !fechaFin) {
+    // Usa el estado 'fechasRepuestos'
+    if (!fechasRepuestos.inicio || !fechasRepuestos.fin) {
       setDownloadError("Por favor, seleccione ambas fechas.");
       return;
     }
@@ -335,16 +350,14 @@ export default function AdministrativoWidgets() {
 
     try {
       const params = new URLSearchParams({
-        fecha_inicio: fechaInicio,
-        fecha_fin: fechaFin,
+        fecha_inicio: fechasRepuestos.inicio,
+        fecha_fin: fechasRepuestos.fin,
       });
-
 
       const response = await apiClient.get(`/reportes/repuestos/quiebres-stock/?${params.toString()}`, {
         responseType: 'blob',
       });
-
-
+      
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
       link.href = url;
@@ -372,9 +385,9 @@ export default function AdministrativoWidgets() {
     }
   };
 
-
   const handleDownloadProductividad = async () => {
-    if (!fechaInicio || !fechaFin) {
+    // Usa el estado 'fechasMecanicos'
+    if (!fechasMecanicos.inicio || !fechasMecanicos.fin) {
       setDownloadError("Por favor, seleccione ambas fechas.");
       return;
     }
@@ -383,15 +396,14 @@ export default function AdministrativoWidgets() {
 
     try {
       const params = new URLSearchParams({
-        fecha_inicio: fechaInicio,
-        fecha_fin: fechaFin,
+        fecha_inicio: fechasMecanicos.inicio,
+        fecha_fin: fechasMecanicos.fin,
       });
 
       const response = await apiClient.get(`/reportes/mecanicos/productividad/?${params.toString()}`, {
         responseType: 'blob',
       });
-
-
+      
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
       link.href = url;
@@ -418,10 +430,9 @@ export default function AdministrativoWidgets() {
     }
   };
 
-
-
   const handleDownloadTiempos = async () => {
-    if (!fechaInicio || !fechaFin) {
+    // Usa el estado 'fechasMecanicos'
+    if (!fechasMecanicos.inicio || !fechasMecanicos.fin) {
       setDownloadError("Por favor, seleccione ambas fechas.");
       return;
     }
@@ -430,15 +441,14 @@ export default function AdministrativoWidgets() {
 
     try {
       const params = new URLSearchParams({
-        fecha_inicio: fechaInicio,
-        fecha_fin: fechaFin,
+        fecha_inicio: fechasMecanicos.inicio,
+        fecha_fin: fechasMecanicos.fin,
       });
 
       const response = await apiClient.get(`/reportes/mecanicos/tiempos-taller/?${params.toString()}`, {
         responseType: 'blob',
       });
-
-
+      
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
       link.href = url;
@@ -464,8 +474,10 @@ export default function AdministrativoWidgets() {
       setIsDownloadingTiempos(false);
     }
   };
+
   const handleDownloadGruas = async () => {
-    if (!fechaInicio || !fechaFin) {
+    // Usa el estado 'fechasGruas'
+    if (!fechasGruas.inicio || !fechasGruas.fin) {
       setDownloadError("Por favor, seleccione ambas fechas.");
       return;
     }
@@ -474,15 +486,14 @@ export default function AdministrativoWidgets() {
 
     try {
       const params = new URLSearchParams({
-        fecha_inicio: fechaInicio,
-        fecha_fin: fechaFin,
+        fecha_inicio: fechasGruas.inicio,
+        fecha_fin: fechasGruas.fin,
       });
 
       const response = await apiClient.get(`/reportes/gruas/solicitudes/?${params.toString()}`, {
         responseType: 'blob',
       });
-
-
+      
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
       link.href = url;
@@ -510,7 +521,8 @@ export default function AdministrativoWidgets() {
   };
 
   const handleDownloadPrestamos = async () => {
-    if (!fechaInicio || !fechaFin) {
+    // Usa el estado 'fechasLlaves'
+    if (!fechasLlaves.inicio || !fechasLlaves.fin) {
       setDownloadError("Por favor, seleccione ambas fechas.");
       return;
     }
@@ -519,15 +531,14 @@ export default function AdministrativoWidgets() {
 
     try {
       const params = new URLSearchParams({
-        fecha_inicio: fechaInicio,
-        fecha_fin: fechaFin,
+        fecha_inicio: fechasLlaves.inicio,
+        fecha_fin: fechasLlaves.fin,
       });
 
       const response = await apiClient.get(`/reportes/llaves/historial-prestamos/?${params.toString()}`, {
         responseType: 'blob',
       });
-
-
+      
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
       link.href = url;
@@ -554,9 +565,9 @@ export default function AdministrativoWidgets() {
     }
   };
 
-
-
+  // (Sin cambios, no usa fecha)
   const handleDownloadInventarioLlaves = async () => {
+    // ... (sin cambios) ...
     setDownloadError(null);
     setIsDownloadingInventarioLlaves(true);
 
@@ -564,7 +575,6 @@ export default function AdministrativoWidgets() {
       const response = await apiClient.get('/reportes/llaves/inventario-pdf/', {
         responseType: 'blob',
       });
-
 
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
@@ -593,7 +603,8 @@ export default function AdministrativoWidgets() {
   };
 
   const handleDownloadFrecuencia = async () => {
-    if (!fechaInicio || !fechaFin) {
+    // Usa el estado 'fechasFlota'
+    if (!fechasFlota.inicio || !fechasFlota.fin) {
       setDownloadError("Por favor, seleccione ambas fechas.");
       return;
     }
@@ -602,15 +613,14 @@ export default function AdministrativoWidgets() {
 
     try {
       const params = new URLSearchParams({
-        fecha_inicio: fechaInicio,
-        fecha_fin: fechaFin,
+        fecha_inicio: fechasFlota.inicio,
+        fecha_fin: fechasFlota.fin,
       });
 
       const response = await apiClient.get(`/reportes/flota/frecuencia-fallas/?${params.toString()}`, {
         responseType: 'blob',
       });
-
-
+      
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
       link.href = url;
@@ -637,9 +647,9 @@ export default function AdministrativoWidgets() {
     }
   };
 
-
-
+  // (Sin cambios, usa patente)
   const handleDownloadHojaVida = async () => {
+    // ... (sin cambios) ...
     if (!patenteHojaVida) {
       setDownloadError("Por favor, ingrese una patente para generar la Hoja de Vida.");
       return;
@@ -655,7 +665,6 @@ export default function AdministrativoWidgets() {
       const response = await apiClient.get(`/reportes/flota/hoja-vida-pdf/?${params.toString()}`, {
         responseType: 'blob',
       });
-
 
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
@@ -687,13 +696,9 @@ export default function AdministrativoWidgets() {
     }
   };
 
-
-
-
-
-
-
+  // --- (Código de renderizado de 'Cargando', 'Error', etc. sin cambios) ---
   if (isLoading) {
+    // ... (sin cambios) ...
     return (
       <div className="flex flex-col items-center justify-center p-8">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mb-4"></div>
@@ -702,7 +707,7 @@ export default function AdministrativoWidgets() {
     );
   }
   if (error) {
-
+    // ... (sin cambios) ...
     return (
       <div className="flex flex-col items-center justify-center p-8">
         <p className="text-red-400 mb-4">Error: {error}</p>
@@ -716,7 +721,7 @@ export default function AdministrativoWidgets() {
     );
   }
   if (!data) {
-
+    // ... (sin cambios) ...
     return (
       <div className="flex flex-col items-center justify-center p-8">
         <p className="text-gray-300 mb-4">No se pudieron cargar los datos del dashboard.</p>
@@ -735,14 +740,13 @@ export default function AdministrativoWidgets() {
   const pendientesAprobacion = alertas?.pendientesAprobacion || 0;
 
 
-  // El return AHORA SÍ tiene un solo div principal
+  // --- 5. ACTUALIZAMOS EL JSX (LA VISTA) ---
   return (
     <div className="w-full">
 
-      {/* --- INICIO: SECCIÓN DE ALERTAS Y CONTROLES --- */}
-      {/* Movimos los controles y la fila de KPIs aquí arriba */}
-      
+      {/* --- Controles y KPIs (sin cambios) --- */}
       <div className={styles.topRowContainer}>
+        {/* ... (sin cambios) ... */}
         <div className={styles.controlsToolbar}>
           <button
             onClick={handleManualRefresh}
@@ -783,10 +787,8 @@ export default function AdministrativoWidgets() {
         </div>
       </div>
       
-      {/* --- INICIO: SECCIÓN DE KPIS Y GRÁFICOS --- */}
       <div className={styles.dashboardGrid}>
         
-        {/* Fila de KPIs */}
         <KpiCard
           title="Pendientes de Aprobación"
           value={pendientesAprobacion}
@@ -812,8 +814,9 @@ export default function AdministrativoWidgets() {
           color="#8b5cf6"
         />
 
-        {/* Fila de Gráficos */}
+        {/* --- Gráficos (sin cambios) --- */}
         <div className={`${styles.card} ${styles.largeCard}`}>
+          {/* ... (gráfico de barras) ... */}
           <h3 className={styles.chartTitle}>Carga de Trabajo Actual</h3>
           <ResponsiveContainer width="100%" height={250}>
             <BarChart data={ordenesPorEstado || []} margin={{ top: 20, right: 20, left: -10, bottom: 5 }}>
@@ -826,8 +829,8 @@ export default function AdministrativoWidgets() {
             </BarChart>
           </ResponsiveContainer>
         </div>
-        
         <div className={`${styles.card} ${styles.largeCard}`}>
+          {/* ... (gráfico de líneas) ... */}
           <h3 className={styles.chartTitle}>Ingresos en la Última Semana</h3>
           <ResponsiveContainer width="100%" height={250}>
             <LineChart data={ordenesUltimaSemana || []} margin={{ top: 20, right: 20, left: -10, bottom: 5 }}>
@@ -841,10 +844,12 @@ export default function AdministrativoWidgets() {
           </ResponsiveContainer>
         </div>
 
-        {/* --- INICIO: SECCIÓN CENTRO DE REPORTES (MOVIDO) --- */}
-        {/* Le añadimos 'fullWidthCard' para que ocupe todo el ancho de la grid */}
+        {/* --- INICIO: SECCIÓN CENTRO DE REPORTES (MODIFICADO) --- */}
         <div className={`${styles.card} ${styles.reportCard} ${styles.fullWidthCard}`}>
           <h2 className={styles.reportHeader}>Centro de Reportes Administrativos</h2>
+          {/* Mostramos el error general de descarga aquí arriba */}
+          {downloadError && <p className={styles.downloadError}>{downloadError}</p>}
+
           <div className={styles.reportGrid}>
 
             {/* --- ÁREA DE SEGURIDAD --- */}
@@ -856,51 +861,26 @@ export default function AdministrativoWidgets() {
               <p className={styles.reportDescription}>
                 Genera la bitácora de todos los ingresos y salidas del taller.
               </p>
-              <div className={styles.datePickers}>
-                <label>
-                  Desde:
-                  <input
-                    type="date"
-                    value={fechaInicio}
-                    onChange={(e) => setFechaInicio(e.target.value)}
-                    className={styles.dateInput}
-                  />
-                </label>
-                <label>
-                  Hasta:
-                  <input
-                    type="date"
-                    value={fechaFin}
-                    onChange={(e) => setFechaFin(e.target.value)}
-                    className={styles.dateInput}
-                  />
-                </label>
-              </div>
+              
+              {/* Usamos el componente de fechas con el estado 'fechasSeguridad' */}
+              <DateRangePicker fechas={fechasSeguridad} onFechasChange={setFechasSeguridad} />
 
               <button
                 onClick={handleDownloadSeguridad}
-                disabled={isDownloading}
+                disabled={isDownloading || !fechasSeguridad.inicio || !fechasSeguridad.fin}
                 className={styles.downloadButton}
               >
                 {isDownloading ? (
-                  <>
-                    <RefreshCw size={16} className="animate-spin" />
-                    Generando...
-                  </>
+                  <> <RefreshCw size={16} className="animate-spin" /> Generando... </>
                 ) : (
-                  <>
-                    <Download size={16} />
-                    Descargar Bitácora (Excel)
-                  </>
+                  <> <Download size={16} /> Descargar Bitácora (Excel) </>
                 )}
               </button>
 
               <hr style={{ borderColor: '#4a5568', margin: '1rem 0' }} />
-
               <p className={styles.reportDescription}>
-                Obtener una foto actual de todos los vehículos en taller.
+                Obtener una foto actual de todos los vehículos en taller (no usa fechas).
               </p>
-
               <button
                 onClick={handleDownloadSnapshotPDF}
                 disabled={isDownloadingPDF}
@@ -908,18 +888,11 @@ export default function AdministrativoWidgets() {
                 style={{ backgroundColor: '#9B2C2C' }}
               >
                 {isDownloadingPDF ? (
-                  <>
-                    <RefreshCw size={16} className="animate-spin" />
-                    Generando...
-                  </>
+                  <> <RefreshCw size={16} className="animate-spin" /> Generando... </>
                 ) : (
-                  <>
-                    <Download size={16} />
-                    Snapshot Vehículos en Taller (PDF)
-                  </>
+                  <> <Download size={16} /> Snapshot Vehículos en Taller (PDF) </>
                 )}
               </button>
-              {downloadError && <p className={styles.downloadError}>{downloadError}</p>}
             </div>
 
             {/* --- ÁREA DE GRÚAS --- */}
@@ -931,9 +904,13 @@ export default function AdministrativoWidgets() {
               <p className={styles.reportDescription}>
                 Historial de solicitudes de grúa (filtrado por fecha de solicitud).
               </p>
+              
+              {/* Usamos el componente de fechas con el estado 'fechasGruas' */}
+              <DateRangePicker fechas={fechasGruas} onFechasChange={setFechasGruas} />
+
               <button
                 onClick={handleDownloadGruas}
-                disabled={isDownloadingGruas || !fechaInicio || !fechaFin}
+                disabled={isDownloadingGruas || !fechasGruas.inicio || !fechasGruas.fin}
                 className={styles.downloadButton}
                 style={{ backgroundColor: '#4F46E5' }}
               >
@@ -952,11 +929,15 @@ export default function AdministrativoWidgets() {
                 Área de Control de Llaves (Pañol)
               </h3>
               <p className={styles.reportDescription}>
-                Bitácora completa de quién tuvo qué llave y cuándo (filtrado por fecha de retiro).
+                Bitácora de préstamos (filtrado por fecha de retiro).
               </p>
+              
+              {/* Usamos el componente de fechas con el estado 'fechasLlaves' */}
+              <DateRangePicker fechas={fechasLlaves} onFechasChange={setFechasLlaves} />
+              
               <button
                 onClick={handleDownloadPrestamos}
-                disabled={isDownloadingPrestamos || !fechaInicio || !fechaFin}
+                disabled={isDownloadingPrestamos || !fechasLlaves.inicio || !fechasLlaves.fin}
                 className={styles.downloadButton}
               >
                 {isDownloadingPrestamos ? (
@@ -990,7 +971,7 @@ export default function AdministrativoWidgets() {
                 Área de Flota (Vehículos)
               </h3>
               <p className={styles.reportDescription}>
-                Historial completo de un vehículo (no usa filtros de fecha).
+                Historial completo de un vehículo (no usa fechas).
               </p>
               <div className={styles.patentePicker}>
                 <label>
@@ -1021,9 +1002,13 @@ export default function AdministrativoWidgets() {
               <p className={styles.reportDescription}>
                 Ranking de vehículos que más ingresan al taller (filtrado por fecha).
               </p>
+              
+              {/* Usamos el componente de fechas con el estado 'fechasFlota' */}
+              <DateRangePicker fechas={fechasFlota} onFechasChange={setFechasFlota} />
+
               <button
                 onClick={handleDownloadFrecuencia}
-                disabled={isDownloadingFrecuencia || !fechaInicio || !fechaFin}
+                disabled={isDownloadingFrecuencia || !fechasFlota.inicio || !fechasFlota.fin}
                 className={styles.downloadButton}
               >
                 {isDownloadingFrecuencia ? (
@@ -1041,11 +1026,15 @@ export default function AdministrativoWidgets() {
                 Área de Repuestos (Bodega)
               </h3>
               <p className={styles.reportDescription}>
-                Historial de repuestos usados por mecánicos (filtrado por fecha).
+                Filtros de fecha para reportes de Consumo y Quiebres:
               </p>
+              
+              {/* Usamos el componente de fechas con el estado 'fechasRepuestos' */}
+              <DateRangePicker fechas={fechasRepuestos} onFechasChange={setFechasRepuestos} />
+              
               <button
                 onClick={handleDownloadRepuestos}
-                disabled={isDownloadingRepuestos || !fechaInicio || !fechaFin}
+                disabled={isDownloadingRepuestos || !fechasRepuestos.inicio || !fechasRepuestos.fin}
                 className={styles.downloadButton}
               >
                 {isDownloadingRepuestos ? (
@@ -1054,9 +1043,22 @@ export default function AdministrativoWidgets() {
                   <> <Download size={16} /> Descargar Consumo (Excel) </>
                 )}
               </button>
+              <button
+                onClick={handleDownloadQuiebres}
+                disabled={isDownloadingQuiebres || !fechasRepuestos.inicio || !fechasRepuestos.fin}
+                className={styles.downloadButton}
+                style={{ backgroundColor: '#D97706', marginTop: '0.5rem' }}
+              >
+                {isDownloadingQuiebres ? (
+                  <> <RefreshCw size={16} className="animate-spin" /> Generando... </>
+                ) : (
+                  <> <Download size={16} /> Quiebres de Stock (Excel) </>
+                )}
+              </button>
+              
               <hr className={styles.reportSeparator} />
               <p className={styles.reportDescription}>
-                Snapshot del inventario actual y su valor total (no usa fechas).
+                Snapshot del inventario actual (no usa fechas).
               </p>
               <button
                 onClick={handleDownloadInventario}
@@ -1070,22 +1072,6 @@ export default function AdministrativoWidgets() {
                   <> <Download size={16} /> Inventario Valorizado (Excel) </>
                 )}
               </button>
-              <hr className={styles.reportSeparator} />
-              <p className={styles.reportDescription}>
-                Historial de repuestos rechazados por falta de stock (filtrado por fecha).
-              </p>
-              <button
-                onClick={handleDownloadQuiebres}
-                disabled={isDownloadingQuiebres || !fechaInicio || !fechaFin}
-                className={styles.downloadButton}
-                style={{ backgroundColor: '#D97706' }}
-              >
-                {isDownloadingQuiebres ? (
-                  <> <RefreshCw size={16} className="animate-spin" /> Generando... </>
-                ) : (
-                  <> <Download size={16} /> Quiebres de Stock (Excel) </>
-                )}
-              </button>
             </div>
 
             {/* --- ÁREA DE MECÁNICOS --- */}
@@ -1095,11 +1081,15 @@ export default function AdministrativoWidgets() {
                 Área de Mecánicos (Productividad)
               </h3>
               <p className={styles.reportDescription}>
-                Órdenes finalizadas por mecánico (filtrado por fecha).
+                Filtros de fecha para reportes de Productividad y Tiempos:
               </p>
+
+              {/* Usamos el componente de fechas con el estado 'fechasMecanicos' */}
+              <DateRangePicker fechas={fechasMecanicos} onFechasChange={setFechasMecanicos} />
+
               <button
                 onClick={handleDownloadProductividad}
-                disabled={isDownloadingProductividad || !fechaInicio || !fechaFin}
+                disabled={isDownloadingProductividad || !fechasMecanicos.inicio || !fechasMecanicos.fin}
                 className={styles.downloadButton}
               >
                 {isDownloadingProductividad ? (
@@ -1108,15 +1098,12 @@ export default function AdministrativoWidgets() {
                   <> <Download size={16} /> Productividad por Mecánico (Excel) </>
                 )}
               </button>
-              <hr className={styles.reportSeparator} />
-              <p className={styles.reportDescription}>
-                Análisis de tiempo total vs. tiempo en pausa (filtrado por fecha).
-              </p>
+              
               <button
                 onClick={handleDownloadTiempos}
-                disabled={isDownloadingTiempos || !fechaInicio || !fechaFin}
+                disabled={isDownloadingTiempos || !fechasMecanicos.inicio || !fechasMecanicos.fin}
                 className={styles.downloadButton}
-                style={{ backgroundColor: '#0D9488' }}
+                style={{ backgroundColor: '#0D9488', marginTop: '0.5rem' }}
               >
                 {isDownloadingTiempos ? (
                   <> <RefreshCw size={16} className="animate-spin" /> Generando... </>
@@ -1131,8 +1118,9 @@ export default function AdministrativoWidgets() {
         {/* --- FIN: SECCIÓN CENTRO DE REPORTES --- */}
         
 
-        {/* Fila de Tabla */}
+        {/* --- Tabla de Órdenes Recientes (sin cambios) --- */}
         <div className={`${styles.card} ${styles.fullWidthCard}`}>
+          {/* ... (sin cambios) ... */}
           <h3 className={styles.chartTitle}>Órdenes de Servicio Recientes</h3>
           <div className={styles.tableContainer}>
             <table className={styles.table}>
@@ -1163,8 +1151,6 @@ export default function AdministrativoWidgets() {
         </div>
         
       </div>
-      {/* --- FIN: SECCIÓN DE KPIS Y GRÁFICOS --- */}
-
-    </div> // Cierre del div principal "w-full"
+    </div>
   );
 }
