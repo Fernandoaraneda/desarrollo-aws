@@ -367,6 +367,49 @@ export default function DetalleOrden() {
         setAlertModal({ isOpen: false, title: '', message: '', intent: 'success' });
     };
 
+    // --- 1. NUEVA FUNCIÓN GENÉRICA PARA CAMBIAR ESTADO ---
+    // (Llama al endpoint que no es ni /pausar/ ni /reanudar/)
+    const llamarCambiarEstado = async (nuevoEstado) => {
+        let motivo = '';
+        if (nuevoEstado === 'Finalizado') {
+            motivo = 'Trabajo finalizado por el mecánico.';
+        } else if (nuevoEstado === 'En Diagnostico') {
+            motivo = 'Mecánico inicia diagnóstico.';
+        }
+
+        try {
+            // Usamos el endpoint genérico 'cambiar-estado'
+            const response = await apiClient.post(`/ordenes/${id}/cambiar-estado/`, {
+                estado: nuevoEstado,
+                motivo: motivo
+            });
+            setOrden(response.data); // Actualiza la orden y el select
+            setAlertModal({ isOpen: true, title: 'Éxito', message: `Estado cambiado a "${nuevoEstado}".`, intent: 'success' });
+        } catch (error) {
+            setAlertModal({ isOpen: true, title: 'Error', message: 'Error al cambiar el estado.', intent: 'danger' });
+            // Como 'orden.estado' no se actualizó, el select volverá al valor anterior solo
+        }
+    };
+
+    // --- 2. NUEVO HANDLER PARA EL MENÚ DESPLEGABLE <select> ---
+    const handleChangeEstado = (e) => {
+        const nuevoEstado = e.target.value;
+        const estadoActual = orden.estado;
+
+        if (nuevoEstado === estadoActual) return; // No hacer nada
+
+        if (nuevoEstado === 'Pausado') {
+            // Si eligen "Pausado", llamamos a la función que abre el modal
+            handlePausar();
+        } else if (nuevoEstado === 'En Proceso' && estadoActual === 'Pausado') {
+            // Si estaba Pausado y eligen "En Proceso", llamamos a reanudar
+            handleReanudar();
+        } else {
+            // Para todos los demás cambios
+            llamarCambiarEstado(nuevoEstado);
+        }
+    };
+
 
     const handleRepuestoAgregado = () => {
         fetchOrden();
@@ -509,16 +552,25 @@ export default function DetalleOrden() {
                             {orden?.estado}
                         </div>
 
-                        {puedeModificar && (
-                            <div className={styles.pauseActions}>
-                                {orden?.estado === 'Pausado' ? (
-                                    <button onClick={handleReanudar} className={styles.resumeButton}><Play size={16} /> Reanudar Trabajo</button>
-                                ) : (
-                                    <button onClick={handlePausar} className={styles.pauseButton} disabled={orden?.estado === 'Finalizado'}><Pause size={16} /> Pausar Trabajo</button>
-                                )}
-                            </div>
-                        )}
+                        <label htmlFor="estadoSelect" style={{ fontSize: '0.8rem', color: '#6b7280' }}>Cambiar estado:</label>
+                        <select
+                            id="estadoSelect"
+                            value={orden?.estado || ''}
+                            onChange={handleChangeEstado}
+                            disabled={!puedeModificar}
+                            // Reutilizamos un estilo que ya tienes
+                            className={styles.mecanicoSelect}
+                            style={{ marginBottom: '1rem' }}
+                        >
+                            {/* Opciones Fijas de Estado */}
+                            <option value="Ingresado">Ingresado</option>
+                            <option value="En Diagnostico">En Diagnóstico</option>
+                            <option value="En Proceso">En Proceso</option>
+                            <option value="Pausado">Pausado</option>
+                            <option value="Finalizado">Finalizado</option>
+                        </select>
 
+                        <hr />
                         <hr />
                         <h4>Historial de Estados</h4>
                         <ul className={styles.historyList}>
