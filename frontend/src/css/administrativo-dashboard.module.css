@@ -384,3 +384,20 @@
   flex-basis: 350px; /* Ancho mínimo de cada tarjeta */
   min-width: 300px;
 }
+
+
+@media (max-width: 400px) {
+  .datePickers {
+    flex-direction: column;
+    /* Apila los inputs verticalmente */
+    gap: 0.5rem;
+    /* Reduce el espacio entre ellos */
+    align-items: stretch;
+    /* Estira los labels */
+  }
+
+  .datePickers label {
+    min-width: 100%;
+    /* Hace que cada label ocupe el 100% del ancho */
+  }
+}

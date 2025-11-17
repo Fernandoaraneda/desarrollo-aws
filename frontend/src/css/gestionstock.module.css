@@ -46,6 +46,7 @@
     border: 1px solid #d1d5db;
     border-radius: 6px;
     font-size: 1rem;
+    box-sizing: border-box;
 }
 
 .tableContainer {
@@ -288,4 +289,24 @@
 .deleteButton:hover {
     background-color: #fef2f2; /* Fondo rojo muy claro */
     color: #991b1b; /* Rojo más oscuro al pasar el mouse */
+}
+
+
+@media (max-width: 640px) {
+
+    /* 1. Arregla el padding de la página */
+    .pageWrapper {
+        padding: 1rem;
+    }
+
+    /* 2. Arregla el Modal (campos uno sobre otro) */
+    .formGrid {
+        grid-template-columns: 1fr; /* 1 sola columna en móviles */
+    }
+
+    .spanFull {
+        grid-column: span 1; /* Asegura que ocupe la única columna */
+    }
+
+
 }

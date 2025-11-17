@@ -44,7 +44,7 @@ export default function Dashboard() {
 
   return (
 
-    <div className="p-4 md:p-8 text-white">
+    <div className="p-2 sm:p-4 md:p-8 text-white">
 
       <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
         <div>
@@ -56,7 +56,7 @@ export default function Dashboard() {
       </header>
 
 
-      <main className="bg-gray-800 p-6 rounded-lg shadow-lg">
+      <main className="bg-gray-800 p-3 sm:p-6 rounded-lg shadow-lg">
         {renderDashboardContent()}
       </main>
     </div>
