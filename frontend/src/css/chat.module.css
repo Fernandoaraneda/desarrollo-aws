@@ -1,7 +1,7 @@
-/* src/css/chat.module.css */
+
 
 .chatLayout {
-    display: flex; /* CAMBIO IMPORTANTE: De grid a flex */
+    display: flex; 
     height: calc(100vh - 80px);
     background-color: #1f2937;
     color: #f9fafb;
@@ -12,14 +12,14 @@
     position: relative;
 }
 
-/* --- SIDEBAR (LISTA) --- */
+
 .sidebar {
-    width: 350px; /* Ancho fijo en PC */
+    width: 350px; 
     background-color: #374151;
     border-right: 1px solid #4b5563;
     display: flex;
     flex-direction: column;
-    flex-shrink: 0; /* Evita que se encoja */
+    flex-shrink: 0; 
 }
 
 .sidebarHeader {
@@ -89,17 +89,17 @@
     color: #f87171;
 }
 
-/* --- CHAT WINDOW (VENTANA DERECHA) --- */
+
 .chatWindow {
-    flex: 1; /* Ocupa todo el espacio restante */
+    flex: 1; 
     display: flex;
     flex-direction: column;
     height: 100%;
-    min-width: 0; /* Evita desbordamientos flex */
+    min-width: 0; 
     background-color: #1f2937;
 }
 
-/* HEADER DEL CHAT (NUEVO: Para el botón de volver y título) */
+
 .chatHeader {
     display: flex;
     align-items: center;
@@ -108,9 +108,9 @@
     border-bottom: 1px solid #4b5563;
 }
 
-/* BOTÓN VOLVER (Solo visible en móvil) */
+
 .backButton {
-    display: none; /* Oculto en escritorio */
+    display: none; 
     background: none;
     border: none;
     color: #d1d5db;
@@ -148,7 +148,7 @@
     min-height: 0;
 }
 
-/* --- Burbujas de Mensaje --- */
+
 .messageBubble {
     max-width: 75%;
     padding: 0.75rem 1rem;
@@ -183,10 +183,10 @@
     color: #f0fdfa;
 }
 
-/* --- Formulario de Envío --- */
+
 .messageForm {
     display: flex;
-    padding: 1rem; /* Reducido un poco padding */
+    padding: 1rem; 
     border-top: 1px solid #4b5563;
     background-color: #1f2937;
     align-items: center;
@@ -199,7 +199,7 @@
     border: 1px solid #4b5563;
     background-color: #374151;
     color: #f9fafb;
-    border-radius: 24px; /* Más redondeado estilo chat app */
+    border-radius: 24px; 
     margin-right: 0.5rem;
     font-size: 1rem;
 }
@@ -214,7 +214,7 @@
     background-color: #0d9488;
     color: white;
     border: none;
-    border-radius: 50%; /* Botón redondo */
+    border-radius: 50%; 
     width: 45px;
     height: 45px;
     display: flex;
@@ -228,7 +228,7 @@
 .sendButton:hover { background-color: #0f766e; }
 .sendButton:disabled { background-color: #4b5563; cursor: not-allowed; }
 
-/* --- Archivos --- */
+
 .attachButton {
     background: none;
     border: none;
@@ -292,7 +292,7 @@
     cursor: pointer;
 }
 
-/* --- Modales --- */
+
 .modalOverlay {
     position: fixed; top: 0; left: 0; right: 0; bottom: 0;
     background-color: rgba(0, 0, 0, 0.6);
@@ -324,38 +324,38 @@
 .modalContent .roomItem { margin-bottom: 0.5rem; }
 .modalContent .roomItem small { color: #d1d5db; }
 
-/* --- MEDIA QUERY (MÓVIL) --- */
-/* Aquí está la magia para que sea responsivo */
+
+
 @media (max-width: 768px) {
     .chatLayout {
-        height: calc(100vh - 60px); /* Ajuste para el header móvil */
+        height: calc(100vh - 60px); 
         margin: 0;
         border-radius: 0;
-        flex-direction: column; /* En teoría flex, pero controlamos visibilidad */
+        flex-direction: column; 
     }
 
     .sidebar {
-        width: 100%; /* Ancho completo */
+        width: 100%; 
         height: 100%;
         border-right: none;
     }
     
     .chatWindow {
-        width: 100%; /* Ancho completo */
+        width: 100%; 
         height: 100%;
     }
 
-    /* Botón volver visible solo en móvil */
+    
     .backButton {
         display: block;
     }
     
-    /* Clase utilitaria para ocultar paneles desde JS */
+    
     .hiddenOnMobile {
         display: none !important;
     }
 
-    /* Ocultar placeholder en móvil (si no hay chat, se ve la lista) */
+    
     .chatWindowPlaceholder {
         display: none;
     }
@@ -367,14 +367,14 @@
 
 .sidebarSearchInput {
     width: 100%;
-    padding: 0.6rem 1rem 0.6rem 2.5rem; /* Espacio a la izq para la lupa */
+    padding: 0.6rem 1rem 0.6rem 2.5rem; 
     border: 1px solid #4b5563;
-    background-color: #1f2937; /* Fondo más oscuro para resaltar */
+    background-color: #1f2937; 
     color: #f9fafb;
     border-radius: 8px;
     font-size: 0.95rem;
     
-    /* 👇 ¡ESTA ES LA CLAVE PARA QUE NO SE SALGA! 👇 */
+    
     box-sizing: border-box; 
 }
 

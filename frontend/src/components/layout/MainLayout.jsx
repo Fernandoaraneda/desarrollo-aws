@@ -1,14 +1,13 @@
-// 1. Importar Suspense
+
 import React, { useState, Suspense, useEffect } from 'react';
 import { NavLink, useNavigate, Outlet } from 'react-router-dom';
-// 2. Corregir rutas de importación para que sean relativas
 import { useUserStore } from '../../store/authStore.js';
 import styles from '../../css/mainlayout.module.css';
 import Notificaciones from './Notificaciones.jsx';
 import AccordionMenu from './AccordionMenu.jsx';
 import apiClient from '../../api/axios.js';
 import ConfirmModal from '../modals/ConfirmModal.jsx';
-// (El componente Sidebar no cambia)
+
 const navLinksByRole = {
   'Supervisor': [
     { type: 'link', to: '/dashboard', label: 'Inicio', icon: 'fas fa-home' },
@@ -171,13 +170,13 @@ const Sidebar = ({ isOpen, toggleSidebar, unreadChatCount, onDownloadManual }) =
           );
         })}
 
-        {/* 3. BOTÓN DE DESCARGA MANUAL (Estilo similar a los NavLink pero es un button) */}
+       
         <button 
           onClick={() => {
-             handleLinkClick(); // Cierra sidebar en móvil si es necesario
-             onDownloadManual(); // Abre el modal
+             handleLinkClick(); 
+             onDownloadManual();
           }}
-          className={styles.navLink} // Reusamos la clase para que se vea igual
+          className={styles.navLink} 
           style={{ 
             background: 'transparent', 
             border: 'none', 
@@ -217,7 +216,7 @@ export default function MainLayout() {
   const [isSidebarOpen, setSidebarOpen] = useState(false);
   const [unreadChatCount, setUnreadChatCount] = useState(0);
 
-  // 4. ESTADO PARA EL MODAL DE DESCARGA
+
   const [isDownloadModalOpen, setIsDownloadModalOpen] = useState(false);
 
   useEffect(() => {
@@ -242,13 +241,13 @@ export default function MainLayout() {
     setSidebarOpen(!isSidebarOpen);
   };
 
-  // 5. FUNCIÓN QUE EJECUTA LA DESCARGA REAL
+
   const handleConfirmDownload = () => {
-    // Crea un elemento <a> temporal para forzar la descarga
+
     const link = document.createElement('a');
-    // Asegúrate que el nombre coincide con el archivo en tu carpeta /public
+
     link.href = '/Manual_Usuario_Flota.pdf'; 
-    link.download = 'Manual_Usuario_Flota.pdf'; // Nombre con el que se guardará
+    link.download = 'Manual_Usuario_Flota.pdf'; 
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -263,7 +262,7 @@ export default function MainLayout() {
         isOpen={isSidebarOpen} 
         toggleSidebar={toggleSidebar} 
         unreadChatCount={unreadChatCount}
-        // 6. PASAMOS LA FUNCIÓN PARA ABRIR EL MODAL
+    
         onDownloadManual={() => setIsDownloadModalOpen(true)}
       />
 
@@ -295,7 +294,7 @@ export default function MainLayout() {
         </main>
       </div>
 
-      {/* 7. RENDERIZAMOS EL MODAL DE CONFIRMACIÓN */}
+
       <ConfirmModal
         isOpen={isDownloadModalOpen}
         onClose={() => setIsDownloadModalOpen(false)}
@@ -303,7 +302,7 @@ export default function MainLayout() {
         title="Descargar Manual"
         message="¿Estás seguro que deseas descargar el Manual de Usuario en PDF?"
         confirmButtonText="Sí, descargar"
-        intent="success" // Usamos 'success' para que el botón sea verde/azul en lugar de rojo
+        intent="success" 
       />
     </div>
   );

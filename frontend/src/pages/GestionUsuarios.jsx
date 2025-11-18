@@ -43,9 +43,9 @@ export default function GestionUsuarios() {
   }, [users, searchTerm]);
 
   const handleConfirmAction = async () => {
-    if (isSubmitting) return; 
+    if (isSubmitting) return;
 
-  
+
     setIsSubmitting(true);
     const newActiveState = !userToProcess.is_active;
     try {
@@ -58,7 +58,7 @@ export default function GestionUsuarios() {
     } catch (err) {
       alert(`No se pudo ${newActiveState ? 'activar' : 'desactivar'} al usuario. Inténtalo de nuevo.`);
     } finally {
-      setIsSubmitting(false); 
+      setIsSubmitting(false);
       setIsModalOpen(false);
       setUserToProcess(null);
     }

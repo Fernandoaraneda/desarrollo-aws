@@ -179,20 +179,16 @@
 
 .formField label {
     display: flex;
-    /* <-- AÑADIDO: para alinear el icono */
+    
     align-items: center;
-    /* <-- AÑADIDO */
+    
     gap: 0.5rem;
-    /* <-- AÑADIDO: espacio entre icono y texto */
+    
     font-weight: 600;
     margin-bottom: 0.5rem;
     color: #374151;
 }
 
-/* * ANTES tenías "select, textarea". 
- * AHORA creamos una clase genérica ".formInput"
- * y la aplicaremos a todos los campos.
-*/
 .formInput {
     width: 100%;
     padding: 0.75rem;
@@ -201,19 +197,19 @@
     font-size: 1rem;
     font-family: inherit;
     background-color: #fff;
-    /* <-- AÑADIDO */
+    
     transition: border-color 0.2s, box-shadow 0.2s;
-    /* <-- AÑADIDO */
+    
 }
 
-/* AÑADIDO: Estilo para cuando el campo está deshabilitado */
+
 .formInput:disabled {
     background-color: #f3f4f6;
     color: #6b7280;
     cursor: not-allowed;
 }
 
-/* AÑADIDO: Estilo de foco para los inputs */
+
 .formInput:focus {
     outline: none;
     border-color: #004b93;
@@ -221,16 +217,16 @@
 }
 
 
-/* --- NUEVAS CLASES PARA EL GRID --- */
+
 .formGrid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    /* 2 columnas */
+    
     gap: 0 1rem;
-    /* Espacio solo entre columnas */
+    
 }
 
-/* Clase para un campo que ocupe las 2 columnas */
+
 .spanFull {
     grid-column: span 2;
 }
@@ -272,40 +268,40 @@
 }
 
 .deleteButton {
-    display: flex; /* Añadido para alinear icono */
-    align-items: center; /* Añadido para alinear icono */
-    gap: 0.25rem; /* Añadido para alinear icono */
-    font-size: 0.9rem; /* Añadido para alinear icono */
-    padding: 0.25rem 0.5rem; /* Añadido para alinear icono */
-    border-radius: 4px; /* Añadido para alinear icono */
-    transition: background-color 0.2s; /* Añadido para alinear icono */
-    background: none; /* Añadido para alinear icono */
-    border: none; /* Añadido para alinear icono */
-    cursor: pointer; /* Añadido para alinear icono */
+    display: flex; 
+    align-items: center; 
+    gap: 0.25rem; 
+    font-size: 0.9rem; 
+    padding: 0.25rem 0.5rem; 
+    border-radius: 4px; 
+    transition: background-color 0.2s; 
+    background: none; 
+    border: none; 
+    cursor: pointer; 
     
-    color: #b91c1c; /* Color rojo oscuro */
+    color: #b91c1c; 
 }
 
 .deleteButton:hover {
-    background-color: #fef2f2; /* Fondo rojo muy claro */
-    color: #991b1b; /* Rojo más oscuro al pasar el mouse */
+    background-color: #fef2f2; 
+    color: #991b1b; 
 }
 
 
 @media (max-width: 640px) {
 
-    /* 1. Arregla el padding de la página */
+    
     .pageWrapper {
         padding: 1rem;
     }
 
-    /* 2. Arregla el Modal (campos uno sobre otro) */
+    
     .formGrid {
-        grid-template-columns: 1fr; /* 1 sola columna en móviles */
+        grid-template-columns: 1fr; 
     }
 
     .spanFull {
-        grid-column: span 1; /* Asegura que ocupe la única columna */
+        grid-column: span 1; 
     }
 
 

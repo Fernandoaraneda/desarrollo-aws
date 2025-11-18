@@ -1,15 +1,12 @@
 import React from 'react';
 import styles from '/src/css/confirmmodal.module.css';
-// 👇 Se importa el icono para la acción de "activar"
 import { AlertTriangle, CheckCircle } from 'lucide-react';
-
-// 👇 Se añaden props nuevas: 'confirmButtonText' e 'intent' para cambiar el estilo
 export default function ConfirmModal({ isOpen, onClose, onConfirm, title, message, confirmButtonText, intent = 'danger', isConfirming = false}) {
   if (!isOpen) {
     return null;
   }
 
-  // Lógica para cambiar el estilo según la intención (peligro o éxito)
+
   const isDanger = intent === 'danger';
   const iconStyle = isDanger ? styles.iconWrapperDanger : styles.iconWrapperSuccess;
   const buttonStyle = isDanger ? styles.confirmButtonDanger : styles.confirmButtonSuccess;
@@ -31,13 +28,13 @@ export default function ConfirmModal({ isOpen, onClose, onConfirm, title, messag
             Cancelar
           </button>
           
-          {/* 👇 3. Desactiva el botón de confirmar y cambia el texto */}
+ 
           <button 
             className={`${styles.confirmButton} ${buttonStyle}`} 
             onClick={onConfirm}
-            disabled={isConfirming} // 👈 Se deshabilita aquí
+            disabled={isConfirming}
           >
-            {/* 👈 Muestra texto diferente si está confirmando */}
+
             {isConfirming ? 'Procesando...' : (confirmButtonText || 'Confirmar')}
           </button>
         </div>

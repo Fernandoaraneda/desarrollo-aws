@@ -5,16 +5,16 @@ import { useUserStore } from '../../store/authStore.js';
 import styles from '../../css/mecanicotasklist.module.css';
 import { Wrench, Clock, AlertTriangle } from 'lucide-react';
 
-// Tarjeta individual para cada tarea/orden
+
 const TaskCard = ({ orden }) => {
     const navigate = useNavigate();
 
-    // Objeto para mapear estados a colores y textos
+
     const statusInfo = {
         'En Diagnostico': { style: styles.diagnostico, icon: <Clock size={16} /> },
         'En Proceso': { style: styles.enproceso, icon: <Wrench size={16} /> },
         'Pausado': { style: styles.pausado, icon: <AlertTriangle size={16} /> },
-        // Puedes añadir más estados si es necesario
+     
     };
 
     const currentStatus = statusInfo[orden.estado] || {};

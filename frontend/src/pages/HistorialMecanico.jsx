@@ -1,17 +1,11 @@
-import React, { useState, useEffect, useMemo } from 'react'; // 1. Importar useMemo
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import apiClient from '../api/axios.js';
-
-// Usamos los mismos estilos que ya tenías
-import styles from '../css/gestionagenda.module.css'; // (O gestionordenes.module.css)
+import styles from '../css/gestionagenda.module.css'; 
 import searchStyles from '../css/gestionusuarios.module.css';
-
-
-import { useUserStore } from '../store/authStore.js'; // 1. Para permisos
-
-
-import ordenesStyles from '../css/gestionordenes.module.css'; // 2. Para el Modal y botón
-import { History, Eye, Search, Edit } from 'lucide-react'; // 3. Icono Edit
+import { useUserStore } from '../store/authStore.js';
+import ordenesStyles from '../css/gestionordenes.module.css'; 
+import { History, Eye, Search, Edit } from 'lucide-react'; 
 
 
 const ModalCambiarEstado = ({ orden, onClose, onSave }) => {
@@ -72,7 +66,7 @@ const ModalCambiarEstado = ({ orden, onClose, onSave }) => {
 };
 
 export default function HistorialMecanico() {
-    // 'ordenes' ahora guarda LA LISTA COMPLETA
+
     const [ordenes, setOrdenes] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -82,20 +76,18 @@ export default function HistorialMecanico() {
     const [ordenSeleccionada, setOrdenSeleccionada] = useState(null);
     const tienePrivilegiosAdmin = (user.rol === 'Supervisor' || user.rol === 'Administrativo');
     useEffect(() => {
-        // 2. Este useEffect ahora corre UNA SOLA VEZ
+  
         const fetchHistorialMecanico = async () => {
             try {
-                // --- ESTA ES TU LÓGICA ORIGINAL ---
+            
                 const response = await apiClient.get('/ordenes/');
                 const todasMisOrdenes = response.data.results || response.data || [];
-
-                // Filtramos las finalizadas AQUÍ
                 const finalizadas = todasMisOrdenes.filter(o => o.estado === 'Finalizado');
-                // --- FIN DE TU LÓGICA ORIGINAL ---
+           
 
                 finalizadas.sort((a, b) => new Date(b.fecha_entrega_real) - new Date(a.fecha_entrega_real));
 
-                setOrdenes(finalizadas); // Guardamos la lista ya filtrada de 'Finalizado'
+                setOrdenes(finalizadas); 
             } catch (err) {
                 setError("No se pudo cargar tu historial de trabajos.");
             } finally {
@@ -104,23 +96,22 @@ export default function HistorialMecanico() {
         };
 
         fetchHistorialMecanico();
-    }, []); // <-- 3. El array vacío significa: "ejecutar solo al cargar"
+    }, []); 
 
-    // 4. LÓGICA DE FILTRADO (idéntica a GestionUsuarios.jsx)
+ 
     const filteredOrdenes = useMemo(() => {
         return ordenes.filter(orden =>
-            // 'ordenes' ya solo contiene las 'Finalizado',
-            // así que solo filtramos por el buscador
+
             (orden.vehiculo_info?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
             (orden.id.toString() || '').includes(searchTerm.toLowerCase())
         );
     }, [ordenes, searchTerm]);
     const handleEstadoActualizado = (ordenId, nuevoEstado) => {
-        // Si el estado YA NO es "Finalizado", la quitamos de esta lista.
+        
         if (nuevoEstado !== 'Finalizado') {
             setOrdenes(prevOrdenes => prevOrdenes.filter(o => o.id !== ordenId));
         } else {
-            // Si sigue siendo "Finalizado" (quizás solo cambió el motivo), actualizamos
+         
             setOrdenes(prevOrdenes =>
                 prevOrdenes.map(o =>
                     o.id === ordenId ? { ...o, estado: nuevoEstado } : o
@@ -129,7 +120,7 @@ export default function HistorialMecanico() {
         }
     };
 
-    if (isLoading) return <p>Cargando historial...</p>; // Esto solo se ve en la carga inicial
+    if (isLoading) return <p>Cargando historial...</p>; 
     if (error) return <p style={{ color: 'red' }}>{error}</p>;
 
 
@@ -141,7 +132,7 @@ export default function HistorialMecanico() {
                 <p>Aquí puedes ver todas las órdenes de servicio que has completado.</p>
             </header>
 
-            {/* 5. El buscador (sin cambios, ya estaba bien) */}
+         
             <div className={searchStyles.controls}>
                 <div className={searchStyles.searchBox}>
                     <Search size={20} className={searchStyles.searchIcon} />
@@ -167,7 +158,7 @@ export default function HistorialMecanico() {
                             </tr>
                         </thead>
                         <tbody>
-                            {/* 6. Mapeamos sobre la lista FILTRADA */}
+                       
                             {filteredOrdenes.length > 0 ? (
                                 filteredOrdenes.map(orden => (
                                     <tr key={orden.id}>
@@ -207,7 +198,7 @@ export default function HistorialMecanico() {
                             ) : (
                                 <tr>
                                     <td colSpan="5" style={{ textAlign: 'center', padding: '1rem' }}>
-                                        {/* 7. Mensaje de "no encontrado" */}
+                                        
                                         {searchTerm
                                             ? 'No se encontraron órdenes finalizadas con esa patente.'
                                             : 'No tienes órdenes finalizadas en tu historial.'

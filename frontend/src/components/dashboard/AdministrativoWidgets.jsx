@@ -5,7 +5,6 @@ import apiClient from '../../api/axios.js';
 import styles from '../../css/administrativo-dashboard.module.css';
 import { useUserStore } from '../../store/authStore.js';
 
-// --- COMPONENTE DE KPI (SIN CAMBIOS) ---
 const KpiCard = ({ title, value, icon, color }) => (
   <div className={styles.card}>
     <div className={styles.cardIcon} style={{ backgroundColor: color }}>
@@ -18,7 +17,7 @@ const KpiCard = ({ title, value, icon, color }) => (
   </div>
 );
 
-// --- 1. NUEVO COMPONENTE REUTILIZABLE PARA FECHAS ---
+
 const DateRangePicker = ({ fechas, onFechasChange }) => (
   <div className={styles.datePickers}>
     <label>
@@ -51,21 +50,13 @@ export default function AdministrativoWidgets() {
   const [autoRefresh, setAutoRefresh] = useState(true);
   const [error, setError] = useState(null);
   const { user } = useUserStore();
-
   const today = new Date().toISOString().split('T')[0];
-
-  // --- 2. ELIMINAMOS EL ESTADO DE FECHA ÚNICO ---
-  // const [fechaInicio, setFechaInicio] = useState(today);
-  // const [fechaFin, setFechaFin] = useState(today);
-
-  // --- 3. AÑADIMOS ESTADOS DE FECHA INDIVIDUALES ---
   const [fechasSeguridad, setFechasSeguridad] = useState({ inicio: today, fin: today });
   const [fechasGruas, setFechasGruas] = useState({ inicio: today, fin: today });
   const [fechasLlaves, setFechasLlaves] = useState({ inicio: today, fin: today });
   const [fechasFlota, setFechasFlota] = useState({ inicio: today, fin: today });
   const [fechasRepuestos, setFechasRepuestos] = useState({ inicio: today, fin: today });
   const [fechasMecanicos, setFechasMecanicos] = useState({ inicio: today, fin: today });
-  
   const [isDownloading, setIsDownloading] = useState(false);
   const [downloadError, setDownloadError] = useState(null);
   const [isDownloadingPDF, setIsDownloadingPDF] = useState(false);
@@ -80,10 +71,8 @@ export default function AdministrativoWidgets() {
   const [patenteHojaVida, setPatenteHojaVida] = useState('');
   const [isDownloadingFrecuencia, setIsDownloadingFrecuencia] = useState(false);
   const [isDownloadingHojaVida, setIsDownloadingHojaVida] = useState(false);
-
-  // --- (fetchData y useEffects sin cambios) ---
   const fetchData = useCallback(async (showRefreshIndicator = false) => {
-    // ... (sin cambios) ...
+
     if (!user) return;
     try {
       if (showRefreshIndicator) {
@@ -126,9 +115,9 @@ export default function AdministrativoWidgets() {
     setAutoRefresh(!autoRefresh);
   };
   
-  // --- (handleDownloadCSV sin cambios) ---
+
   const handleDownloadCSV = () => {
-    // ... (sin cambios) ...
+
     if (!data) return;
     const { kpis, ordenesPorEstado, ordenesUltimaSemana, ordenesRecientes, alertas } = data;
     const exportData = {
@@ -169,10 +158,9 @@ export default function AdministrativoWidgets() {
     document.body.removeChild(link);
   };
 
-  // --- 4. ACTUALIZAMOS LAS FUNCIONES DE DESCARGA ---
 
   const handleDownloadSeguridad = async () => {
-    // Usa el estado 'fechasSeguridad'
+
     if (!fechasSeguridad.inicio || !fechasSeguridad.fin) {
       setDownloadError("Por favor, seleccione ambas fechas.");
       return;
@@ -217,9 +205,9 @@ export default function AdministrativoWidgets() {
     }
   };
 
-  // (Sin cambios, no usa fecha)
+
   const handleDownloadSnapshotPDF = async () => {
-    // ... (sin cambios) ...
+
     setDownloadError(null);
     setIsDownloadingPDF(true);
 
@@ -256,7 +244,7 @@ export default function AdministrativoWidgets() {
   };
 
   const handleDownloadRepuestos = async () => {
-    // Usa el estado 'fechasRepuestos'
+
     if (!fechasRepuestos.inicio || !fechasRepuestos.fin) {
       setDownloadError("Por favor, seleccione ambas fechas.");
       return;
@@ -301,9 +289,9 @@ export default function AdministrativoWidgets() {
     }
   };
 
-  // (Sin cambios, no usa fecha)
+
   const handleDownloadInventario = async () => {
-    // ... (sin cambios) ...
+ 
     setDownloadError(null);
     setIsDownloadingInventario(true);
 
@@ -340,7 +328,7 @@ export default function AdministrativoWidgets() {
   };
 
   const handleDownloadQuiebres = async () => {
-    // Usa el estado 'fechasRepuestos'
+
     if (!fechasRepuestos.inicio || !fechasRepuestos.fin) {
       setDownloadError("Por favor, seleccione ambas fechas.");
       return;
@@ -386,7 +374,7 @@ export default function AdministrativoWidgets() {
   };
 
   const handleDownloadProductividad = async () => {
-    // Usa el estado 'fechasMecanicos'
+
     if (!fechasMecanicos.inicio || !fechasMecanicos.fin) {
       setDownloadError("Por favor, seleccione ambas fechas.");
       return;
@@ -431,7 +419,7 @@ export default function AdministrativoWidgets() {
   };
 
   const handleDownloadTiempos = async () => {
-    // Usa el estado 'fechasMecanicos'
+ 
     if (!fechasMecanicos.inicio || !fechasMecanicos.fin) {
       setDownloadError("Por favor, seleccione ambas fechas.");
       return;
@@ -476,7 +464,7 @@ export default function AdministrativoWidgets() {
   };
 
   const handleDownloadGruas = async () => {
-    // Usa el estado 'fechasGruas'
+
     if (!fechasGruas.inicio || !fechasGruas.fin) {
       setDownloadError("Por favor, seleccione ambas fechas.");
       return;
@@ -521,7 +509,7 @@ export default function AdministrativoWidgets() {
   };
 
   const handleDownloadPrestamos = async () => {
-    // Usa el estado 'fechasLlaves'
+
     if (!fechasLlaves.inicio || !fechasLlaves.fin) {
       setDownloadError("Por favor, seleccione ambas fechas.");
       return;
@@ -565,9 +553,9 @@ export default function AdministrativoWidgets() {
     }
   };
 
-  // (Sin cambios, no usa fecha)
+
   const handleDownloadInventarioLlaves = async () => {
-    // ... (sin cambios) ...
+
     setDownloadError(null);
     setIsDownloadingInventarioLlaves(true);
 
@@ -603,7 +591,7 @@ export default function AdministrativoWidgets() {
   };
 
   const handleDownloadFrecuencia = async () => {
-    // Usa el estado 'fechasFlota'
+
     if (!fechasFlota.inicio || !fechasFlota.fin) {
       setDownloadError("Por favor, seleccione ambas fechas.");
       return;
@@ -647,9 +635,9 @@ export default function AdministrativoWidgets() {
     }
   };
 
-  // (Sin cambios, usa patente)
+
   const handleDownloadHojaVida = async () => {
-    // ... (sin cambios) ...
+   
     if (!patenteHojaVida) {
       setDownloadError("Por favor, ingrese una patente para generar la Hoja de Vida.");
       return;
@@ -696,9 +684,8 @@ export default function AdministrativoWidgets() {
     }
   };
 
-  // --- (Código de renderizado de 'Cargando', 'Error', etc. sin cambios) ---
   if (isLoading) {
-    // ... (sin cambios) ...
+
     return (
       <div className="flex flex-col items-center justify-center p-8">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mb-4"></div>
@@ -707,7 +694,7 @@ export default function AdministrativoWidgets() {
     );
   }
   if (error) {
-    // ... (sin cambios) ...
+ 
     return (
       <div className="flex flex-col items-center justify-center p-8">
         <p className="text-red-400 mb-4">Error: {error}</p>
@@ -721,7 +708,7 @@ export default function AdministrativoWidgets() {
     );
   }
   if (!data) {
-    // ... (sin cambios) ...
+
     return (
       <div className="flex flex-col items-center justify-center p-8">
         <p className="text-gray-300 mb-4">No se pudieron cargar los datos del dashboard.</p>
@@ -740,13 +727,12 @@ export default function AdministrativoWidgets() {
   const pendientesAprobacion = alertas?.pendientesAprobacion || 0;
 
 
-  // --- 5. ACTUALIZAMOS EL JSX (LA VISTA) ---
+
   return (
     <div className="w-full">
 
-      {/* --- Controles y KPIs (sin cambios) --- */}
       <div className={styles.topRowContainer}>
-        {/* ... (sin cambios) ... */}
+
         <div className={styles.controlsToolbar}>
           <button
             onClick={handleManualRefresh}
@@ -844,15 +830,14 @@ export default function AdministrativoWidgets() {
           </ResponsiveContainer>
         </div>
 
-        {/* --- INICIO: SECCIÓN CENTRO DE REPORTES (MODIFICADO) --- */}
         <div className={`${styles.card} ${styles.reportCard} ${styles.fullWidthCard}`}>
           <h2 className={styles.reportHeader}>Centro de Reportes Administrativos</h2>
-          {/* Mostramos el error general de descarga aquí arriba */}
+    
           {downloadError && <p className={styles.downloadError}>{downloadError}</p>}
 
           <div className={styles.reportGrid}>
 
-            {/* --- ÁREA DE SEGURIDAD --- */}
+            
             <div className={styles.reportSection}>
               <h3 className={styles.reportSectionTitle}>
                 <Truck size={18} />
@@ -862,7 +847,7 @@ export default function AdministrativoWidgets() {
                 Genera la bitácora de todos los ingresos y salidas del taller.
               </p>
               
-              {/* Usamos el componente de fechas con el estado 'fechasSeguridad' */}
+          
               <DateRangePicker fechas={fechasSeguridad} onFechasChange={setFechasSeguridad} />
 
               <button
@@ -895,7 +880,7 @@ export default function AdministrativoWidgets() {
               </button>
             </div>
 
-            {/* --- ÁREA DE GRÚAS --- */}
+ 
             <div className={styles.reportSection}>
               <h3 className={styles.reportSectionTitle}>
                 <Navigation size={18} />
@@ -905,7 +890,7 @@ export default function AdministrativoWidgets() {
                 Historial de solicitudes de grúa (filtrado por fecha de solicitud).
               </p>
               
-              {/* Usamos el componente de fechas con el estado 'fechasGruas' */}
+   
               <DateRangePicker fechas={fechasGruas} onFechasChange={setFechasGruas} />
 
               <button
@@ -922,7 +907,6 @@ export default function AdministrativoWidgets() {
               </button>
             </div>
 
-            {/* --- ÁREA DE CONTROL DE LLAVES --- */}
             <div className={styles.reportSection}>
               <h3 className={styles.reportSectionTitle}>
                 <KeyRound size={18} />
@@ -932,7 +916,7 @@ export default function AdministrativoWidgets() {
                 Bitácora de préstamos (filtrado por fecha de retiro).
               </p>
               
-              {/* Usamos el componente de fechas con el estado 'fechasLlaves' */}
+  
               <DateRangePicker fechas={fechasLlaves} onFechasChange={setFechasLlaves} />
               
               <button
@@ -964,7 +948,6 @@ export default function AdministrativoWidgets() {
               </button>
             </div>
 
-            {/* --- ÁREA DE FLOTA --- */}
             <div className={styles.reportSection}>
               <h3 className={styles.reportSectionTitle}>
                 <Clipboard size={18} />
@@ -1003,7 +986,7 @@ export default function AdministrativoWidgets() {
                 Ranking de vehículos que más ingresan al taller (filtrado por fecha).
               </p>
               
-              {/* Usamos el componente de fechas con el estado 'fechasFlota' */}
+     
               <DateRangePicker fechas={fechasFlota} onFechasChange={setFechasFlota} />
 
               <button
@@ -1019,7 +1002,7 @@ export default function AdministrativoWidgets() {
               </button>
             </div>
 
-            {/* --- ÁREA DE REPUESTOS --- */}
+    
             <div className={styles.reportSection}>
               <h3 className={styles.reportSectionTitle}>
                 <Package size={18} />
@@ -1029,7 +1012,7 @@ export default function AdministrativoWidgets() {
                 Filtros de fecha para reportes de Consumo y Quiebres:
               </p>
               
-              {/* Usamos el componente de fechas con el estado 'fechasRepuestos' */}
+       
               <DateRangePicker fechas={fechasRepuestos} onFechasChange={setFechasRepuestos} />
               
               <button
@@ -1074,7 +1057,7 @@ export default function AdministrativoWidgets() {
               </button>
             </div>
 
-            {/* --- ÁREA DE MECÁNICOS --- */}
+      
             <div className={styles.reportSection}>
               <h3 className={styles.reportSectionTitle}>
                 <Wrench size={18} />
@@ -1084,7 +1067,7 @@ export default function AdministrativoWidgets() {
                 Filtros de fecha para reportes de Productividad y Tiempos:
               </p>
 
-              {/* Usamos el componente de fechas con el estado 'fechasMecanicos' */}
+         
               <DateRangePicker fechas={fechasMecanicos} onFechasChange={setFechasMecanicos} />
 
               <button
@@ -1115,12 +1098,9 @@ export default function AdministrativoWidgets() {
 
           </div> 
         </div> 
-        {/* --- FIN: SECCIÓN CENTRO DE REPORTES --- */}
-        
 
-        {/* --- Tabla de Órdenes Recientes (sin cambios) --- */}
         <div className={`${styles.card} ${styles.fullWidthCard}`}>
-          {/* ... (sin cambios) ... */}
+       
           <h3 className={styles.chartTitle}>Órdenes de Servicio Recientes</h3>
           <div className={styles.tableContainer}>
             <table className={styles.table}>

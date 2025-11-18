@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import apiClient from '../../api/axios.js';
-import styles from '../../css/chat.module.css'; // Reusamos los estilos
+import styles from '../../css/chat.module.css';
 import { X, Search } from 'lucide-react';
 import { useUserStore } from '../../store/authStore.js';
 
@@ -13,12 +13,12 @@ export default function NewChatModal({ isOpen, onClose, onSuccess }) {
 
     useEffect(() => {
         if (isOpen) {
-            // Cargar la lista de todos los usuarios
+           
             const fetchUsers = async () => {
                 setIsLoading(true);
                 try {
                     const response = await apiClient.get('/users/list/');
-                    // Filtramos al usuario actual de la lista
+                    
                     const otherUsers = (response.data.results || response.data).filter(
                         u => u.username !== currentUser.username
                     );
@@ -33,7 +33,6 @@ export default function NewChatModal({ isOpen, onClose, onSuccess }) {
         }
     }, [isOpen, currentUser.username]);
 
-    // Lógica para filtrar usuarios
     const filteredUsers = useMemo(() => {
         if (!searchTerm) return users;
         return users.filter(u =>
@@ -43,15 +42,14 @@ export default function NewChatModal({ isOpen, onClose, onSuccess }) {
         );
     }, [users, searchTerm]);
 
-    // Función al hacer clic en un usuario
     const handleSelectUser = async (userId) => {
         setIsCreating(true);
         try {
-            // Llama al nuevo endpoint del backend
+        
             const response = await apiClient.post('/chat/rooms/', {
                 user_id: userId
             });
-            // Llama a la función onSuccess (del padre) con la nueva sala
+            
             onSuccess(response.data);
         } catch (error) {
             console.error("Error al crear/encontrar la sala:", error);
@@ -78,7 +76,7 @@ export default function NewChatModal({ isOpen, onClose, onSuccess }) {
                         placeholder="Buscar usuario por nombre..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className={styles.messageInput} // Reusamos el estilo del input
+                        className={styles.messageInput} 
                     />
                 </div>
 
@@ -92,7 +90,7 @@ export default function NewChatModal({ isOpen, onClose, onSuccess }) {
                             key={user.id}
                             className={styles.roomItem}
                             onClick={() => handleSelectUser(user.id)}
-                            style={{ cursor: isCreating ? 'wait' : 'pointer' }} // Cambia el cursor mientras crea
+                            style={{ cursor: isCreating ? 'wait' : 'pointer' }}
                         >
                             <p style={{ margin: 0, fontWeight: 600 }}>{user.first_name} {user.last_name}</p>
                             <small style={{ color: '#6b7280' }}>@{user.username} ({user.rol})</small>

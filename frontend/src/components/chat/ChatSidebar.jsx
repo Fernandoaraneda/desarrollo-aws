@@ -2,16 +2,14 @@ import React, { useState } from 'react';
 import styles from '../../css/chat.module.css';
 import { Users, PlusSquare, X, Search } from 'lucide-react'; 
 import apiClient from '../../api/axios.js';
-// 1. IMPORTAR EL MODAL
 import ConfirmModal from '../modals/ConfirmModal.jsx'; 
 
 export default function ChatSidebar({ rooms, currentUser, onSelectRoom, selectedRoomId, isLoading, onNewChat, onRoomDeleted }) {
     const [searchTerm, setSearchTerm] = useState("");
     
-    // 2. NUEVOS ESTADOS PARA EL MODAL
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [chatToDeleteId, setChatToDeleteId] = useState(null);
-    const [isDeleting, setIsDeleting] = useState(false); // Para mostrar "Procesando..." en el botón
+    const [isDeleting, setIsDeleting] = useState(false);
 
     const getRoomName = (room) => {
         if (room.nombre && room.participantes.length > 2) {
@@ -31,24 +29,23 @@ export default function ChatSidebar({ rooms, currentUser, onSelectRoom, selected
         return roomName.includes(searchTerm.toLowerCase());
     });
 
-    // 3. MODIFICAR EL CLICK DEL BOTÓN DE BORRAR
-    // Ahora solo guarda el ID y abre el modal, NO borra todavía
+
     const handleDeleteClick = (e, roomId) => {
-        e.stopPropagation(); // Evita que se abra el chat al hacer clic en la X
+        e.stopPropagation(); 
         setChatToDeleteId(roomId);
         setIsDeleteModalOpen(true);
     };
 
-    // 4. FUNCIÓN QUE EJECUTA EL BORRADO REAL (Se pasa al modal)
+   
     const confirmDelete = async () => {
         if (!chatToDeleteId) return;
 
         setIsDeleting(true);
         try {
             await apiClient.delete(`/chat/rooms/${chatToDeleteId}/`);
-            onRoomDeleted(chatToDeleteId); // Actualiza la lista en el padre
-            setIsDeleteModalOpen(false);   // Cierra el modal
-            setChatToDeleteId(null);       // Limpia el ID
+            onRoomDeleted(chatToDeleteId); 
+            setIsDeleteModalOpen(false);   
+            setChatToDeleteId(null);       
         } catch (error) {
             console.error("Error al eliminar la sala:", error);
             alert("Hubo un error al intentar abandonar la conversación.");
@@ -111,7 +108,6 @@ export default function ChatSidebar({ rooms, currentUser, onSelectRoom, selected
                         
                         <button 
                             className={styles.deleteRoomButton}
-                            // Usamos la nueva función handleDeleteClick
                             onClick={(e) => handleDeleteClick(e, room.id)}
                             title="Abandonar"
                         >
@@ -121,7 +117,7 @@ export default function ChatSidebar({ rooms, currentUser, onSelectRoom, selected
                 ))}
             </div>
 
-            {/* 5. RENDERIZAR EL MODAL AL FINAL */}
+           
             <ConfirmModal
                 isOpen={isDeleteModalOpen}
                 onClose={() => setIsDeleteModalOpen(false)}
@@ -129,8 +125,8 @@ export default function ChatSidebar({ rooms, currentUser, onSelectRoom, selected
                 title="Abandonar Conversación"
                 message="¿Estás seguro de que quieres abandonar este chat? El historial se eliminará para ti."
                 confirmButtonText="Sí, abandonar"
-                intent="danger"       // Para que el botón salga rojo
-                isConfirming={isDeleting} // Para que el botón diga "Procesando..." mientras borra
+                intent="danger"       
+                isConfirming={isDeleting}
             />
         </aside>
     );

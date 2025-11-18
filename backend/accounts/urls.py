@@ -114,6 +114,5 @@ urlpatterns = [
     path('chat/rooms/<int:pk>/', ChatRoomDetailView.as_view(), name='chat-room-detail'),
     
     
-    # Incluir rutas del router (vehiculos, agendamientos, ordenes)
     path('', include(router.urls)),
 ]

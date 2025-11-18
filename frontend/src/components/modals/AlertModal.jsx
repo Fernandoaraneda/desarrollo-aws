@@ -1,6 +1,5 @@
-// src/components/modals/AlertModal.jsx
+
 import React from 'react';
-// Usaremos los mismos estilos de tu ConfirmModal
 import styles from '/src/css/confirmmodal.module.css'; 
 import { AlertTriangle, CheckCircle } from 'lucide-react';
 

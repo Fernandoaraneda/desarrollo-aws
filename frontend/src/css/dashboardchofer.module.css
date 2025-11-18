@@ -1,15 +1,10 @@
-/* ======================================================
- * src/css/dashboardchofer.module.css
- * ¡VERSIÓN CORREGIDA CON TEXTO NEGRO Y EFECTO HOVER!
- * ======================================================
- */
 
 .mainTitle {
   font-size: 2rem;
   font-weight: bold;
   margin-bottom: 1.5rem;
-  /* --- AÑADIDO: Asegura color de texto --- */
-  color: #f9fafb; /* Color claro para el título principal de la página */
+  
+  color: #f9fafb; 
 }
 
 .cardsContainer {
@@ -22,7 +17,7 @@
   border-radius: 12px;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
   padding: 1.5rem;
-  /* --- AÑADIDO: Mejoras de botón --- */
+  
   border: 1px solid transparent;
   cursor: pointer;
   transition: all 0.2s ease-in-out;
@@ -30,7 +25,7 @@
   width: 100%;
 }
 
-/* --- AÑADIDO: Efecto hover --- */
+
 .statusCard:hover {
   transform: translateY(-4px);
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
@@ -44,26 +39,26 @@
   border-bottom: 1px solid #f3f4f6;
   padding-bottom: 1rem;
   margin-bottom: 1rem;
-  /* --- AÑADIDO: Color de texto --- */
+  
   color: #1f2937;
 }
 
 .cardHeader h3 {
   font-size: 1.5rem;
   font-weight: 600;
-  /* --- AÑADIDO: Color de texto --- */
+  
   color: #1f2937;
 }
 
 .cardBody h4 {
   font-weight: 500;
-  color: #6b7280; /* Este ya estaba bien */
+  color: #6b7280; 
   font-size: 0.9rem;
 }
 
 .cardBody p {
   font-size: 1.1rem;
-  /* --- AÑADIDO: Color de texto --- */
+  
   color: #374151;
   white-space: pre-wrap;
   word-break: break-word;
@@ -143,17 +138,17 @@
   flex-direction: column;
   align-items: center;
   gap: 1rem;
-  /* --- AÑADIDO: Color de texto --- */
+  
   color: #1f2937;
 }
 
 .noVehiclesMessage h2 {
   font-size: 1.5rem;
   font-weight: 600;
-  /* --- AÑADIDO: Color de texto --- */
+  
   color: #1f2937;
 }
 
 .noVehiclesMessage p {
-  color: #6b7280; /* Este ya estaba bien */
+  color: #6b7280; 
 }

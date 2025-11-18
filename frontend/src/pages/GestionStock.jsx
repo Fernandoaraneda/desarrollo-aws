@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import apiClient from '/src/api/axios.js';
 import styles from '../css/gestionstock.module.css';
 import AlertModal from '/src/components/modals/AlertModal.jsx';
-import { Package, Plus, Edit, Search, Save, XCircle, Hash, Bookmark, DollarSign, Boxes, Trash2 } from 'lucide-react'; // <-- Añadir Trash2
+import { Package, Plus, Edit, Search, Save, XCircle, Hash, Bookmark, DollarSign, Boxes, Trash2 } from 'lucide-react';
 import ConfirmModal from '/src/components/modals/ConfirmModal.jsx';
 const RepuestoModal = ({ isOpen, onClose, onSave, producto, onAlert }) => {
     const [formData, setFormData] = useState({
@@ -52,7 +52,7 @@ const RepuestoModal = ({ isOpen, onClose, onSave, producto, onAlert }) => {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        // 1. VALIDACIÓN CAMBIADA: Solo chequear el nombre
+      
         if (!formData.nombre) {
             onAlert("El Nombre es obligatorio.");
             return;
@@ -64,17 +64,17 @@ const RepuestoModal = ({ isOpen, onClose, onSave, producto, onAlert }) => {
             stock: parseInt(formData.stock, 10) || 0,
         };
 
-        // 2. LÓGICA CAMBIADA: Borrar el SKU si es un producto nuevo
+        
         if (!isEditMode) {
             delete dataToSave.sku;
         }
 
         try {
             if (isEditMode) {
-                // Patch (editar) usa el SKU en la URL
+                
                 await apiClient.patch(`/productos/${formData.sku}/`, dataToSave);
             } else {
-                // Post (crear) ahora va SIN SKU. El backend lo generará.
+           
                 await apiClient.post('/productos/', dataToSave);
             }
             onSave();
@@ -94,7 +94,7 @@ const RepuestoModal = ({ isOpen, onClose, onSave, producto, onAlert }) => {
                 <form onSubmit={handleSubmit}>
                     <div className={styles.formGrid}>
 
-                        {/* 3. CAMPO SKU CONDICIONAL */}
+                      
                         {isEditMode && (
                             <div className={`${styles.formField} ${styles.spanFull}`}>
                                 <label><Hash size={16} /> SKU (Código Único)</label>
@@ -102,13 +102,13 @@ const RepuestoModal = ({ isOpen, onClose, onSave, producto, onAlert }) => {
                                     type="text"
                                     name="sku"
                                     value={formData.sku}
-                                    disabled={true} // Siempre deshabilitado
+                                    disabled={true}
                                     className={styles.formInput}
                                 />
                             </div>
                         )}
 
-                        {/* Campo Nombre (siempre ocupa todo el ancho) */}
+             
                         <div className={`${styles.formField} ${styles.spanFull}`}>
                             <label><Package size={16} /> Nombre del Repuesto</label>
                             <input
@@ -122,7 +122,6 @@ const RepuestoModal = ({ isOpen, onClose, onSave, producto, onAlert }) => {
                             />
                         </div>
 
-                        {/* Campo Marca (siempre ocupa todo el ancho) */}
                         <div className={`${styles.formField} ${styles.spanFull}`}>
                             <label><Bookmark size={16} /> Marca (Opcional)</label>
                             <input
@@ -135,7 +134,7 @@ const RepuestoModal = ({ isOpen, onClose, onSave, producto, onAlert }) => {
                             />
                         </div>
 
-                        {/* Campo Precio */}
+                  
                         <div className={styles.formField}>
                             <label><DollarSign size={16} /> Precio de Venta</label>
                             <input
@@ -149,7 +148,7 @@ const RepuestoModal = ({ isOpen, onClose, onSave, producto, onAlert }) => {
                             />
                         </div>
 
-                        {/* Campo Stock */}
+                   
                         <div className={styles.formField}>
                             <label><Boxes size={16} /> Stock Actual</label>
                             <input
@@ -163,7 +162,7 @@ const RepuestoModal = ({ isOpen, onClose, onSave, producto, onAlert }) => {
                             />
                         </div>
 
-                    </div> {/* Fin de .formGrid */}
+                    </div>
 
                     <div className={styles.modalActions}>
                         <button type="button" className={styles.cancelButton} onClick={onClose}>
@@ -251,29 +250,26 @@ export default function GestionStock() {
         setIsConfirmOpen(true);
     };
 
-    // 2. Cierra el modal de confirmación
+ 
     const handleCloseConfirm = () => {
         setIsConfirmOpen(false);
         setProductoParaEliminar(null);
     };
 
-    // 3. Al confirmar la eliminación
+ 
     const handleConfirmDelete = async () => {
         if (!productoParaEliminar) return;
 
         try {
-            // Llama a la API (DELETE /productos/{sku}/)
+     
             await apiClient.delete(`/productos/${productoParaEliminar.sku}/`);
 
-            // Cierra el modal y recarga los datos
             handleCloseConfirm();
             fetchProductos();
-
-            // Muestra alerta de éxito
             showAlert(`Producto "${productoParaEliminar.nombre}" eliminado con éxito.`, "success");
 
         } catch (err) {
-            // Manejo de errores (ej: El producto no se puede borrar si está en una OrdenItem (PROTECT))
+           
             handleCloseConfirm();
             const errorMsg = err.response?.data?.detail || err.response?.data?.error || "Error al eliminar el producto. Es probable que esté siendo usado en una orden de servicio.";
             showAlert(errorMsg, 'danger');

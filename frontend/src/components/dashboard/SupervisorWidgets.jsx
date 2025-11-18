@@ -1,14 +1,12 @@
-// src/pages/SupervisorWidgets.jsx
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line } from 'recharts';
-// --- ✅ 1. 'Bell' AÑADIDO ---
 import { Truck, Calendar, Wrench, Clock, RefreshCw, Bell } from 'lucide-react';
 import apiClient from '../../api/axios.js';
 import styles from '../../css/supervisor-dashboard.module.css';
 import { useUserStore } from '../../store/authStore.js';
 
-// --- Componente para las Tarjetas de KPIs ---
+
 const KpiCard = ({ title, value, icon, color }) => (
   <div className={styles.card}>
     <div className={styles.cardIcon} style={{ backgroundColor: color }}>
@@ -21,7 +19,7 @@ const KpiCard = ({ title, value, icon, color }) => (
   </div>
 );
 
-// --- Componente Principal del Dashboard del Supervisor (Con Auto-actualización y Exportación CSV) ---
+
 export default function SupervisorWidgets() {
   const [data, setData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -31,16 +29,16 @@ export default function SupervisorWidgets() {
   const [error, setError] = useState(null);
   const { user } = useUserStore();
 
-  // ✅ 1. Función para obtener los datos del dashboard (SIN CAMBIOS)
+  
   const fetchData = useCallback(async (showRefreshIndicator = false) => {
     if (!user) return;
     try {
       if (showRefreshIndicator) {
         setIsRefreshing(true);
       }
-      console.log('Obteniendo datos del dashboard...'); // Debug
+      console.log('Obteniendo datos del dashboard...'); 
       const response = await apiClient.get('/dashboard/supervisor/stats/');
-      console.log('Datos recibidos:', response.data); // Debug
+      console.log('Datos recibidos:', response.data);
       setData(response.data);
       setLastUpdated(new Date());
       setError(null);
@@ -55,14 +53,14 @@ export default function SupervisorWidgets() {
     }
   }, [user]);
 
-  // ✅ 2. Efecto para la carga inicial (SIN CAMBIOS)
+  
   useEffect(() => {
     if (user) {
       fetchData();
     }
   }, [user, fetchData]);
 
-  // ✅ 3. Efecto para la auto-actualización cada 30 segundos (SIN CAMBIOS)
+  
   useEffect(() => {
     if (!autoRefresh || !user) return;
     const interval = setInterval(() => {
@@ -71,23 +69,23 @@ export default function SupervisorWidgets() {
     return () => clearInterval(interval);
   }, [autoRefresh, user, fetchData]);
 
-  // ✅ 4. Función para refrescar manually (SIN CAMBIOS)
+ 
   const handleManualRefresh = () => {
     fetchData(true);
   };
 
-  // ✅ 5. Función para alternar auto-refresh (SIN CAMBIOS)
+
   const toggleAutoRefresh = () => {
     setAutoRefresh(!autoRefresh);
   };
 
-  // ✅ 6. Función para exportar los datos visibles en CSV (SIN CAMBIOS)
+
   const handleDownloadCSV = () => {
     if (!data) return;
-    // --- ✅ 'alertas' AÑADIDO A LA EXPORTACIÓN ---
+  
     const { kpis, ordenesPorEstado, ordenesUltimaSemana, ordenesRecientes, alertas } = data;
     const exportData = {
-      Alertas: alertas, // <-- Añadido
+      Alertas: alertas, 
       KPIs: kpis,
       OrdenesPorEstado: ordenesPorEstado,
       OrdenesUltimaSemana: ordenesUltimaSemana,

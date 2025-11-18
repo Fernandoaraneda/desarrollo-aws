@@ -13,12 +13,12 @@ export default function HistorialChofer() {
     useEffect(() => {
         const fetchHistorial = async () => {
             try {
-            
+
                 const response = await apiClient.get('/ordenes/');
                 const todasLasOrdenes = response.data.results || response.data || [];
-                
+
                 const finalizadas = todasLasOrdenes.filter(o => o.estado === 'Finalizado');
-              
+
                 finalizadas.sort((a, b) => new Date(b.fecha_entrega_real) - new Date(a.fecha_entrega_real));
 
                 setOrdenes(finalizadas);
@@ -60,14 +60,14 @@ export default function HistorialChofer() {
                                         <td>{orden.id}</td>
                                         <td>{orden.vehiculo_info}</td>
                                         <td>
-                                            {orden.fecha_entrega_real 
-                                                ? new Date(orden.fecha_entrega_real).toLocaleDateString('es-CL') 
+                                            {orden.fecha_entrega_real
+                                                ? new Date(orden.fecha_entrega_real).toLocaleDateString('es-CL')
                                                 : 'Fecha no registrada'
                                             }
                                         </td>
                                         <td>{orden.descripcion_falla}</td>
                                         <td>
-                                            <button 
+                                            <button
                                                 className={styles.actionButton}
                                                 onClick={() => navigate(`/ordenes/${orden.id}`)}
                                                 title="Ver Detalle de la Orden"

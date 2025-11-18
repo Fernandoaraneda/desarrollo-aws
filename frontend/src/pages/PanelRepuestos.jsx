@@ -1,13 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import apiClient from '/src/api/axios.js';
-// Usaremos los estilos de Gestión de Órdenes, son apropiados
 import styles from '/src/css/gestionordenes.module.css'; 
 import { Inbox, Check, X, AlertTriangle } from 'lucide-react';
 import AlertModal from '/src/components/modals/AlertModal.jsx';
 import ConfirmModal from '/src/components/modals/ConfirmModal.jsx';
 
-// --- Modal para Rechazar Solicitud ---
-// Es específico porque necesita un campo de "motivo"
+
+
 const RechazarModal = ({ isOpen, onClose, onConfirm }) => {
     const [motivo, setMotivo] = useState('Sin stock. Solicitado a proveedor (3 días aprox.)');
     
@@ -30,7 +29,7 @@ const RechazarModal = ({ isOpen, onClose, onConfirm }) => {
                     <label htmlFor="motivoRechazo">Motivo (Obligatorio)</label>
                     <textarea
                         id="motivoRechazo"
-                        className={styles.modalTextarea} // Asumiendo que tienes esta clase
+                        className={styles.modalTextarea}
                         rows="3"
                         value={motivo}
                         onChange={(e) => setMotivo(e.target.value)}
@@ -47,18 +46,16 @@ const RechazarModal = ({ isOpen, onClose, onConfirm }) => {
     );
 };
 
-// --- Componente Principal ---
+
 export default function PanelRepuestos() {
     const [solicitudes, setSolicitudes] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    // Estado para los 3 modales
+
     const [alert, setAlert] = useState({ isOpen: false, title: '', message: '', intent: 'danger' });
     const [confirm, setConfirm] = useState({ isOpen: false, title: '', message: '', onConfirm: () => {} });
     const [rechazar, setRechazar] = useState({ isOpen: false, item: null });
-
-    // Función para cargar datos
     const fetchPendientes = async () => {
         setIsLoading(true);
         try {
@@ -75,16 +72,15 @@ export default function PanelRepuestos() {
         fetchPendientes();
     }, []);
 
-    // --- Handlers de Alertas y Modales ---
+ 
     const showAlert = (title, message, intent = 'danger') => {
         setAlert({ isOpen: true, title, message, intent });
     };
     const closeAlert = () => setAlert({ isOpen: false, title: '', message: '', intent: 'danger' });
-    
     const closeConfirm = () => setConfirm({ isOpen: false, title: '', message: '', onConfirm: () => {} });
     const closeRechazar = () => setRechazar({ isOpen: false, item: null });
 
-    // --- Lógica de Aprobación ---
+
     const handleOpenAprobar = (item) => {
         setConfirm({
             isOpen: true,
@@ -102,13 +98,13 @@ export default function PanelRepuestos() {
                 accion: 'aprobar'
             });
             showAlert("Éxito", "Repuesto aprobado y stock descontado.", "success");
-            fetchPendientes(); // Recargamos la lista
+            fetchPendientes();
         } catch (err) {
             showAlert("Error", err.response?.data?.error || "No se pudo aprobar.");
         }
     };
 
-    // --- Lógica de Rechazo ---
+
     const handleOpenRechazar = (item) => {
         setRechazar({ isOpen: true, item: item });
     };
@@ -122,15 +118,15 @@ export default function PanelRepuestos() {
                 motivo: motivo
             });
             showAlert("Éxito", "Repuesto rechazado y mecánico notificado.", "success");
-            fetchPendientes(); // Recargamos la lista
+            fetchPendientes();
         } catch (err) {
             showAlert("Error", err.response?.data?.error || "No se pudo rechazar.");
         }
     };
 
 
-    if (isLoading) return <p className={styles.loading}>Cargando solicitudes...</p>; // Asumiendo que tienes .loading
-    if (error) return <p className={styles.error}>{error}</p>; // Asumiendo que tienes .error
+    if (isLoading) return <p className={styles.loading}>Cargando solicitudes...</p>; 
+    if (error) return <p className={styles.error}>{error}</p>;
 
     return (
         <>
@@ -200,7 +196,6 @@ export default function PanelRepuestos() {
                 </div>
             </div>
 
-            {/* --- Modales --- */}
             <AlertModal
                 isOpen={alert.isOpen}
                 onClose={closeAlert}

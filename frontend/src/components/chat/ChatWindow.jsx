@@ -1,12 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import apiClient from '../../api/axios.js';
 import styles from '../../css/chat.module.css';
-// 1. AÑADIMOS ArrowLeft A LOS IMPORTS
 import { Send, MessageSquare, Paperclip, XCircle, ArrowLeft } from 'lucide-react';
 import AuthenticatedImage from '../AuthenticatedImage';
 import AlertModal from '../modals/AlertModal'; 
 
-// 2. AÑADIMOS LAS PROPS chatName Y onBack
 export default function ChatWindow({ roomId, currentUser, chatName, onBack }) {
     const [messages, setMessages] = useState([]);
     const [newMessage, setNewMessage] = useState("");
@@ -18,7 +16,7 @@ export default function ChatWindow({ roomId, currentUser, chatName, onBack }) {
 
     const [errorModal, setErrorModal] = useState({ isOpen: false, message: "" });
 
-    // Definiciones de validación
+
     const MAX_FILE_SIZE_MB = 10;
     const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
     const ALLOWED_FILE_TYPES = [
@@ -187,7 +185,7 @@ export default function ChatWindow({ roomId, currentUser, chatName, onBack }) {
         }
     };
 
-    // SI NO HAY SALA (Solo visible en escritorio, en móvil se oculta por CSS en el padre)
+
     if (!roomId) {
         return (
             <div className={styles.chatWindowPlaceholder}>
@@ -199,7 +197,7 @@ export default function ChatWindow({ roomId, currentUser, chatName, onBack }) {
 
     return (
         <main className={styles.chatWindow}>
-            {/* 3. AÑADIMOS EL HEADER CON BOTÓN VOLVER (VISIBLE SOLO EN MÓVIL POR CSS) */}
+       
             <div className={styles.chatHeader}>
                 <button onClick={onBack} className={styles.backButton}>
                     <ArrowLeft size={24} />

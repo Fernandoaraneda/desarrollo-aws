@@ -47,49 +47,49 @@ export default function CrearEditarVehiculo() {
   const [error, setError] = useState(null);
   const [talleres, setTalleres] = useState([]);
 
- useEffect(() => {
+  useEffect(() => {
     const fetchData = async () => {
-        setIsLoading(true);
-        try {
-            
-            const [choferesRes, talleresRes, vehiculoRes] = await Promise.all([
-                apiClient.get('/choferes/'),
-                apiClient.get('/talleres/'),
-                isEditMode ? apiClient.get(`/vehiculos/${patente}/`) : Promise.resolve(null)
-            ]);
+      setIsLoading(true);
+      try {
 
-            
-            setChoferes(choferesRes.data.results || choferesRes.data);
-            
-            
-            setTalleres(talleresRes.data.results || talleresRes.data);
+        const [choferesRes, talleresRes, vehiculoRes] = await Promise.all([
+          apiClient.get('/choferes/'),
+          apiClient.get('/talleres/'),
+          isEditMode ? apiClient.get(`/vehiculos/${patente}/`) : Promise.resolve(null)
+        ]);
 
-            
-            if (isEditMode && vehiculoRes) {
-                setVehiculoData({
-                    ...vehiculoRes.data,
-                    chofer: vehiculoRes.data.chofer || '',
-                    taller: vehiculoRes.data.taller || '', 
-                    anio: vehiculoRes.data.anio || '',
-                    kilometraje: vehiculoRes.data.kilometraje || '',
-                    color: vehiculoRes.data.color || '',
-                    vin: vehiculoRes.data.vin || '',
-                });
-            } else {
-                setIsLoading(false); 
-            }
 
-        } catch (err) {
-            setError('No se pudo cargar la información necesaria (choferes, talleres o vehículo).');
-        } finally {
-            if (isEditMode) {
-                setIsLoading(false); 
-            }
+        setChoferes(choferesRes.data.results || choferesRes.data);
+
+
+        setTalleres(talleresRes.data.results || talleresRes.data);
+
+
+        if (isEditMode && vehiculoRes) {
+          setVehiculoData({
+            ...vehiculoRes.data,
+            chofer: vehiculoRes.data.chofer || '',
+            taller: vehiculoRes.data.taller || '',
+            anio: vehiculoRes.data.anio || '',
+            kilometraje: vehiculoRes.data.kilometraje || '',
+            color: vehiculoRes.data.color || '',
+            vin: vehiculoRes.data.vin || '',
+          });
+        } else {
+          setIsLoading(false);
         }
+
+      } catch (err) {
+        setError('No se pudo cargar la información necesaria (choferes, talleres o vehículo).');
+      } finally {
+        if (isEditMode) {
+          setIsLoading(false);
+        }
+      }
     };
 
     fetchData();
-}, [patente, isEditMode, navigate]); 
+  }, [patente, isEditMode, navigate]);
 
 
   const handleChange = (e) => {

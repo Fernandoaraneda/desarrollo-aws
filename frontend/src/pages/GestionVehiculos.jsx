@@ -10,10 +10,10 @@ const LoadingSpinner = () => <div className={styles.centeredMessage}>Cargando...
 const ErrorMessage = ({ message }) => <div className={styles.centeredMessage} style={{ color: 'red' }}>{message}</div>;
 
 export default function GestionVehiculos() {
-    
+
     const [activeVehicles, setActiveVehicles] = useState([]);
     const [inactiveVehicles, setInactiveVehicles] = useState([]);
-    const [view, setView] = useState('activos'); 
+    const [view, setView] = useState('activos');
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
     const navigate = useNavigate();
@@ -21,7 +21,7 @@ export default function GestionVehiculos() {
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 10;
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [modalAction, setModalAction] = useState(null); 
+    const [modalAction, setModalAction] = useState(null);
     const [vehicleToProcess, setVehicleToProcess] = useState(null);
 
     useEffect(() => {
@@ -68,7 +68,7 @@ export default function GestionVehiculos() {
         setModalAction(action);
         setIsModalOpen(true);
     };
-    
+
     const vehiculosToShow = view === 'activos' ? activeVehicles : inactiveVehicles;
     const filteredVehiculos = useMemo(() => {
         return vehiculosToShow.filter(v =>
@@ -96,12 +96,12 @@ export default function GestionVehiculos() {
                     </button>
                 </header>
 
-                
+
                 <div className={styles.tableCard}>
-                    
+
                     <div className={styles.tableControls}>
                         <div className={styles.segmentedControl}>
-                            <button 
+                            <button
                                 className={`${styles.segment} ${view === 'activos' ? styles.segmentActive : ''}`}
                                 onClick={() => { setView('activos'); setCurrentPage(1); }}
                             >
@@ -125,7 +125,7 @@ export default function GestionVehiculos() {
                         </div>
                     </div>
 
-                    
+
                     <div className={styles.tableContainer}>
                         <table className={styles.table}>
                             <thead>
@@ -169,8 +169,8 @@ export default function GestionVehiculos() {
                             </tbody>
                         </table>
                     </div>
-                    
-                    
+
+
                     <div className={styles.pagination}>
                         <button onClick={handlePrevPage} disabled={currentPage === 1}>Anterior</button>
                         <span>Página {currentPage} de {totalPages || 1}</span>
@@ -185,9 +185,9 @@ export default function GestionVehiculos() {
                 onConfirm={handleConfirmAction}
                 title={modalAction === 'deactivate' ? "Confirmar Desactivación" : "Confirmar Reactivación"}
                 message={
-                    modalAction === 'deactivate' ? 
-                    `¿Estás seguro de que quieres desactivar el vehículo ${vehicleToProcess?.patente}? Se ocultará de las listas.` :
-                    `¿Estás seguro de que quieres reactivar el vehículo ${vehicleToProcess?.patente}? Volverá a estar disponible.`
+                    modalAction === 'deactivate' ?
+                        `¿Estás seguro de que quieres desactivar el vehículo ${vehicleToProcess?.patente}? Se ocultará de las listas.` :
+                        `¿Estás seguro de que quieres reactivar el vehículo ${vehicleToProcess?.patente}? Volverá a estar disponible.`
                 }
                 confirmButtonText={modalAction === 'deactivate' ? "Sí, Desactivar" : "Sí, Reactivar"}
                 intent={modalAction === 'deactivate' ? "danger" : "success"}

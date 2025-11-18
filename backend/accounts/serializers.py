@@ -1,6 +1,6 @@
-# ----------------------------------------------------------------------
-# IMPORTACIONES
-# ----------------------------------------------------------------------
+
+
+
 from rest_framework import serializers
 from django.contrib.auth import get_user_model, authenticate
 from django.contrib.auth.models import Group
@@ -9,7 +9,7 @@ from django.db.models import Q
 from datetime import timedelta, datetime
 import re
 
-# Modelos locales
+
 from .models import (
     Vehiculo,
     Agendamiento,
@@ -31,22 +31,22 @@ import os
 from django.core.exceptions import ValidationError as DjangoValidationError
 
 
-# ======================================================================
-# 💡 VALIDADORES DE ARCHIVOS (NUEVO)
-# ======================================================================
+
+
+
 
 
 def validate_image_only(file):
     """Validador para tamaño (10MB) y SOLO tipo de archivo (Imágenes)."""
-    # 1. Validación de Tamaño (10MB)
-    MAX_SIZE = 10 * 1024 * 1024  # 10MB
+
+    MAX_SIZE = 10 * 1024 * 1024
     if file.size > MAX_SIZE:
         raise DjangoValidationError(
             f"El tamaño del archivo ({file.size // (1024*1024)}MB) supera el límite de 10MB."
         )
 
-    # 2. Validación de Tipo (MIME Type)
-    # Esto asegura que solo se suban archivos que el sistema identifica como 'image/*'
+
+
     if not file.content_type or not file.content_type.startswith("image/"):
         raise DjangoValidationError(
             f"Archivo no permitido. Solo se aceptan imágenes (tipo detectado: {file.content_type})."
@@ -57,9 +57,9 @@ def validate_image_only(file):
 
 def validate_image_size(file):
     """Validador solo para el tamaño de la imagen (10MB)."""
-    MAX_SIZE = 10 * 1024 * 1024  # 10MB
+    MAX_SIZE = 10 * 1024 * 1024
     if file.size > MAX_SIZE:
-        # Usamos DjangoValidationError, DRF lo captura
+
         raise DjangoValidationError(
             f"El tamaño de la imagen ({file.size // (1024*1024)}MB) supera el límite de 10MB."
         )
@@ -68,20 +68,20 @@ def validate_image_size(file):
 
 def validate_file_restrictions(file):
     """Validador para tamaño (10MB) y tipo de archivo (Imágenes, PDF, PPT, Excel)."""
-    # 1. Validación de Tamaño (10MB)
-    MAX_SIZE = 10 * 1024 * 1024  # 10MB
+
+    MAX_SIZE = 10 * 1024 * 1024
     if file.size > MAX_SIZE:
         raise DjangoValidationError(
             f"El tamaño del archivo ({file.size // (1024*1024)}MB) supera el límite de 10MB."
         )
 
-    # 2. Validación de Tipo (MIME Type) - VERSIÓN MEJORADA
+
     ALLOWED_MIME_TYPES = [
-        "image/",  # Todas las imágenes (jpeg, png, gif, etc.)
-        "application/pdf", # PDF
+        "image/",
+        "application/pdf",
         
-        # --- AÑADIR ESTOS PARA WORD ---
-        "application/msword",  # .doc
+
+        "application/msword",
         "application/vnd.openxmlformats-officedocument.wordprocessingml.document", 
     ]
 
@@ -100,14 +100,14 @@ def validate_file_restrictions(file):
                 break
 
     if not file_type_ok:
-        # Fallback a la extensión si el MIME type falla
+
         ext = os.path.splitext(file.name)[1].lower()
         
-        # --- ACTUALIZAR TAMBIÉN LAS EXTENSIONES ---
+
         ALLOWED_EXTENSIONS = [
-            ".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp", ".svg", # Imágenes
-            ".pdf", # PDF
-            ".doc", ".docx" # Word
+            ".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp", ".svg",
+            ".pdf",
+            ".doc", ".docx"
         ]
         
         if ext not in ALLOWED_EXTENSIONS:
@@ -118,7 +118,7 @@ def validate_file_restrictions(file):
     return file
 
 
-# ======================================================================
+
 
 
 User = get_user_model()
@@ -153,7 +153,7 @@ def validar_rut_chileno(rut):
             dv_esperado = str(dv_calculado)
 
         if dv == dv_esperado:
-            # Formatear el RUT (ej: 12.345.678-9)
+
             cuerpo_int = int(cuerpo)
             cuerpo_formateado = f"{cuerpo_int:,}".replace(",", ".")
             return True, f"{cuerpo_formateado}-{dv}"
@@ -163,9 +163,9 @@ def validar_rut_chileno(rut):
         return False, "Error al procesar el RUT."
 
 
-# ======================================================================
-# 🔐 SERIALIZERS DE USUARIOS
-# ======================================================================
+
+
+
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -219,9 +219,9 @@ class UserCreateUpdateSerializer(serializers.ModelSerializer):
             "telefono",
         ]
 
-    # -----------------------
-    # Validaciones
-    # -----------------------
+
+
+
     def validate_password(self, value):
         """Valida la contraseña según las reglas de Django."""
         if value:
@@ -237,21 +237,21 @@ class UserCreateUpdateSerializer(serializers.ModelSerializer):
         if not es_valido:
             raise serializers.ValidationError(rut_o_error)
 
-        # Guardamos el RUT formateado (ej: 12.345.678-9)
-        # Esto coincide con los datos que mostraste de tu BD.
+
+
         return rut_o_error
 
     def validate_telefono(self, value):
         """
         Valida que el teléfono tenga 9 dígitos y (opcionalmente) comience con 9.
         """
-        if not value:  # Permite campos vacíos (null=True, blank=True)
+        if not value:
             return None
 
-        # Limpiar cualquier caracter que no sea dígito
+
         numeros = re.sub(r"\D", "", str(value))
 
-        # Opcional: Si escriben +569... lo limpiamos a 9...
+
         if len(numeros) == 11 and numeros.startswith("569"):
             numeros = numeros[2:]
 
@@ -260,7 +260,7 @@ class UserCreateUpdateSerializer(serializers.ModelSerializer):
                 "El teléfono debe ser un número celular chileno válido (9 dígitos, ej: 912345678)."
             )
 
-        # Guardamos solo los 9 dígitos limpios
+
         return numeros
 
     def validate_first_name(self, value):
@@ -269,7 +269,7 @@ class UserCreateUpdateSerializer(serializers.ModelSerializer):
         """
         if not value:
             raise serializers.ValidationError("El nombre no puede estar vacío.")
-        # Regex permite letras, acentos, ñ, espacios y apóstrofes
+
         if not re.match(r"^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s']+$", value):
             raise serializers.ValidationError(
                 "El nombre solo debe contener letras y espacios."
@@ -296,9 +296,9 @@ class UserCreateUpdateSerializer(serializers.ModelSerializer):
             )
         return value
 
-    # -----------------------
-    # Métodos CRUD
-    # -----------------------
+
+
+
     def create(self, validated_data):
         """Crea un usuario y lo asigna a un grupo/rol."""
         rol_name = validated_data.pop("rol")
@@ -309,7 +309,7 @@ class UserCreateUpdateSerializer(serializers.ModelSerializer):
             user.set_password(password)
         user.save()
 
-        # Asigna el grupo correspondiente
+
         try:
             group = Group.objects.get(name=rol_name)
             user.groups.add(group)
@@ -373,9 +373,9 @@ class ChangePasswordSerializer(serializers.Serializer):
         return value
 
 
-# ======================================================================
-# 🚗 SERIALIZERS DE VEHÍCULOS
-# ======================================================================
+
+
+
 
 
 class VehiculoSerializer(serializers.ModelSerializer):
@@ -446,8 +446,8 @@ class VehiculoSerializer(serializers.ModelSerializer):
     def _validate_texto_vehiculo(self, value, field_name="El campo"):
         """Función helper interna para validar marca, modelo, color."""
         if not value:
-            return value  # Permite campos vacíos (como 'color')
-        # Permite letras, números, acentos, ñ, espacios, y guiones
+            return value
+
         if not re.match(r"^[a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\s'-]+$", str(value)):
             raise serializers.ValidationError(
                 f"{field_name} contiene caracteres inválidos."
@@ -472,9 +472,9 @@ class VehiculoSerializer(serializers.ModelSerializer):
         return self._validate_texto_vehiculo(value, "El Color")
 
 
-# ======================================================================
-# 📅 SERIALIZERS DE AGENDAMIENTOS
-# ======================================================================
+
+
+
 
 
 class AgendamientoSerializer(serializers.ModelSerializer):
@@ -537,9 +537,9 @@ class AgendamientoSerializer(serializers.ModelSerializer):
             self.fields["vehiculo"].queryset = Vehiculo.activos.filter(chofer=user)
 
 
-# ======================================================================
-# 🧾 SERIALIZERS DE ÓRDENES DE SERVICIO
-# ======================================================================
+
+
+
 
 
 class OrdenDocumentoSerializer(serializers.ModelSerializer):
@@ -571,7 +571,7 @@ class OrdenDocumentoSerializer(serializers.ModelSerializer):
             "estado_en_carga",
         ]
 
-        # Aplica el validador de tamaño Y extensión al campo 'archivo'
+
         extra_kwargs = {"archivo": {"validators": [validate_file_restrictions]}}
 
     def get_archivo_url(self, obj):
@@ -606,7 +606,7 @@ class AgendamientoDocumentoSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ["subido_por_nombre", "fecha", "archivo_url"]
 
-        # --- AQUÍ APLICAMOS LA VALIDACIÓN ---
+
         extra_kwargs = {"archivo": {"validators": [validate_file_restrictions]}}
 
     def get_archivo_url(self, obj):
@@ -646,7 +646,7 @@ class OrdenItemSerializer(serializers.ModelSerializer):
     Serializer para los Items de la Orden (Repuestos o Servicios).
     """
 
-    # Usamos 'source' para leer la info del producto, no solo el SKU
+
     producto_info = ProductoSerializer(source="producto", read_only=True)
     servicio_info = serializers.StringRelatedField(source="servicio", read_only=True)
 
@@ -674,8 +674,8 @@ class OrdenItemSerializer(serializers.ModelSerializer):
             "motivo_gestion",
             "fecha_gestion",
         ]
-        # Hacemos que 'producto' y 'servicio' sean write_only en el serializer base
-        # El usuario enviará el ID, pero recibirá el objeto 'producto_info' anidado
+
+
         extra_kwargs = {
             "producto": {"write_only": True, "required": False, "allow_null": True},
             "servicio": {"write_only": True, "required": False, "allow_null": True},
@@ -739,8 +739,8 @@ class OrdenSalidaListSerializer(serializers.ModelSerializer):
     pendientes de salida (fecha_entrega_real is null).
     """
 
-    # Usamos SerializerMethodField para obtener datos de modelos relacionados
-    # y evitar errores si alguno es Nulo.
+
+
 
     vehiculo_patente = serializers.SerializerMethodField()
     chofer_nombre = serializers.SerializerMethodField()
@@ -760,17 +760,17 @@ class OrdenSalidaListSerializer(serializers.ModelSerializer):
         )
 
     def get_vehiculo_patente(self, obj):
-        # obj es la instancia de Orden
+
         if obj.vehiculo:
             return obj.vehiculo.patente
         return "N/A"
 
     def get_chofer_nombre(self, obj):
-        # Accedemos al chofer a través del agendamiento de origen
+
         if obj.agendamiento_origen and obj.agendamiento_origen.chofer_asociado:
             return obj.agendamiento_origen.chofer_asociado.get_full_name()
 
-        # Si no hay agendamiento, intentamos desde el vehículo (si tienes esa lógica)
+
         if obj.vehiculo and obj.vehiculo.chofer:
             return obj.vehiculo.chofer.get_full_name()
         return "No asignado"
@@ -779,7 +779,7 @@ class OrdenSalidaListSerializer(serializers.ModelSerializer):
         if obj.usuario_asignado:
             return obj.usuario_asignado.get_full_name()
 
-        # Fallback por si el mecánico estaba en el agendamiento
+
         if obj.agendamiento_origen and obj.agendamiento_origen.mecanico_asignado:
             return obj.agendamiento_origen.mecanico_asignado.get_full_name()
 
@@ -789,14 +789,14 @@ class OrdenSalidaListSerializer(serializers.ModelSerializer):
         """
         Validación personalizada para DRF (se ejecuta antes de crear/guardar).
         """
-        # 1. Validar duplicados de vehículo
+
         vehiculo = data.get("vehiculo")
 
-        # Chequeamos si estamos creando (no hay 'instance')
+
         is_create = self.instance is None
 
         if vehiculo and is_create:
-            # Busca si este vehículo ya tiene OTRA cita que esté "activa"
+
             citas_activas = Agendamiento.objects.filter(vehiculo=vehiculo).exclude(
                 estado__in=[
                     Agendamiento.Estado.FINALIZADO,
@@ -804,14 +804,14 @@ class OrdenSalidaListSerializer(serializers.ModelSerializer):
                 ]
             )
 
-            # Si ya existe una cita activa, lanza un error
+
             if citas_activas.exists():
                 raise serializers.ValidationError(
                     f"El vehículo {vehiculo.patente} ya tiene una cita activa (Programada o En Taller). "
                     "No puede agendar otra hasta que la anterior se complete."
                 )
 
-        # (Aquí irían otras validaciones si las tuvieras)
+
 
         return data
 
@@ -828,9 +828,9 @@ class TallerSerializer(serializers.ModelSerializer):
         fields = ["id", "nombre", "direccion"]
 
 
-# ======================================================================
-#  SERIALIZERS DE GESTIÓN DE LLAVES
-# ======================================================================
+
+
+
 
 
 class LlaveVehiculoSerializer(serializers.ModelSerializer):
@@ -865,7 +865,7 @@ class LlaveVehiculoSerializer(serializers.ModelSerializer):
             "motivo_reporte",
         ]
         extra_kwargs = {
-            "vehiculo": {"write_only": True}  # Solo necesitamos el ID para crear
+            "vehiculo": {"write_only": True}
         }
 
 
@@ -918,11 +918,11 @@ class LlaveHistorialEstadoSerializer(serializers.ModelSerializer):
             "fecha",
         ]
 
-    # ======================================================================
 
 
-# 📦 SERIALIZER DE HISTORIAL DE SEGURIDAD
-# ======================================================================
+
+
+
 
 
 class HistorialSeguridadSerializer(serializers.ModelSerializer):
@@ -952,26 +952,26 @@ class HistorialSeguridadSerializer(serializers.ModelSerializer):
         if obj.vehiculo and obj.vehiculo.chofer:
             return obj.vehiculo.chofer.get_full_name()
         return "No asignado"
-# ======================================================================
-# 💬 SERIALIZERS DE CHAT (NUEVO)
-# ======================================================================
+
+
+
 
 class ChatMessageSerializer(serializers.ModelSerializer):
     """
     Serializa un mensaje individual.
     """
-    # Usamos UserSerializer para mostrar los detalles del autor, no solo el ID
+
     autor = UserSerializer(read_only=True)
     archivo = serializers.FileField(
         required=False, 
         allow_null=True, 
-        validators=[validate_file_restrictions] # Reutiliza tu validador
+        validators=[validate_file_restrictions]
     )
     
     class Meta:
         model = ChatMessage
-        # --- 2. AQUÍ ESTÁ LA CORRECCIÓN ---
-        # Añadir 'archivo' a la lista de fields
+
+
         fields = ['id', 'room', 'autor', 'contenido', 'archivo', 'creado_en']
         read_only_fields = ['id', 'room', 'autor', 'creado_en']
         
@@ -993,7 +993,7 @@ class ChatRoomSerializer(serializers.ModelSerializer):
     """
     Serializa una sala de chat, incluyendo sus participantes.
     """
-    # Usamos UserSerializer para mostrar la info de los participantes
+
     participantes = UserSerializer(many=True, read_only=True)
     
     class Meta:

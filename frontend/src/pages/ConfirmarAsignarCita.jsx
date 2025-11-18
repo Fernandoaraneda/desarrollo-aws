@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 
-// --- Rutas relativas corregidas ---
+
 import apiClient from '../api/axios.js';
 import styles from '../css/ConfirmarAsignarCita.module.css';
 
@@ -16,12 +16,9 @@ import {
     Package,
 } from 'lucide-react';
 
-// --- Componentes internos ---
 import AuthenticatedImage from '../components/AuthenticatedImage.jsx';
 import AlertModal from '../components/modals/AlertModal.jsx';
 import ConfirmModal from '../components/modals/ConfirmModal.jsx';
-
-// DatePicker
 import DatePicker, { registerLocale } from 'react-datepicker';
 import { es } from 'date-fns/locale/es';
 import 'react-datepicker/dist/react-datepicker.css';
@@ -32,13 +29,12 @@ const HORA_FIN = 19;
 const DURACION_CITA_MINUTOS = 60;
 
 /**
- * Convierte un objeto Date a un string YYYY-MM-DD en la zona horaria local.
- * @param {Date} date El objeto de fecha local.
- * @returns {string} La fecha en formato YYYY-MM-DD.
+ * @param {Date} date
+ * @returns {string} 
  */
 const toLocalISOString = (date) => {
     const y = date.getFullYear();
-    // getMonth() es 0-indexado, por eso +1
+
     const m = String(date.getMonth() + 1).padStart(2, '0');
     const d = String(date.getDate()).padStart(2, '0');
     return `${y}-${m}-${d}`;
@@ -47,14 +43,11 @@ const toLocalISOString = (date) => {
 export default function ConfirmarAsignarCita() {
     const { id } = useParams();
     const navigate = useNavigate();
-
     const [agendamiento, setAgendamiento] = useState(null);
     const [mecanicos, setMecanicos] = useState([]);
-
     const [selectedDate, setSelectedDate] = useState(new Date());
     const [selectedMecanicoId, setSelectedMecanicoId] = useState('');
     const [selectedSlot, setSelectedSlot] = useState('');
-
     const [agendaMecanico, setAgendaMecanico] = useState([]);
     const [isLoadingAgenda, setIsLoadingAgenda] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
@@ -116,7 +109,7 @@ export default function ConfirmarAsignarCita() {
             return;
         }
 
-        // 1. Usamos la función helper para obtener la fecha local
+ 
         const fechaParaAPI = toLocalISOString(selectedDate);
 
         const fetchAgendaMecanico = async () => {
@@ -124,7 +117,7 @@ export default function ConfirmarAsignarCita() {
             try {
                 const response = await apiClient.get(
                     `/mecanicos/${selectedMecanicoId}/agenda/`,
-                    { params: { fecha: fechaParaAPI } } // Se envía 'YYYY-MM-DD' local
+                    { params: { fecha: fechaParaAPI } }
                 );
                 setAgendaMecanico(response.data.results || response.data || []);
             } catch (err) {
@@ -140,12 +133,7 @@ export default function ConfirmarAsignarCita() {
 
     const availableSlots = useMemo(() => {
         const slots = [];
-
-        // 1. Usamos la función helper para obtener la fecha local
         const fechaString = toLocalISOString(selectedDate);
-
-        // 2. Creamos el inicio y fin del día usando el string local
-        // new Date('YYYY-MM-DDTHH:MM:SS') crea una fecha en la zona horaria local
         const dayStart = new Date(
             `${fechaString}T${String(HORA_INICIO).padStart(2, '0')}:00:00`
         );
@@ -162,7 +150,6 @@ export default function ConfirmarAsignarCita() {
             );
         }
 
-        // Esta lógica ya es correcta porque compara `getTime()`
         const bookedTimes = agendaMecanico.map((cita) =>
             new Date(cita.fecha_hora_programada).getTime()
         );
@@ -172,11 +159,10 @@ export default function ConfirmarAsignarCita() {
 
         const now = new Date();
 
-        // 3. Usamos la función helper para comparar el día
         const todayString = toLocalISOString(now);
         const isToday = fechaString === todayString;
 
-        const nowWithMargin = new Date(now.getTime() + 5 * 60000); // Margen de 5 min
+        const nowWithMargin = new Date(now.getTime() + 5 * 60000);
 
         if (isToday) {
             return available.filter((slot) => slot.getTime() > nowWithMargin.getTime());
@@ -247,11 +233,9 @@ export default function ConfirmarAsignarCita() {
         setIsConfirmGruaOpen(true);
     };
 
-    // --- AÑADE ESTA NUEVA FUNCIÓN ---
-    const handleDoEnviarGrua = async () => {
-        setIsConfirmGruaOpen(false); // 1. Cierra el modal
 
-        // 2. Ejecuta la lógica que estaba antes en handleEnviarGrua
+    const handleDoEnviarGrua = async () => {
+        setIsConfirmGruaOpen(false); 
         try {
             const res = await apiClient.post(`/agendamientos/${id}/enviar-grua/`);
             setAgendamiento(res.data);
@@ -318,15 +302,13 @@ export default function ConfirmarAsignarCita() {
                         <h4>
                             <ImageIcon /> Imagen Adjunta
                         </h4>
-                        {/* --- MODIFICADO ---
-                            Usamos AuthenticatedImage en lugar de <img>
-                        */}
+                      
                         <AuthenticatedImage
                             src={agendamiento.imagen_averia}
                             alt="Avería reportada"
                             className={styles.fullWidthImage}
                         />
-                        {/* --- FIN MODIFICADO --- */}
+                  
                     </div>
                 )}
                 {agendamiento.es_mantenimiento && (
@@ -489,13 +471,13 @@ export default function ConfirmarAsignarCita() {
                             disabled={!selectedMecanicoId || isLoadingAgenda}
                         >
                             <option value="">
-                                --{' '}
+                                {' '}
                                 {isLoadingAgenda
                                     ? 'Cargando horas...'
                                     : !selectedMecanicoId
                                         ? 'Seleccione un mecánico primero'
                                         : 'Seleccione una hora'}{' '}
-                                --
+                                
                             </option>
 
                             {!isLoadingAgenda &&

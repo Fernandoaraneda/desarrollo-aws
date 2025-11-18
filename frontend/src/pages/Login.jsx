@@ -46,7 +46,7 @@ export default function LoginPage() {
 
       apiClient.defaults.headers["Authorization"] = `Bearer ${res.data.access}`;
 
-  
+
       setInterval(refreshToken, 25 * 60 * 1000);
 
       setAuth({
@@ -65,12 +65,12 @@ export default function LoginPage() {
   return (
     <div className={styles.containerFormWrapper}>
       <video
-          autoPlay
-          loop
-          muted
-          className={styles.videoBackground}
-          src="/src/assets/Fondo_para_Login_de_PepsiCo_Flota.mp4"
-        ></video>
+        autoPlay
+        loop
+        muted
+        className={styles.videoBackground}
+        src="/src/assets/Fondo_para_Login_de_PepsiCo_Flota.mp4"
+      ></video>
       {!showLogin ? (
         <div className={`${styles.containerForm} ${styles.welcomeCard}`}>
           <h2 className={styles.welcomeTitle}>Bienvenido a PepsicoTaller</h2>

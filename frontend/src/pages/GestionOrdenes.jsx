@@ -1,17 +1,13 @@
-import React, { useState, useEffect, useMemo } from 'react'; // 1. Importar useMemo
+import React, { useState, useEffect, useMemo } from 'react'; 
 import { useNavigate } from 'react-router-dom';
 import apiClient from '../api/axios.js';
 import styles from '../css/gestionordenes.module.css';
-// 2. Importar estilos del buscador
 import searchStyles from '../css/gestionusuarios.module.css';
-// 3. Importar icono Search
 import { Wrench, Eye, Edit, Search } from 'lucide-react';
 
 
 const ModalCambiarEstado = ({ orden, onClose, onSave }) => {
-    // ...
-    // (TU CÓDIGO DEL MODAL VA AQUÍ - SIN CAMBIOS)
-    // ...
+
     const [nuevoEstado, setNuevoEstado] = useState(orden.estado);
     const [motivo, setMotivo] = useState('');
     const estadosPosibles = [
@@ -69,17 +65,17 @@ const ModalCambiarEstado = ({ orden, onClose, onSave }) => {
 
 
 export default function GestionOrdenes() {
-    // 'ordenes' guarda la lista COMPLETA
+
     const [ordenes, setOrdenes] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
     const [ordenSeleccionada, setOrdenSeleccionada] = useState(null);
     const navigate = useNavigate();
-    // 4. Añadir estado para el buscador
+ 
     const [searchTerm, setSearchTerm] = useState('');
 
     useEffect(() => {
-        // 5. Tu fetchOrdenes original (NO SE TOCA)
+      
         const fetchOrdenes = async () => {
             try {
                 const response = await apiClient.get('/ordenes/');
@@ -95,22 +91,21 @@ export default function GestionOrdenes() {
             }
         };
         fetchOrdenes();
-    }, []); // Se ejecuta 1 sola vez
+    }, []);
 
-    // 6. LÓGICA DE FILTRADO (igual a GestionUsuarios)
+   
     const filteredOrdenes = useMemo(() => {
         return ordenes.filter(orden =>
-            // Filtramos por patente (que está en vehiculo_info)
+            
             (orden.vehiculo_info?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
-            // Filtramos por ID de orden
+           
             (orden.id.toString() || '').includes(searchTerm.toLowerCase())
         );
-    }, [ordenes, searchTerm]); // Se recalcula si 'ordenes' o 'searchTerm' cambian
+    }, [ordenes, searchTerm]); 
 
 
     const handleEstadoActualizado = (ordenId, nuevoEstado) => {
-        // 7. Esta función es clave y NO SE TOCA
-        // Cuando marcas como 'Finalizado', debe desaparecer de la lista 'ordenes'
+
         if (nuevoEstado === 'Finalizado') {
             setOrdenes(prevOrdenes => prevOrdenes.filter(o => o.id !== ordenId));
         } else {
@@ -132,7 +127,7 @@ export default function GestionOrdenes() {
                 <p>Aquí puedes ver y gestionar las órdenes de trabajo asignadas.</p>
             </header>
 
-            {/* 8. AÑADIR EL BUSCADOR (con los estilos de gestionusuarios) */}
+            
             <div className={searchStyles.controls}>
                 <div className={searchStyles.searchBox}>
                     <Search size={20} className={searchStyles.searchIcon} />
@@ -158,7 +153,7 @@ export default function GestionOrdenes() {
                             </tr>
                         </thead>
                         <tbody>
-                            {/* 9. Mapear sobre la lista FILTRADA */}
+                        
                             {filteredOrdenes.length > 0 ? (
                                 filteredOrdenes.map(orden => (
                                     < tr key={orden.id} >

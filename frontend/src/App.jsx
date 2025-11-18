@@ -1,18 +1,9 @@
-// src/App.jsx
-
-// 1. Importar lazy y Suspense de React
 import { lazy, Suspense } from 'react';
 import { Routes, Route, Navigate } from "react-router-dom";
-import { useUserStore } from "/src/store/authStore.js"; // <- Ruta corregida
+import { useUserStore } from "/src/store/authStore.js"; 
+import MainLayout from "/src/components/layout/MainLayout.jsx"; 
+import ProtectedRoute from '/src/components/ProtectedRoute.jsx'; 
 
-// 2. Componentes estáticos (se cargan siempre, son necesarios para el layout)
-import MainLayout from "/src/components/layout/MainLayout.jsx"; // <- Ruta corregida
-import ProtectedRoute from '/src/components/ProtectedRoute.jsx'; // <- Ruta y extensión corregidas
-
-// 3. (Se eliminan todos los 'import ... from "./pages/..."' estáticos de aquí)
-
-// 4. Se definen TODAS las páginas con React.lazy() y rutas absolutas
-// Esto hace que cada página se cargue en un archivo JS separado y solo cuando se necesite.
 const Login = lazy(() => import('/src/pages/Login.jsx'));
 const ResetPassword = lazy(() => import('/src/pages/ResetPassword.jsx'));
 const SetNewPassword = lazy(() => import('/src/pages/SetNewPassword.jsx'));
@@ -27,18 +18,18 @@ const PanelSupervisor = lazy(() => import('/src/pages/PanelSupervisor.jsx'));
 const GestionOrdenes = lazy(() => import('/src/pages/GestionOrdenes.jsx'));
 const DetalleOrden = lazy(() => import('/src/pages/DetalleOrden.jsx'));
 const ConfirmarAsignarCita = lazy(() => import('/src/pages/ConfirmarAsignarCita.jsx'));
-const PanelIngresos = lazy(() => import('/src/pages/PanelIngresos.jsx')); // <- Extensión .jsx añadida
+const PanelIngresos = lazy(() => import('/src/pages/PanelIngresos.jsx')); 
 const PanelSalida = lazy(() => import('/src/pages/Panelsalida.jsx'));
-const ProximasCitas = lazy(() => import('/src/pages/ProximasCitas.jsx')); // <- Extensión .jsx añadida
+const ProximasCitas = lazy(() => import('/src/pages/ProximasCitas.jsx')); 
 const HistorialChofer = lazy(() => import('/src/pages/HistorialChofer.jsx'));
 const GestionLlaves = lazy(() => import('/src/pages/GestionLlaves.jsx'));
-const GestionLlavesHistorial = lazy(() => import('/src/pages/GestionLlavesHistorial.jsx')); // <- Extensión .jsx añadida
+const GestionLlavesHistorial = lazy(() => import('/src/pages/GestionLlavesHistorial.jsx')); 
 const HistorialMecanico = lazy(() => import('/src/pages/HistorialMecanico.jsx'));
 const HistorialSeguridad = lazy(() => import('/src/pages/HistorialSeguridad.jsx'));
-const PanelRepuestos = lazy(() => import('/src/pages/PanelRepuestos.jsx')); // <- Extensión .jsx añadida
-const GestionStock = lazy(() => import('/src/pages/GestionStock.jsx')); // <- Extensión .jsx añadida
+const PanelRepuestos = lazy(() => import('/src/pages/PanelRepuestos.jsx')); 
+const GestionStock = lazy(() => import('/src/pages/GestionStock.jsx')); 
 const ChatLayout = lazy(() => import('/src/pages/ChatLayout.jsx'));
-// 5. Opcional: Un componente de "Cargando..." más agradable para el fallback
+
 function AppLoadingFallback() {
   return (
     <div style={{
@@ -47,7 +38,7 @@ function AppLoadingFallback() {
       alignItems: 'center',
       height: '100vh',
       width: '100vw',
-      backgroundColor: '#111827', // Un fondo oscuro similar al layout
+      backgroundColor: '#111827', 
       color: 'white',
       fontSize: '1.2rem',
       fontFamily: 'sans-serif'
@@ -61,8 +52,7 @@ function App() {
   const { user } = useUserStore();
 
   return (
-    // 6. Envolver TODAS las rutas en <Suspense>
-    // Muestra el fallback mientras se descarga el JS de la página solicitada.
+
     <Suspense fallback={<AppLoadingFallback />}>
       <Routes>
 
@@ -73,8 +63,6 @@ function App() {
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/set-new-password" element={<SetNewPassword />} />
 
-        {/* Todas las rutas internas y protegidas quedan igual, 
-            pero ahora usan los componentes cargados con lazy() */}
         <Route element={<MainLayout />}>
 
         <Route
@@ -86,7 +74,6 @@ function App() {
             }
           />
 
-          {/* --- AÑADE ESTA RUTA NUEVA --- */}
           <Route
             path="/chat"
             element={
@@ -141,7 +128,7 @@ function App() {
             </ProtectedRoute>
           } />
 
-          {/* Flujo de Agenda */}
+      
           <Route path="/agenda" element={
             <ProtectedRoute roles={['Supervisor', 'Chofer', 'Administrativo']}>
               <GestionAgenda />
@@ -170,7 +157,7 @@ function App() {
             </ProtectedRoute>
           } />
 
-          {/* Órdenes de Servicio */}
+        
           <Route path="/ordenes" element={
             <ProtectedRoute roles={['Supervisor', 'Mecanico', 'Administrativo']}>
               <GestionOrdenes />
@@ -245,7 +232,7 @@ function App() {
               </ProtectedRoute>
             }
           />
-        </Route> {/* Fin de MainLayout */}
+        </Route> 
 
         <Route path="*" element={<Navigate to={user ? "/dashboard" : "/"} replace />} />
 

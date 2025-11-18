@@ -13,7 +13,6 @@ export default function ChatLayout() {
     const [isLoading, setIsLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false); 
 
-    // Función para recargar las salas
     const fetchRooms = async () => {
         if (!isLoading) setIsLoading(true); 
         try {
@@ -30,7 +29,6 @@ export default function ChatLayout() {
         fetchRooms();
     }, []);
 
-    // Función que se llama cuando el modal crea un chat
     const handleNewChatSuccess = (newRoom) => {
         setIsModalOpen(false); 
         
@@ -42,23 +40,21 @@ export default function ChatLayout() {
     };
 
     const handleRoomDeleted = (deletedRoomId) => {
-        // Quita la sala de la lista
+     
         setRooms(prev => prev.filter(r => r.id !== deletedRoomId));
         
-        // Si la sala eliminada era la seleccionada, deselecciónala
+        
         if (selectedRoomId === deletedRoomId) {
             setSelectedRoomId(null);
         }
     };
 
-    // 1. BUSCAMOS LA SALA SELECCIONADA PARA SACAR SU NOMBRE
+    
     const selectedRoom = rooms.find(r => r.id === selectedRoomId);
 
     return (
         <div className={styles.chatLayout}>
-            
-            {/* 2. ENVOLVEMOS EL SIDEBAR EN UN DIV CON LA CLASE CONDICIONAL */}
-            {/* Si hay chat seleccionado, ocultamos el sidebar en móvil */}
+   
             <div className={`${styles.sidebar} ${selectedRoomId ? styles.hiddenOnMobile : ''}`}>
                 <ChatSidebar
                     rooms={rooms}
@@ -71,16 +67,15 @@ export default function ChatLayout() {
                 />
             </div>
 
-            {/* 3. ENVOLVEMOS LA VENTANA EN UN DIV CON LA CLASE CONDICIONAL */}
-            {/* Si NO hay chat seleccionado, ocultamos la ventana en móvil */}
+   
             <div className={`${styles.chatWindow} ${!selectedRoomId ? styles.hiddenOnMobile : ''}`}>
                 <ChatWindow
                     key={selectedRoomId || 'empty'} 
                     roomId={selectedRoomId}
                     currentUser={user}
-                    // 4. PASAMOS PROPS NUEVAS
+                 
                     chatName={selectedRoom ? (selectedRoom.nombre || "Chat") : null}
-                    onBack={() => setSelectedRoomId(null)} // Al volver, limpiamos la selección
+                    onBack={() => setSelectedRoomId(null)} 
                 />
             </div>
             

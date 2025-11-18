@@ -1,54 +1,46 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
-// --- CORREGIDO: Ruta absoluta ---
 import apiClient from '/src/api/axios.js';
 import { useUserStore } from '/src/store/authStore.js';
 import styles from '/src/css/detalleorden.module.css';
-// --- FIN CORREGIDO ---
 import {
     Wrench, User, Tag, Calendar, Image as ImageIcon, Upload,
     Paperclip, Play, Pause, ChevronDown, FileText, Download,
     Search, PlusCircle
 } from 'lucide-react';
-// --- CORREGIDO: Ruta absoluta ---
 import AlertModal from '/src/components/modals/AlertModal.jsx';
-// --- FIN CORREGIDO ---
-
-// --- AÑADIDO Y CORREGIDO: Ruta absoluta ---
 import AuthenticatedImage from '/src/components/AuthenticatedImage.jsx';
-// --- FIN AÑADIDO ---
 
 
 const DocumentGroup = ({ state, docs }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [downloadingId, setDownloadingId] = useState(null);
     const handleDownload = async (doc) => {
-        if (downloadingId === doc.id) return; // Ya está descargando
+        if (downloadingId === doc.id) return; 
 
         setDownloadingId(doc.id);
 
         try {
-            // Usa apiClient para la petición (esto AÑADE EL TOKEN)
+            
             const response = await apiClient.get(doc.archivo_url, {
-                responseType: 'blob', // Pide el archivo como un blob binario
+                responseType: 'blob',
             });
 
-            // Crea una URL local en el navegador para el blob
+         
             const url = window.URL.createObjectURL(new Blob([response.data]));
 
-            // Crea un enlace temporal
+           
             const link = document.createElement('a');
             link.href = url;
 
-            // Intenta obtener el nombre original del archivo
+    
             const fileName = doc.archivo_url.split('/').pop();
             link.setAttribute('download', fileName || doc.descripcion || 'archivo');
 
-            // Simula el clic para descargar
             document.body.appendChild(link);
             link.click();
 
-            // Limpia
+         
             document.body.removeChild(link);
             window.URL.revokeObjectURL(url);
 
@@ -56,7 +48,7 @@ const DocumentGroup = ({ state, docs }) => {
             console.error("Error al descargar el archivo:", err);
             alert('No se pudo descargar el archivo. Verifique su conexión.');
         } finally {
-            setDownloadingId(null); // Resetea el estado de carga
+            setDownloadingId(null);
         }
     };
     const renderFile = (doc) => {
@@ -65,8 +57,7 @@ const DocumentGroup = ({ state, docs }) => {
         const tipo = (doc.tipo || '').toLowerCase();
         const isImage = tipo.match(/\.(jpg|jpeg|png|gif|webp|bmp)$/i);
         if (isImage) {
-            // --- MODIFICADO ---
-            // Reemplazamos <a><img></a> por AuthenticatedImage
+
             return (
                 <AuthenticatedImage
                     src={fileUrl}
@@ -74,7 +65,7 @@ const DocumentGroup = ({ state, docs }) => {
                     className={styles.imagePreview}
                 />
             );
-            // --- FIN MODIFICADO ---
+      
         }
         const isDownloadingThis = downloadingId === doc.id;
 
@@ -82,7 +73,7 @@ const DocumentGroup = ({ state, docs }) => {
             <button
                 onClick={() => handleDownload(doc)}
                 disabled={isDownloadingThis}
-                className={styles.downloadLink} // Reusamos tu estilo
+                className={styles.downloadLink} 
             >
                 <Download size={18} />
                 {isDownloadingThis ? 'Descargando...' : (doc.descripcion || 'Descargar Archivo')}
@@ -367,8 +358,6 @@ export default function DetalleOrden() {
         setAlertModal({ isOpen: false, title: '', message: '', intent: 'success' });
     };
 
-    // --- 1. NUEVA FUNCIÓN GENÉRICA PARA CAMBIAR ESTADO ---
-    // (Llama al endpoint que no es ni /pausar/ ni /reanudar/)
     const llamarCambiarEstado = async (nuevoEstado) => {
         let motivo = '';
         if (nuevoEstado === 'Finalizado') {
@@ -378,34 +367,34 @@ export default function DetalleOrden() {
         }
 
         try {
-            // Usamos el endpoint genérico 'cambiar-estado'
+  
             const response = await apiClient.post(`/ordenes/${id}/cambiar-estado/`, {
                 estado: nuevoEstado,
                 motivo: motivo
             });
-            setOrden(response.data); // Actualiza la orden y el select
+            setOrden(response.data);
             setAlertModal({ isOpen: true, title: 'Éxito', message: `Estado cambiado a "${nuevoEstado}".`, intent: 'success' });
         } catch (error) {
             setAlertModal({ isOpen: true, title: 'Error', message: 'Error al cambiar el estado.', intent: 'danger' });
-            // Como 'orden.estado' no se actualizó, el select volverá al valor anterior solo
+           
         }
     };
 
-    // --- 2. NUEVO HANDLER PARA EL MENÚ DESPLEGABLE <select> ---
+
     const handleChangeEstado = (e) => {
         const nuevoEstado = e.target.value;
         const estadoActual = orden.estado;
 
-        if (nuevoEstado === estadoActual) return; // No hacer nada
+        if (nuevoEstado === estadoActual) return;
 
         if (nuevoEstado === 'Pausado') {
-            // Si eligen "Pausado", llamamos a la función que abre el modal
+       
             handlePausar();
         } else if (nuevoEstado === 'En Proceso' && estadoActual === 'Pausado') {
-            // Si estaba Pausado y eligen "En Proceso", llamamos a reanudar
+           
             handleReanudar();
         } else {
-            // Para todos los demás cambios
+          
             llamarCambiarEstado(nuevoEstado);
         }
     };
@@ -438,15 +427,12 @@ export default function DetalleOrden() {
                     {orden?.imagen_averia_url && (
                         <div className={styles.infoCard}>
                             <h3><ImageIcon /> Imagen de la Avería</h3>
-                            {/* --- MODIFICADO ---
-                                Usamos AuthenticatedImage en lugar de <img>
-                            */}
                             <AuthenticatedImage
                                 src={orden.imagen_averia_url}
                                 alt="Avería reportada"
                                 className={styles.averiaImage}
                             />
-                            {/* --- FIN MODIFICADO --- */}
+                        
                         </div>
                     )}
 
@@ -558,11 +544,11 @@ export default function DetalleOrden() {
                             value={orden?.estado || ''}
                             onChange={handleChangeEstado}
                             disabled={!puedeModificar}
-                            // Reutilizamos un estilo que ya tienes
+                     
                             className={styles.mecanicoSelect}
                             style={{ marginBottom: '1rem' }}
                         >
-                            {/* Opciones Fijas de Estado */}
+                           
                             <option value="Ingresado">Ingresado</option>
                             <option value="En Diagnostico">En Diagnóstico</option>
                             <option value="En Proceso">En Proceso</option>

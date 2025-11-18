@@ -688,7 +688,7 @@ class LlaveHistorialEstado(TimeStampedModel):
         verbose_name_plural = "Historiales de Estados de Llave"
         ordering = ["-fecha"]
 # --------------------------------------------------------------------------
-# MÓDULO DE CHAT (NUEVO)
+# MÓDULO DE CHAT 
 # --------------------------------------------------------------------------
 
 class ChatRoom(TimeStampedModel):
@@ -702,6 +702,13 @@ class ChatRoom(TimeStampedModel):
         verbose_name="Participantes",
         help_text="Usuarios que son parte de esta conversación."
     )
+    oculto_para = models.ManyToManyField(
+        Usuario,
+        related_name="chat_rooms_ocultos",
+        verbose_name="Oculto Para",
+        blank=True,
+        help_text="Usuarios que han eliminado visualmente este chat."
+    )
     
     nombre = models.CharField(
         max_length=100, 
@@ -714,14 +721,15 @@ class ChatRoom(TimeStampedModel):
         if self.nombre:
             return self.nombre
         
-        # Intenta crear un nombre descriptivo, ej: "Chat: c.soto, f.araneda"
-        nombres = [u.username for u in self.participantes.all()[:2]]
+      
+        participantes_list = list(self.participantes.all()[:2])
+        nombres = [u.get_full_name() or u.username for u in participantes_list]
         return f"Chat: {', '.join(nombres)}"
 
     class Meta:
         verbose_name = "Sala de Chat"
         verbose_name_plural = "Salas de Chat"
-        ordering = ['-actualizado_en'] # Mostrar las salas con mensajes más recientes primero
+        ordering = ['-actualizado_en'] 
 
 
 class ChatMessage(TimeStampedModel):
@@ -737,15 +745,14 @@ class ChatMessage(TimeStampedModel):
     )
     autor = models.ForeignKey(
         Usuario, 
-        on_delete=models.SET_NULL, # Si se borra el usuario, el mensaje dice "Usuario eliminado"
+        on_delete=models.SET_NULL,
         null=True,
         related_name="mensajes_enviados",
         verbose_name="Autor"
     )
     contenido = models.TextField("Contenido del Mensaje")
     
-    # Para saber si los destinatarios lo leyeron.
-    # Usamos ManyToMany para soportar chats grupales.
+
     leido_por = models.ManyToManyField(
         Usuario,
         related_name="mensajes_leidos",
