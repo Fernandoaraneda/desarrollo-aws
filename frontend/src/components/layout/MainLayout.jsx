@@ -7,6 +7,7 @@ import styles from '../../css/mainlayout.module.css';
 import Notificaciones from './Notificaciones.jsx';
 import AccordionMenu from './AccordionMenu.jsx';
 import apiClient from '../../api/axios.js';
+import ConfirmModal from '../modals/ConfirmModal.jsx';
 // (El componente Sidebar no cambia)
 const navLinksByRole = {
   'Supervisor': [
@@ -94,7 +95,9 @@ const navLinksByRole = {
   ],
 };
 
-const Sidebar = ({ isOpen, toggleSidebar, unreadChatCount }) => {
+
+
+const Sidebar = ({ isOpen, toggleSidebar, unreadChatCount, onDownloadManual }) => {
   const { user, logout } = useUserStore();
   const navigate = useNavigate();
 
@@ -115,8 +118,6 @@ const Sidebar = ({ isOpen, toggleSidebar, unreadChatCount }) => {
     { to: '/chat', label: 'Chat Interno', icon: 'fas fa-comments' },
     { to: '/profile', label: 'Mi Perfil', icon: 'fas fa-user' }
   ];
-
-
 
   return (
     <aside className={`${styles.sidebar} ${isOpen ? styles.isOpen : ''}`}>
@@ -149,7 +150,6 @@ const Sidebar = ({ isOpen, toggleSidebar, unreadChatCount }) => {
         })}
         <hr style={{ borderColor: 'var(--border-color)', margin: '1rem' }} />
         
-        {/* --- 4. ESTA ES LA LÓGICA QUE FALTABA EN EL MAP --- */}
         {commonLinks.map(link => {
           const isChatLink = link.to === '/chat';
           const showBadge = isChatLink && unreadChatCount > 0;
@@ -158,11 +158,10 @@ const Sidebar = ({ isOpen, toggleSidebar, unreadChatCount }) => {
             <NavLink
               key={link.to} to={link.to} onClick={handleLinkClick}
               className={({ isActive }) => `${styles.navLink} ${isActive ? styles.activeLink : ''}`}
-              style={{ position: 'relative' }} // Necesario para el badge
+              style={{ position: 'relative' }}
             >
               <i className={link.icon}></i> <span>{link.label}</span>
               
-              {/* 5. Renderizar el badge (esto faltaba) */}
               {showBadge && (
                 <span className={styles.chatBadge}>
                   {unreadChatCount > 9 ? '9+' : unreadChatCount}
@@ -171,6 +170,28 @@ const Sidebar = ({ isOpen, toggleSidebar, unreadChatCount }) => {
             </NavLink>
           );
         })}
+
+        {/* 3. BOTÓN DE DESCARGA MANUAL (Estilo similar a los NavLink pero es un button) */}
+        <button 
+          onClick={() => {
+             handleLinkClick(); // Cierra sidebar en móvil si es necesario
+             onDownloadManual(); // Abre el modal
+          }}
+          className={styles.navLink} // Reusamos la clase para que se vea igual
+          style={{ 
+            background: 'transparent', 
+            border: 'none', 
+            width: '100%', 
+            textAlign: 'left', 
+            cursor: 'pointer',
+            fontSize: 'inherit',
+            fontFamily: 'inherit'
+          }}
+        >
+          <i className="fas fa-file-pdf"></i> 
+          <span>Manual Usuario</span>
+        </button>
+
       </nav>
 
       <div className={styles.sidebarFooter}>
@@ -183,7 +204,6 @@ const Sidebar = ({ isOpen, toggleSidebar, unreadChatCount }) => {
   );
 };
 
-// (LayoutLoadingFallback no cambia)
 function LayoutLoadingFallback() {
   return (
     <div style={{ padding: '2rem', textAlign: 'center', color: '#6b7280' }}>
@@ -195,9 +215,10 @@ function LayoutLoadingFallback() {
 export default function MainLayout() {
   const { user } = useUserStore();
   const [isSidebarOpen, setSidebarOpen] = useState(false);
-
-  // --- 6. AÑADIR ESTADO Y FETCH PARA EL CONTADOR (esto faltaba) ---
   const [unreadChatCount, setUnreadChatCount] = useState(0);
+
+  // 4. ESTADO PARA EL MODAL DE DESCARGA
+  const [isDownloadModalOpen, setIsDownloadModalOpen] = useState(false);
 
   useEffect(() => {
     const fetchUnreadCount = async () => {
@@ -205,31 +226,45 @@ export default function MainLayout() {
         const response = await apiClient.get('/chat/unread-count/');
         setUnreadChatCount(response.data.unread_count);
       } catch (error) {
-        // No mostramos error en consola si es 404 (endpoint aún no creado)
         if (error.response && error.response.status !== 404) {
             console.error("Error al cargar contador de chat:", error);
         }
       }
     };
     
-    fetchUnreadCount(); // Carga inicial
-    const interval = setInterval(fetchUnreadCount, 30000); // Refresca cada 30 seg
+    fetchUnreadCount(); 
+    const interval = setInterval(fetchUnreadCount, 30000); 
 
     return () => clearInterval(interval);
   }, []);
-  // --- Fin del paso 6 ---
 
   const toggleSidebar = () => {
     setSidebarOpen(!isSidebarOpen);
   };
 
+  // 5. FUNCIÓN QUE EJECUTA LA DESCARGA REAL
+  const handleConfirmDownload = () => {
+    // Crea un elemento <a> temporal para forzar la descarga
+    const link = document.createElement('a');
+    // Asegúrate que el nombre coincide con el archivo en tu carpeta /public
+    link.href = '/Manual_Usuario_Flota.pdf'; 
+    link.download = 'Manual_Usuario_Flota.pdf'; // Nombre con el que se guardará
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    // Cerrar el modal
+    setIsDownloadModalOpen(false);
+  };
+
   return (
     <div className={styles.layoutWrapper}>
-      {/* 7. Pasar el contador al Sidebar (esto faltaba) */}
       <Sidebar 
         isOpen={isSidebarOpen} 
         toggleSidebar={toggleSidebar} 
-        unreadChatCount={unreadChatCount} 
+        unreadChatCount={unreadChatCount}
+        // 6. PASAMOS LA FUNCIÓN PARA ABRIR EL MODAL
+        onDownloadManual={() => setIsDownloadModalOpen(true)}
       />
 
       <div
@@ -251,14 +286,25 @@ export default function MainLayout() {
               <Notificaciones />
             </div>
           </div>
-
         </header>
+        
         <main className={styles.mainContent}>
           <Suspense fallback={<LayoutLoadingFallback />}>
             <Outlet />
           </Suspense>
         </main>
       </div>
+
+      {/* 7. RENDERIZAMOS EL MODAL DE CONFIRMACIÓN */}
+      <ConfirmModal
+        isOpen={isDownloadModalOpen}
+        onClose={() => setIsDownloadModalOpen(false)}
+        onConfirm={handleConfirmDownload}
+        title="Descargar Manual"
+        message="¿Estás seguro que deseas descargar el Manual de Usuario en PDF?"
+        confirmButtonText="Sí, descargar"
+        intent="success" // Usamos 'success' para que el botón sea verde/azul en lugar de rojo
+      />
     </div>
   );
 }

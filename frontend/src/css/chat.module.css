@@ -1,6 +1,7 @@
+/* src/css/chat.module.css */
+
 .chatLayout {
-    display: grid;
-    grid-template-columns: 300px 1fr;
+    display: flex; /* CAMBIO IMPORTANTE: De grid a flex */
     height: calc(100vh - 80px);
     background-color: #1f2937;
     color: #f9fafb;
@@ -8,14 +9,17 @@
     overflow: hidden;
     margin: 0.1rem;
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    position: relative;
 }
 
-
+/* --- SIDEBAR (LISTA) --- */
 .sidebar {
+    width: 350px; /* Ancho fijo en PC */
     background-color: #374151;
     border-right: 1px solid #4b5563;
     display: flex;
     flex-direction: column;
+    flex-shrink: 0; /* Evita que se encoja */
 }
 
 .sidebarHeader {
@@ -23,7 +27,6 @@
     font-size: 1.25rem;
     font-weight: 600;
     border-bottom: 1px solid #4b5563;
-    /* Añadido para el botón [+] */
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -43,7 +46,6 @@
     color: #fff;
 }
 
-
 .roomList {
     flex: 1;
     overflow-y: auto;
@@ -57,7 +59,6 @@
     margin-bottom: 0.5rem;
     transition: background-color 0.2s;
     font-weight: 500;
-    /* Lógica de flex para el botón de eliminar */
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -71,7 +72,6 @@
     background-color: #0d9488;
     color: white;
 }
-
 
 .deleteRoomButton {
     background: none;
@@ -89,25 +89,53 @@
     color: #f87171;
 }
 
-
-
+/* --- CHAT WINDOW (VENTANA DERECHA) --- */
 .chatWindow {
+    flex: 1; /* Ocupa todo el espacio restante */
     display: flex;
     flex-direction: column;
     height: 100%;
-    min-height: 0;
+    min-width: 0; /* Evita desbordamientos flex */
+    background-color: #1f2937;
+}
+
+/* HEADER DEL CHAT (NUEVO: Para el botón de volver y título) */
+.chatHeader {
+    display: flex;
+    align-items: center;
+    padding: 1rem;
+    background-color: #374151;
+    border-bottom: 1px solid #4b5563;
+}
+
+/* BOTÓN VOLVER (Solo visible en móvil) */
+.backButton {
+    display: none; /* Oculto en escritorio */
+    background: none;
+    border: none;
+    color: #d1d5db;
+    cursor: pointer;
+    margin-right: 10px;
+    padding: 5px;
+}
+
+.chatTitle {
+    font-weight: 600;
+    font-size: 1.1rem;
+    margin: 0;
 }
 
 .chatWindowPlaceholder {
     flex: 1;
     display: flex;
     flex-direction: column;
-    /* Para poner el texto debajo del ícono */
     justify-content: center;
     align-items: center;
     gap: 1rem;
     color: #9ca3af;
     font-size: 1.2rem;
+    text-align: center;
+    padding: 2rem;
 }
 
 .messagesContainer {
@@ -122,33 +150,29 @@
 
 /* --- Burbujas de Mensaje --- */
 .messageBubble {
-    max-width: 70%;
+    max-width: 75%;
     padding: 0.75rem 1rem;
     border-radius: 12px;
     word-wrap: break-word;
 }
 
 .messageMeta {
-    font-size: 0.8rem;
+    font-size: 0.75rem;
     color: #d1d5db;
-    margin-bottom: 0.25rem;
+    margin-bottom: 4px;
+    opacity: 0.8;
 }
 
-/* Mensaje de OTRA persona */
 .theirs {
     background-color: #4b5563;
     align-self: flex-start;
     border-bottom-left-radius: 4px;
 }
 
-.theirs .messageMeta {
-    text-align: left;
-}
+.theirs .messageMeta { text-align: left; }
 
-/* Mensaje MÍO */
 .mine {
     background-color: #0d9488;
-    /* Mismo color "teal" */
     color: white;
     align-self: flex-end;
     border-bottom-right-radius: 4px;
@@ -162,10 +186,11 @@
 /* --- Formulario de Envío --- */
 .messageForm {
     display: flex;
-    padding: 1.5rem;
+    padding: 1rem; /* Reducido un poco padding */
     border-top: 1px solid #4b5563;
     background-color: #1f2937;
     align-items: center;
+    gap: 0.5rem;
 }
 
 .messageInput {
@@ -174,8 +199,8 @@
     border: 1px solid #4b5563;
     background-color: #374151;
     color: #f9fafb;
-    border-radius: 8px;
-    margin-right: 1rem;
+    border-radius: 24px; /* Más redondeado estilo chat app */
+    margin-right: 0.5rem;
     font-size: 1rem;
 }
 
@@ -185,62 +210,46 @@
 }
 
 .sendButton {
-    padding: 0.75rem 1.5rem;
+    padding: 0.75rem;
     background-color: #0d9488;
     color: white;
     border: none;
-    border-radius: 8px;
-    font-weight: 600;
+    border-radius: 50%; /* Botón redondo */
+    width: 45px;
+    height: 45px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     cursor: pointer;
     transition: background-color 0.2s;
+    flex-shrink: 0;
 }
 
-.sendButton:hover {
-    background-color: #0f766e;
-}
+.sendButton:hover { background-color: #0f766e; }
+.sendButton:disabled { background-color: #4b5563; cursor: not-allowed; }
 
-.sendButton:disabled {
-    background-color: #4b5563;
-    cursor: not-allowed;
-}
-
-/* --- Estilos para Adjuntar Archivos --- */
-
+/* --- Archivos --- */
 .attachButton {
     background: none;
     border: none;
     padding: 0.5rem;
     cursor: pointer;
     color: #9ca3af;
-    /* Gris (claro, para fondo oscuro) */
     display: flex;
     align-items: center;
-    margin-left: -0.5rem;
-    /* Ajuste para que esté más pegado */
 }
-
-.attachButton:hover {
-    color: #f9fafb;
-    /* Blanco */
-}
-
-.attachButton:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-}
+.attachButton:hover { color: #f9fafb; }
+.attachButton:disabled { opacity: 0.5; cursor: not-allowed; }
 
 .filePreview {
     background-color: #4b5563;
-    /* Gris medio */
     padding: 0.5rem 1.5rem;
-    /* Alinear con padding del form */
     font-size: 0.8rem;
     display: flex;
     justify-content: space-between;
     align-items: center;
     border-top: 1px solid #4b5563;
     color: #f3f4f6;
-    /* Texto claro */
 }
 
 .filePreview span {
@@ -254,14 +263,11 @@
     background: none;
     border: none;
     color: #f87171;
-    /* Rojo claro */
     cursor: pointer;
     padding: 0 0 0 0.5rem;
 }
 
-.fileAttachment {
-    margin-top: 8px;
-}
+.fileAttachment { margin-top: 8px; }
 
 .fileLink {
     display: inline-flex;
@@ -272,149 +278,107 @@
     border-radius: 8px;
     text-decoration: none;
     color: #f9fafb;
-    /* Texto blanco */
     font-weight: 500;
 }
+.fileLink:hover { background-color: rgba(255, 255, 255, 0.2); }
 
-.fileLink:hover {
-    background-color: rgba(255, 255, 255, 0.2);
+.chatImage {
+    max-width: 100%;
+    max-height: 300px;
+    width: auto;
+    height: auto;
+    border-radius: 8px;
+    display: block;
+    cursor: pointer;
 }
 
-
-
-
+/* --- Modales --- */
 .modalOverlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
     background-color: rgba(0, 0, 0, 0.6);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 1000;
-    opacity: 0;
-    animation: fadeIn 0.3s ease forwards;
+    display: flex; align-items: center; justify-content: center;
+    z-index: 1000; opacity: 0; animation: fadeIn 0.3s ease forwards;
 }
-
 .modalContent {
-    background: #374151;
-    color: #f9fafb;
-    padding: 2rem;
-    border-radius: 12px;
-    max-width: 500px;
-    width: 90%;
+    background: #374151; color: #f9fafb; padding: 2rem;
+    border-radius: 12px; max-width: 500px; width: 90%;
     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-    position: relative;
-    opacity: 0;
-    transform: scale(0.95);
+    position: relative; opacity: 0; transform: scale(0.95);
     animation: scaleUp 0.3s ease 0.1s forwards;
 }
-
-@keyframes fadeIn {
-    to {
-        opacity: 1;
-    }
-}
-
-@keyframes scaleUp {
-    to {
-        opacity: 1;
-        transform: scale(1);
-    }
-}
+@keyframes fadeIn { to { opacity: 1; } }
+@keyframes scaleUp { to { opacity: 1; transform: scale(1); } }
 
 .modalCloseButton {
-    position: absolute;
-    top: 1rem;
-    right: 1rem;
-    background: none;
-    border: none;
-    cursor: pointer;
-    color: #9ca3af;
-    border-radius: 50%;
-    width: 32px;
-    height: 32px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    position: absolute; top: 1rem; right: 1rem;
+    background: none; border: none; cursor: pointer;
+    color: #9ca3af; border-radius: 50%; width: 32px; height: 32px;
+    display: flex; align-items: center; justify-content: center;
 }
+.modalCloseButton:hover { background-color: #4b5563; color: #f9fafb; }
+.modalTitle { margin-top: 0; margin-bottom: 1.5rem; font-size: 1.25rem; font-weight: 600; color: #f9fafb; }
+.searchBox { position: relative; margin-bottom: 1rem; }
+.searchIcon { position: absolute; top: 50%; left: 1rem; transform: translateY(-50%); color: #9ca3af; }
+.modalContent .messageInput { padding-left: 2.5rem; width: 100%; margin-right: 0; }
+.modalContent .roomList { max-height: 400px; margin-top: 1rem; padding: 0; }
+.modalContent .roomItem { margin-bottom: 0.5rem; }
+.modalContent .roomItem small { color: #d1d5db; }
 
-.modalCloseButton:hover {
-    background-color: #4b5563;
-    color: #f9fafb;
-}
-
-.modalTitle {
-    margin-top: 0;
-    margin-bottom: 1.5rem;
-    font-size: 1.25rem;
-    font-weight: 600;
-    color: #f9fafb;
-}
-
-
-.searchBox {
-    position: relative;
-    margin-bottom: 1rem;
-}
-
-.searchIcon {
-    position: absolute;
-    top: 50%;
-    left: 1rem;
-    transform: translateY(-50%);
-    color: #9ca3af;
-}
-
-
-.modalContent .messageInput {
-    padding-left: 2.5rem;
-    width: 100%;
-    margin-right: 0;
-}
-
-
-.modalContent .roomList {
-    max-height: 400px;
-    margin-top: 1rem;
-    padding: 0;
-}
-
-.modalContent .roomItem {
-    margin-bottom: 0.5rem;
-}
-
-.modalContent .roomItem small {
-    color: #d1d5db;
-}
-
-/* --- Media Query para Móviles --- */
+/* --- MEDIA QUERY (MÓVIL) --- */
+/* Aquí está la magia para que sea responsivo */
 @media (max-width: 768px) {
     .chatLayout {
-        grid-template-columns: 1fr;
-        height: calc(100vh - 60px);
+        height: calc(100vh - 60px); /* Ajuste para el header móvil */
         margin: 0;
         border-radius: 0;
+        flex-direction: column; /* En teoría flex, pero controlamos visibilidad */
     }
 
     .sidebar {
-        height: 250px;
-        flex: none;
+        width: 100%; /* Ancho completo */
+        height: 100%;
+        border-right: none;
+    }
+    
+    .chatWindow {
+        width: 100%; /* Ancho completo */
+        height: 100%;
     }
 
+    /* Botón volver visible solo en móvil */
+    .backButton {
+        display: block;
+    }
+    
+    /* Clase utilitaria para ocultar paneles desde JS */
+    .hiddenOnMobile {
+        display: none !important;
+    }
+
+    /* Ocultar placeholder en móvil (si no hay chat, se ve la lista) */
     .chatWindowPlaceholder {
         display: none;
     }
 }
 
-.chatImage {
+.sidebarSearchContainer {
+    padding: 0 1rem 1rem 1rem;
+}
 
-    max-width: 100%;
-    max-height: 400px;
-    width: auto;
-    height: auto;
+.sidebarSearchInput {
+    width: 100%;
+    padding: 0.6rem 1rem 0.6rem 2.5rem; /* Espacio a la izq para la lupa */
+    border: 1px solid #4b5563;
+    background-color: #1f2937; /* Fondo más oscuro para resaltar */
+    color: #f9fafb;
     border-radius: 8px;
-    display: block;
+    font-size: 0.95rem;
+    
+    /* 👇 ¡ESTA ES LA CLAVE PARA QUE NO SE SALGA! 👇 */
+    box-sizing: border-box; 
+}
+
+.sidebarSearchInput:focus {
+    outline: none;
+    border-color: #0d9488;
 }

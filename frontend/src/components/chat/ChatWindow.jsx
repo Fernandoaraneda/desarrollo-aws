@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 import apiClient from '../../api/axios.js';
 import styles from '../../css/chat.module.css';
-import { Send, MessageSquare, Paperclip, XCircle } from 'lucide-react';
+// 1. AÑADIMOS ArrowLeft A LOS IMPORTS
+import { Send, MessageSquare, Paperclip, XCircle, ArrowLeft } from 'lucide-react';
 import AuthenticatedImage from '../AuthenticatedImage';
-// --- 1. IMPORTA EL MODAL ---
-import AlertModal from '../modals/AlertModal'; // Ajusta la ruta si es necesario
+import AlertModal from '../modals/AlertModal'; 
 
-export default function ChatWindow({ roomId, currentUser }) {
+// 2. AÑADIMOS LAS PROPS chatName Y onBack
+export default function ChatWindow({ roomId, currentUser, chatName, onBack }) {
     const [messages, setMessages] = useState([]);
     const [newMessage, setNewMessage] = useState("");
     const [isLoading, setIsLoading] = useState(false);
@@ -15,7 +16,6 @@ export default function ChatWindow({ roomId, currentUser }) {
     const [selectedFile, setSelectedFile] = useState(null);
     const fileInputRef = useRef(null);
 
-    // --- 2. AÑADE EL ESTADO PARA EL MODAL DE ERROR ---
     const [errorModal, setErrorModal] = useState({ isOpen: false, message: "" });
 
     // Definiciones de validación
@@ -33,7 +33,6 @@ export default function ChatWindow({ roomId, currentUser }) {
     const textInputRef = useRef(null);
     const lastFetchTimestamp = useRef(null);
 
-    // ... (scrollToBottom, fetchMessages, useEffects... todo eso queda igual) ...
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     };
@@ -66,7 +65,6 @@ export default function ChatWindow({ roomId, currentUser }) {
             }
         } catch (error) {
             console.error("Error al cargar mensajes:", error);
-            // También podrías mostrar un modal aquí si la carga falla
             setErrorModal({ isOpen: true, message: "No se pudieron cargar los mensajes." });
         } finally {
             if (mode === 'replace') setIsLoading(false);
@@ -91,7 +89,6 @@ export default function ChatWindow({ roomId, currentUser }) {
         scrollToBottom();
     }, [messages]); 
 
-    // --- 3. MODIFICA EL MANEJO DE ERRORES ---
     const handleSend = async (e) => {
         e.preventDefault();
         if ((newMessage.trim() === "" && !selectedFile) || isSending) return;
@@ -121,17 +118,13 @@ export default function ChatWindow({ roomId, currentUser }) {
 
         } catch (error) {
             console.error("Error al enviar mensaje:", error);
-            
-            // --- AQUÍ ESTÁ EL CAMBIO ---
-            // Intenta obtener un mensaje de error específico del backend
             const errorMessage = 
-                error.response?.data?.archivo?.[0] || // Error de validación de Django
-                error.response?.data?.detail ||        // Error de permisos
-                error.response?.data?.error ||         // Otro error genérico
-                "No se pudo enviar el mensaje. Revisa el archivo o tu conexión."; // Fallback
+                error.response?.data?.archivo?.[0] || 
+                error.response?.data?.detail || 
+                error.response?.data?.error || 
+                "No se pudo enviar el mensaje. Revisa el archivo o tu conexión."; 
 
             setErrorModal({ isOpen: true, message: errorMessage });
-            // alert("No se pudo enviar el mensaje."); // <-- Ya no usamos esto
         } finally {
             setIsSending(false);
             setTimeout(() => {
@@ -140,16 +133,13 @@ export default function ChatWindow({ roomId, currentUser }) {
         }
     };
 
-    // --- 3. MODIFICA EL MANEJO DE ERRORES ---
     const handleFileChange = (e) => {
         if (e.target.files && e.target.files[0]) {
             const file = e.target.files[0];
 
             if (file.size > MAX_FILE_SIZE_BYTES) {
-                // --- AQUÍ ESTÁ EL CAMBIO ---
                 const message = `Error: El archivo es demasiado grande. Peso máximo: ${MAX_FILE_SIZE_MB}MB.`;
                 setErrorModal({ isOpen: true, message: message });
-                // alert(`Error: El archivo es demasiado grande....`); // <-- Ya no usamos esto
                 
                 if (fileInputRef.current) {
                     fileInputRef.current.value = null;
@@ -173,16 +163,6 @@ export default function ChatWindow({ roomId, currentUser }) {
         }
     };
 
-    if (!roomId) {
-        return (
-            <div className={styles.chatWindowPlaceholder}>
-                <MessageSquare size={48} />
-                <p>Selecciona una conversación para empezar a chatear.</p>
-            </div>
-        );
-    }
-
-    // --- 3. MODIFICA EL MANEJO DE ERRORES ---
     const handleAuthenticatedDownload = async (e, fileUrl) => {
         e.preventDefault(); 
         const fileName = fileUrl.split('/').pop();
@@ -203,18 +183,34 @@ export default function ChatWindow({ roomId, currentUser }) {
 
         } catch (error) {
             console.error("Error al descargar archivo:", error);
-            // --- AQUÍ ESTÁ EL CAMBIO ---
             setErrorModal({ isOpen: true, message: "No se pudo descargar el archivo." });
-            // alert("No se pudo descargar el archivo."); // <-- Ya no usamos esto
         }
     };
 
-    // Renderizado principal
+    // SI NO HAY SALA (Solo visible en escritorio, en móvil se oculta por CSS en el padre)
+    if (!roomId) {
+        return (
+            <div className={styles.chatWindowPlaceholder}>
+                <MessageSquare size={48} />
+                <p>Selecciona una conversación para empezar a chatear.</p>
+            </div>
+        );
+    }
+
     return (
         <main className={styles.chatWindow}>
+            {/* 3. AÑADIMOS EL HEADER CON BOTÓN VOLVER (VISIBLE SOLO EN MÓVIL POR CSS) */}
+            <div className={styles.chatHeader}>
+                <button onClick={onBack} className={styles.backButton}>
+                    <ArrowLeft size={24} />
+                </button>
+                <h3 className={styles.chatTitle}>
+                    {chatName || "Chat"}
+                </h3>
+            </div>
+
             <div className={styles.messagesContainer}>
-                {/* ... (todo tu mapeo de mensajes se mantiene igual) ... */}
-                {isLoading && messages.length === 0 && <p>Cargando mensajes...</p>}
+                {isLoading && messages.length === 0 && <p style={{textAlign:'center', color:'#9ca3af'}}>Cargando mensajes...</p>}
                 
                 {messages.map(msg => {
                     const isImage = msg.archivo && (
@@ -272,7 +268,6 @@ export default function ChatWindow({ roomId, currentUser }) {
             )}
 
             <form className={styles.messageForm} onSubmit={handleSend}>
-                {/* ... (todo tu formulario se mantiene igual) ... */}
                 <input
                     type="file"
                     ref={fileInputRef}
@@ -309,7 +304,6 @@ export default function ChatWindow({ roomId, currentUser }) {
                 </button>
             </form>
 
-            {/* --- 4. RENDERIZA EL MODAL --- */}
             <AlertModal
                 isOpen={errorModal.isOpen}
                 onClose={() => setErrorModal({ isOpen: false, message: "" })}

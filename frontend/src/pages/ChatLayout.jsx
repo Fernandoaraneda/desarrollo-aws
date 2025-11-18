@@ -41,7 +41,6 @@ export default function ChatLayout() {
         setSelectedRoomId(newRoom.id);
     };
 
-    // --- 1. AÑADIR ESTA FUNCIÓN ---
     const handleRoomDeleted = (deletedRoomId) => {
         // Quita la sala de la lista
         setRooms(prev => prev.filter(r => r.id !== deletedRoomId));
@@ -52,22 +51,38 @@ export default function ChatLayout() {
         }
     };
 
+    // 1. BUSCAMOS LA SALA SELECCIONADA PARA SACAR SU NOMBRE
+    const selectedRoom = rooms.find(r => r.id === selectedRoomId);
+
     return (
         <div className={styles.chatLayout}>
-            <ChatSidebar
-                rooms={rooms}
-                currentUser={user}
-                onSelectRoom={setSelectedRoomId}
-                selectedRoomId={selectedRoomId}
-                isLoading={isLoading}
-                onNewChat={() => setIsModalOpen(true)}
-                onRoomDeleted={handleRoomDeleted} // <-- 2. Pasar la nueva prop
-            />
-            <ChatWindow
-                key={selectedRoomId} 
-                roomId={selectedRoomId}
-                currentUser={user}
-            />
+            
+            {/* 2. ENVOLVEMOS EL SIDEBAR EN UN DIV CON LA CLASE CONDICIONAL */}
+            {/* Si hay chat seleccionado, ocultamos el sidebar en móvil */}
+            <div className={`${styles.sidebar} ${selectedRoomId ? styles.hiddenOnMobile : ''}`}>
+                <ChatSidebar
+                    rooms={rooms}
+                    currentUser={user}
+                    onSelectRoom={setSelectedRoomId}
+                    selectedRoomId={selectedRoomId}
+                    isLoading={isLoading}
+                    onNewChat={() => setIsModalOpen(true)}
+                    onRoomDeleted={handleRoomDeleted}
+                />
+            </div>
+
+            {/* 3. ENVOLVEMOS LA VENTANA EN UN DIV CON LA CLASE CONDICIONAL */}
+            {/* Si NO hay chat seleccionado, ocultamos la ventana en móvil */}
+            <div className={`${styles.chatWindow} ${!selectedRoomId ? styles.hiddenOnMobile : ''}`}>
+                <ChatWindow
+                    key={selectedRoomId || 'empty'} 
+                    roomId={selectedRoomId}
+                    currentUser={user}
+                    // 4. PASAMOS PROPS NUEVAS
+                    chatName={selectedRoom ? (selectedRoom.nombre || "Chat") : null}
+                    onBack={() => setSelectedRoomId(null)} // Al volver, limpiamos la selección
+                />
+            </div>
             
             <NewChatModal
                 isOpen={isModalOpen}
