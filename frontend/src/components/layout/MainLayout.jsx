@@ -9,9 +9,9 @@ import apiClient from '../../api/axios.js';
 import ConfirmModal from '../modals/ConfirmModal.jsx';
 
 const navLinksByRole = {
-  'Supervisor': [
+  'Jefetaller': [
     { type: 'link', to: '/dashboard', label: 'Inicio', icon: 'fas fa-home' },
-    { type: 'link', to: '/panel-supervisor', label: 'Panel de Citas', icon: 'fas fa-calendar-check' },
+    { type: 'link', to: '/panel-Jefetaller', label: 'Panel de Citas', icon: 'fas fa-calendar-check' },
     { type: 'link', to: '/usuarios', label: 'Gestionar Usuarios', icon: 'fas fa-users-cog' },
     { type: 'link', to: '/vehiculos', label: 'Gestionar Vehículos', icon: 'fas fa-truck' },
   ],
@@ -31,9 +31,9 @@ const navLinksByRole = {
     { to: '/panel-salidas', label: 'Registrar Salida', icon: 'fas fa-door-closed' },
     { to: '/historial-seguridad', label: 'Historial Movimientos', icon: 'fas fa-history' },
   ],
-  'Administrativo': [
+  'Supervisor': [
     { type: 'link', to: '/dashboard', label: 'Inicio', icon: 'fas fa-home' },
-    { type: 'link', to: '/panel-supervisor', label: 'Panel de Citas', icon: 'fas fa-calendar-check' },
+    { type: 'link', to: '/panel-Jefetaller', label: 'Panel de Citas', icon: 'fas fa-calendar-check' },
     { type: 'link', to: '/usuarios', label: 'Gestionar Usuarios', icon: 'fas fa-users-cog' },
     { type: 'link', to: '/vehiculos', label: 'Gestionar Vehículos', icon: 'fas fa-truck' },
     {
@@ -112,11 +112,11 @@ const Sidebar = ({ isOpen, toggleSidebar, unreadChatCount, onDownloadManual }) =
   };
 
   const userLinks = navLinksByRole[user?.rol] || [];
-  const commonLinks = 
-  [
-    { to: '/chat', label: 'Chat Interno', icon: 'fas fa-comments' },
-    { to: '/profile', label: 'Mi Perfil', icon: 'fas fa-user' }
-  ];
+  const commonLinks =
+    [
+      { to: '/chat', label: 'Chat Interno', icon: 'fas fa-comments' },
+      { to: '/profile', label: 'Mi Perfil', icon: 'fas fa-user' }
+    ];
 
   return (
     <aside className={`${styles.sidebar} ${isOpen ? styles.isOpen : ''}`}>
@@ -148,7 +148,7 @@ const Sidebar = ({ isOpen, toggleSidebar, unreadChatCount, onDownloadManual }) =
           );
         })}
         <hr style={{ borderColor: 'var(--border-color)', margin: '1rem' }} />
-        
+
         {commonLinks.map(link => {
           const isChatLink = link.to === '/chat';
           const showBadge = isChatLink && unreadChatCount > 0;
@@ -160,7 +160,7 @@ const Sidebar = ({ isOpen, toggleSidebar, unreadChatCount, onDownloadManual }) =
               style={{ position: 'relative' }}
             >
               <i className={link.icon}></i> <span>{link.label}</span>
-              
+
               {showBadge && (
                 <span className={styles.chatBadge}>
                   {unreadChatCount > 9 ? '9+' : unreadChatCount}
@@ -170,24 +170,24 @@ const Sidebar = ({ isOpen, toggleSidebar, unreadChatCount, onDownloadManual }) =
           );
         })}
 
-       
-        <button 
+
+        <button
           onClick={() => {
-             handleLinkClick(); 
-             onDownloadManual();
+            handleLinkClick();
+            onDownloadManual();
           }}
-          className={styles.navLink} 
-          style={{ 
-            background: 'transparent', 
-            border: 'none', 
-            width: '100%', 
-            textAlign: 'left', 
+          className={styles.navLink}
+          style={{
+            background: 'transparent',
+            border: 'none',
+            width: '100%',
+            textAlign: 'left',
             cursor: 'pointer',
             fontSize: 'inherit',
             fontFamily: 'inherit'
           }}
         >
-          <i className="fas fa-file-pdf"></i> 
+          <i className="fas fa-file-pdf"></i>
           <span>Manual Usuario</span>
         </button>
 
@@ -226,13 +226,13 @@ export default function MainLayout() {
         setUnreadChatCount(response.data.unread_count);
       } catch (error) {
         if (error.response && error.response.status !== 404) {
-            console.error("Error al cargar contador de chat:", error);
+          console.error("Error al cargar contador de chat:", error);
         }
       }
     };
-    
-    fetchUnreadCount(); 
-    const interval = setInterval(fetchUnreadCount, 30000); 
+
+    fetchUnreadCount();
+    const interval = setInterval(fetchUnreadCount, 30000);
 
     return () => clearInterval(interval);
   }, []);
@@ -246,23 +246,23 @@ export default function MainLayout() {
 
     const link = document.createElement('a');
 
-    link.href = '/Manual_Usuario_Flota.pdf'; 
-    link.download = 'Manual_Usuario_Flota.pdf'; 
+    link.href = '/Manual_Usuario_Flota.pdf';
+    link.download = 'Manual_Usuario_Flota.pdf';
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    
+
     // Cerrar el modal
     setIsDownloadModalOpen(false);
   };
 
   return (
     <div className={styles.layoutWrapper}>
-      <Sidebar 
-        isOpen={isSidebarOpen} 
-        toggleSidebar={toggleSidebar} 
+      <Sidebar
+        isOpen={isSidebarOpen}
+        toggleSidebar={toggleSidebar}
         unreadChatCount={unreadChatCount}
-    
+
         onDownloadManual={() => setIsDownloadModalOpen(true)}
       />
 
@@ -286,7 +286,7 @@ export default function MainLayout() {
             </div>
           </div>
         </header>
-        
+
         <main className={styles.mainContent}>
           <Suspense fallback={<LayoutLoadingFallback />}>
             <Outlet />
@@ -302,7 +302,7 @@ export default function MainLayout() {
         title="Descargar Manual"
         message="¿Estás seguro que deseas descargar el Manual de Usuario en PDF?"
         confirmButtonText="Sí, descargar"
-        intent="success" 
+        intent="success"
       />
     </div>
   );

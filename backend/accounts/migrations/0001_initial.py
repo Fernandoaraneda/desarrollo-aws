@@ -13,260 +13,696 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ('auth', '0012_alter_user_first_name_max_length'),
+        ("auth", "0012_alter_user_first_name_max_length"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='Producto',
+            name="Producto",
             fields=[
-                ('creado_en', models.DateTimeField(auto_now_add=True)),
-                ('actualizado_en', models.DateTimeField(auto_now=True)),
-                ('sku', models.CharField(max_length=50, primary_key=True, serialize=False)),
-                ('nombre', models.CharField(db_index=True, max_length=150)),
-                ('descripcion', models.TextField(blank=True, null=True)),
-                ('marca', models.CharField(blank=True, max_length=50, null=True)),
-                ('precio_venta', models.DecimalField(decimal_places=2, default=0, max_digits=10)),
-                ('stock', models.PositiveIntegerField(default=0)),
+                ("creado_en", models.DateTimeField(auto_now_add=True)),
+                ("actualizado_en", models.DateTimeField(auto_now=True)),
+                (
+                    "sku",
+                    models.CharField(max_length=50, primary_key=True, serialize=False),
+                ),
+                ("nombre", models.CharField(db_index=True, max_length=150)),
+                ("descripcion", models.TextField(blank=True, null=True)),
+                ("marca", models.CharField(blank=True, max_length=50, null=True)),
+                (
+                    "precio_venta",
+                    models.DecimalField(decimal_places=2, default=0, max_digits=10),
+                ),
+                ("stock", models.PositiveIntegerField(default=0)),
             ],
             options={
-                'verbose_name': 'Producto',
-                'verbose_name_plural': 'Productos',
+                "verbose_name": "Producto",
+                "verbose_name_plural": "Productos",
             },
         ),
         migrations.CreateModel(
-            name='Servicio',
+            name="Servicio",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('creado_en', models.DateTimeField(auto_now_add=True)),
-                ('actualizado_en', models.DateTimeField(auto_now=True)),
-                ('nombre', models.CharField(max_length=150)),
-                ('descripcion', models.TextField(blank=True, null=True)),
-                ('precio_base', models.DecimalField(decimal_places=2, max_digits=10)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("creado_en", models.DateTimeField(auto_now_add=True)),
+                ("actualizado_en", models.DateTimeField(auto_now=True)),
+                ("nombre", models.CharField(max_length=150)),
+                ("descripcion", models.TextField(blank=True, null=True)),
+                ("precio_base", models.DecimalField(decimal_places=2, max_digits=10)),
             ],
             options={
-                'verbose_name': 'Servicio',
-                'verbose_name_plural': 'Servicios',
+                "verbose_name": "Servicio",
+                "verbose_name_plural": "Servicios",
             },
         ),
         migrations.CreateModel(
-            name='Usuario',
+            name="Usuario",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('password', models.CharField(max_length=128, verbose_name='password')),
-                ('last_login', models.DateTimeField(blank=True, null=True, verbose_name='last login')),
-                ('is_superuser', models.BooleanField(default=False, help_text='Designates that this user has all permissions without explicitly assigning them.', verbose_name='superuser status')),
-                ('username', models.CharField(error_messages={'unique': 'A user with that username already exists.'}, help_text='Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only.', max_length=150, unique=True, validators=[django.contrib.auth.validators.UnicodeUsernameValidator()], verbose_name='username')),
-                ('first_name', models.CharField(blank=True, max_length=150, verbose_name='first name')),
-                ('last_name', models.CharField(blank=True, max_length=150, verbose_name='last name')),
-                ('email', models.EmailField(blank=True, max_length=254, verbose_name='email address')),
-                ('is_staff', models.BooleanField(default=False, help_text='Designates whether the user can log into this admin site.', verbose_name='staff status')),
-                ('date_joined', models.DateTimeField(default=django.utils.timezone.now, verbose_name='date joined')),
-                ('rut', models.CharField(db_index=True, max_length=12, unique=True, verbose_name='RUT')),
-                ('telefono', models.CharField(blank=True, max_length=50, null=True)),
-                ('is_active', models.BooleanField(default=True)),
-                ('groups', models.ManyToManyField(blank=True, help_text='Los grupos a los que pertenece este usuario. Un usuario obtendrá todos los permisos otorgados a cada uno de sus grupos.', related_name='usuario_set', related_query_name='usuario', to='auth.group', verbose_name='Grupos')),
-                ('user_permissions', models.ManyToManyField(blank=True, help_text='Permisos específicos para este usuario.', related_name='usuario_set', related_query_name='usuario', to='auth.permission', verbose_name='Permisos de usuario')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("password", models.CharField(max_length=128, verbose_name="password")),
+                (
+                    "last_login",
+                    models.DateTimeField(
+                        blank=True, null=True, verbose_name="last login"
+                    ),
+                ),
+                (
+                    "is_superuser",
+                    models.BooleanField(
+                        default=False,
+                        help_text="Designates that this user has all permissions without explicitly assigning them.",
+                        verbose_name="superuser status",
+                    ),
+                ),
+                (
+                    "username",
+                    models.CharField(
+                        error_messages={
+                            "unique": "A user with that username already exists."
+                        },
+                        help_text="Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only.",
+                        max_length=150,
+                        unique=True,
+                        validators=[
+                            django.contrib.auth.validators.UnicodeUsernameValidator()
+                        ],
+                        verbose_name="username",
+                    ),
+                ),
+                (
+                    "first_name",
+                    models.CharField(
+                        blank=True, max_length=150, verbose_name="first name"
+                    ),
+                ),
+                (
+                    "last_name",
+                    models.CharField(
+                        blank=True, max_length=150, verbose_name="last name"
+                    ),
+                ),
+                (
+                    "email",
+                    models.EmailField(
+                        blank=True, max_length=254, verbose_name="email address"
+                    ),
+                ),
+                (
+                    "is_staff",
+                    models.BooleanField(
+                        default=False,
+                        help_text="Designates whether the user can log into this admin site.",
+                        verbose_name="staff status",
+                    ),
+                ),
+                (
+                    "date_joined",
+                    models.DateTimeField(
+                        default=django.utils.timezone.now, verbose_name="date joined"
+                    ),
+                ),
+                (
+                    "rut",
+                    models.CharField(
+                        db_index=True, max_length=12, unique=True, verbose_name="RUT"
+                    ),
+                ),
+                ("telefono", models.CharField(blank=True, max_length=50, null=True)),
+                ("is_active", models.BooleanField(default=True)),
+                (
+                    "groups",
+                    models.ManyToManyField(
+                        blank=True,
+                        help_text="Los grupos a los que pertenece este usuario. Un usuario obtendrá todos los permisos otorgados a cada uno de sus grupos.",
+                        related_name="usuario_set",
+                        related_query_name="usuario",
+                        to="auth.group",
+                        verbose_name="Grupos",
+                    ),
+                ),
+                (
+                    "user_permissions",
+                    models.ManyToManyField(
+                        blank=True,
+                        help_text="Permisos específicos para este usuario.",
+                        related_name="usuario_set",
+                        related_query_name="usuario",
+                        to="auth.permission",
+                        verbose_name="Permisos de usuario",
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Usuario',
-                'verbose_name_plural': 'Usuarios',
+                "verbose_name": "Usuario",
+                "verbose_name_plural": "Usuarios",
             },
             managers=[
-                ('objects', django.contrib.auth.models.UserManager()),
+                ("objects", django.contrib.auth.models.UserManager()),
             ],
         ),
         migrations.CreateModel(
-            name='Agendamiento',
+            name="Agendamiento",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('creado_en', models.DateTimeField(auto_now_add=True)),
-                ('actualizado_en', models.DateTimeField(auto_now=True)),
-                ('solicita_grua', models.BooleanField(default=False, help_text='Marcar si el vehículo requiere ser movilizado por una grúa.')),
-                ('fecha_hora_programada', models.DateTimeField()),
-                ('duracion_estimada_minutos', models.PositiveIntegerField(default=60)),
-                ('fecha_hora_fin', models.DateTimeField(blank=True, editable=False, null=True)),
-                ('motivo_ingreso', models.TextField()),
-                ('estado', models.CharField(choices=[('Programado', 'Programado'), ('Confirmado', 'Confirmado'), ('En Taller', 'En Taller'), ('Finalizado', 'Finalizado'), ('Cancelado', 'Cancelado')], db_index=True, default='Programado', max_length=50)),
-                ('imagen_averia', models.ImageField(blank=True, null=True, upload_to='agendamientos_imagenes/%Y/%m/', verbose_name='Imagen de la avería')),
-                ('chofer_asociado', models.ForeignKey(blank=True, limit_choices_to={'groups__name': 'Chofer'}, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='agendamientos_chofer', to=settings.AUTH_USER_MODEL)),
-                ('creado_por', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, related_name='agendamientos_creados', to=settings.AUTH_USER_MODEL)),
-                ('mecanico_asignado', models.ForeignKey(blank=True, limit_choices_to={'groups__name': 'Mecanico'}, null=True, on_delete=django.db.models.deletion.PROTECT, related_name='citas_asignadas', to=settings.AUTH_USER_MODEL)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("creado_en", models.DateTimeField(auto_now_add=True)),
+                ("actualizado_en", models.DateTimeField(auto_now=True)),
+                (
+                    "solicita_grua",
+                    models.BooleanField(
+                        default=False,
+                        help_text="Marcar si el vehículo requiere ser movilizado por una grúa.",
+                    ),
+                ),
+                ("fecha_hora_programada", models.DateTimeField()),
+                ("duracion_estimada_minutos", models.PositiveIntegerField(default=60)),
+                (
+                    "fecha_hora_fin",
+                    models.DateTimeField(blank=True, editable=False, null=True),
+                ),
+                ("motivo_ingreso", models.TextField()),
+                (
+                    "estado",
+                    models.CharField(
+                        choices=[
+                            ("Programado", "Programado"),
+                            ("Confirmado", "Confirmado"),
+                            ("En Taller", "En Taller"),
+                            ("Finalizado", "Finalizado"),
+                            ("Cancelado", "Cancelado"),
+                        ],
+                        db_index=True,
+                        default="Programado",
+                        max_length=50,
+                    ),
+                ),
+                (
+                    "imagen_averia",
+                    models.ImageField(
+                        blank=True,
+                        null=True,
+                        upload_to="agendamientos_imagenes/%Y/%m/",
+                        verbose_name="Imagen de la avería",
+                    ),
+                ),
+                (
+                    "chofer_asociado",
+                    models.ForeignKey(
+                        blank=True,
+                        limit_choices_to={"groups__name": "Chofer"},
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="agendamientos_chofer",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
+                (
+                    "creado_por",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.PROTECT,
+                        related_name="agendamientos_creados",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
+                (
+                    "mecanico_asignado",
+                    models.ForeignKey(
+                        blank=True,
+                        limit_choices_to={"groups__name": "Mecanico"},
+                        null=True,
+                        on_delete=django.db.models.deletion.PROTECT,
+                        related_name="citas_asignadas",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Agendamiento',
-                'verbose_name_plural': 'Agendamientos',
-                'ordering': ['fecha_hora_programada'],
+                "verbose_name": "Agendamiento",
+                "verbose_name_plural": "Agendamientos",
+                "ordering": ["fecha_hora_programada"],
             },
         ),
         migrations.CreateModel(
-            name='AgendamientoDocumento',
+            name="AgendamientoDocumento",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('tipo', models.CharField(choices=[('Foto', 'Foto'), ('Informe', 'Informe'), ('Otro', 'Otro')], max_length=50)),
-                ('descripcion', models.CharField(blank=True, max_length=255)),
-                ('archivo', models.FileField(upload_to='agendamientos_documentos/%Y/%m/')),
-                ('fecha', models.DateTimeField(auto_now_add=True)),
-                ('agendamiento', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='documentos', to='accounts.agendamiento')),
-                ('subido_por', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, to=settings.AUTH_USER_MODEL)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "tipo",
+                    models.CharField(
+                        choices=[
+                            ("Foto", "Foto"),
+                            ("Informe", "Informe"),
+                            ("Otro", "Otro"),
+                        ],
+                        max_length=50,
+                    ),
+                ),
+                ("descripcion", models.CharField(blank=True, max_length=255)),
+                (
+                    "archivo",
+                    models.FileField(upload_to="agendamientos_documentos/%Y/%m/"),
+                ),
+                ("fecha", models.DateTimeField(auto_now_add=True)),
+                (
+                    "agendamiento",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="documentos",
+                        to="accounts.agendamiento",
+                    ),
+                ),
+                (
+                    "subido_por",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.PROTECT,
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Documento de Agendamiento',
-                'verbose_name_plural': 'Documentos de Agendamiento',
-                'ordering': ['-fecha'],
+                "verbose_name": "Documento de Agendamiento",
+                "verbose_name_plural": "Documentos de Agendamiento",
+                "ordering": ["-fecha"],
             },
         ),
         migrations.CreateModel(
-            name='AgendamientoHistorial',
+            name="AgendamientoHistorial",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('estado', models.CharField(max_length=50)),
-                ('fecha', models.DateTimeField(auto_now_add=True)),
-                ('comentario', models.TextField(blank=True, null=True)),
-                ('agendamiento', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='historial', to='accounts.agendamiento')),
-                ('usuario', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, to=settings.AUTH_USER_MODEL)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("estado", models.CharField(max_length=50)),
+                ("fecha", models.DateTimeField(auto_now_add=True)),
+                ("comentario", models.TextField(blank=True, null=True)),
+                (
+                    "agendamiento",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="historial",
+                        to="accounts.agendamiento",
+                    ),
+                ),
+                (
+                    "usuario",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.PROTECT,
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Historial de Agendamiento',
-                'verbose_name_plural': 'Historiales de Agendamiento',
-                'ordering': ['-fecha'],
+                "verbose_name": "Historial de Agendamiento",
+                "verbose_name_plural": "Historiales de Agendamiento",
+                "ordering": ["-fecha"],
             },
         ),
         migrations.CreateModel(
-            name='Notificacion',
+            name="Notificacion",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('mensaje', models.CharField(max_length=255)),
-                ('link', models.CharField(blank=True, max_length=255, null=True)),
-                ('leida', models.BooleanField(db_index=True, default=False)),
-                ('fecha', models.DateTimeField(auto_now_add=True)),
-                ('usuario', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='notificaciones', to=settings.AUTH_USER_MODEL)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("mensaje", models.CharField(max_length=255)),
+                ("link", models.CharField(blank=True, max_length=255, null=True)),
+                ("leida", models.BooleanField(db_index=True, default=False)),
+                ("fecha", models.DateTimeField(auto_now_add=True)),
+                (
+                    "usuario",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="notificaciones",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Notificación',
-                'verbose_name_plural': 'Notificaciones',
-                'ordering': ['-fecha'],
+                "verbose_name": "Notificación",
+                "verbose_name_plural": "Notificaciones",
+                "ordering": ["-fecha"],
             },
         ),
         migrations.CreateModel(
-            name='Orden',
+            name="Orden",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('creado_en', models.DateTimeField(auto_now_add=True)),
-                ('actualizado_en', models.DateTimeField(auto_now=True)),
-                ('fecha_ingreso', models.DateTimeField(default=django.utils.timezone.now)),
-                ('fecha_entrega_estimada', models.DateField(blank=True, null=True)),
-                ('fecha_entrega_real', models.DateTimeField(blank=True, null=True)),
-                ('estado', models.CharField(choices=[('Ingresado', 'Ingresado'), ('En Diagnostico', 'En Diagnóstico'), ('En Proceso', 'En Proceso'), ('Pausado', 'Pausado'), ('Finalizado', 'Finalizado')], db_index=True, default='Ingresado', max_length=50)),
-                ('descripcion_falla', models.TextField(verbose_name='Descripción de la Falla (Cliente)')),
-                ('diagnostico_tecnico', models.TextField(blank=True, null=True, verbose_name='Diagnóstico Técnico (Mecánico)')),
-                ('agendamiento_origen', models.OneToOneField(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='orden_generada', to='accounts.agendamiento')),
-                ('usuario_asignado', models.ForeignKey(blank=True, limit_choices_to={'groups__name__in': ['Mecanico', 'Supervisor'], 'is_active': True}, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='ordenes_asignadas', to=settings.AUTH_USER_MODEL)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("creado_en", models.DateTimeField(auto_now_add=True)),
+                ("actualizado_en", models.DateTimeField(auto_now=True)),
+                (
+                    "fecha_ingreso",
+                    models.DateTimeField(default=django.utils.timezone.now),
+                ),
+                ("fecha_entrega_estimada", models.DateField(blank=True, null=True)),
+                ("fecha_entrega_real", models.DateTimeField(blank=True, null=True)),
+                (
+                    "estado",
+                    models.CharField(
+                        choices=[
+                            ("Ingresado", "Ingresado"),
+                            ("En Diagnostico", "En Diagnóstico"),
+                            ("En Proceso", "En Proceso"),
+                            ("Pausado", "Pausado"),
+                            ("Finalizado", "Finalizado"),
+                        ],
+                        db_index=True,
+                        default="Ingresado",
+                        max_length=50,
+                    ),
+                ),
+                (
+                    "descripcion_falla",
+                    models.TextField(verbose_name="Descripción de la Falla (Cliente)"),
+                ),
+                (
+                    "diagnostico_tecnico",
+                    models.TextField(
+                        blank=True,
+                        null=True,
+                        verbose_name="Diagnóstico Técnico (Mecánico)",
+                    ),
+                ),
+                (
+                    "agendamiento_origen",
+                    models.OneToOneField(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="orden_generada",
+                        to="accounts.agendamiento",
+                    ),
+                ),
+                (
+                    "usuario_asignado",
+                    models.ForeignKey(
+                        blank=True,
+                        limit_choices_to={
+                            "groups__name__in": ["Mecanico", "Jefetaller"],
+                            "is_active": True,
+                        },
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="ordenes_asignadas",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Orden de Servicio',
-                'verbose_name_plural': 'Órdenes de Servicio',
-                'ordering': ['-fecha_ingreso'],
+                "verbose_name": "Orden de Servicio",
+                "verbose_name_plural": "Órdenes de Servicio",
+                "ordering": ["-fecha_ingreso"],
             },
         ),
         migrations.CreateModel(
-            name='OrdenDocumento',
+            name="OrdenDocumento",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('tipo', models.CharField(choices=[('Foto', 'Foto'), ('Informe', 'Informe'), ('PDF', 'PDF'), ('Otro', 'Otro')], max_length=50)),
-                ('descripcion', models.CharField(blank=True, max_length=255)),
-                ('archivo', models.FileField(upload_to='ordenes_documentos/%Y/%m/')),
-                ('fecha', models.DateTimeField(auto_now_add=True)),
-                ('orden', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='documentos', to='accounts.orden')),
-                ('subido_por', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, to=settings.AUTH_USER_MODEL)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "tipo",
+                    models.CharField(
+                        choices=[
+                            ("Foto", "Foto"),
+                            ("Informe", "Informe"),
+                            ("PDF", "PDF"),
+                            ("Otro", "Otro"),
+                        ],
+                        max_length=50,
+                    ),
+                ),
+                ("descripcion", models.CharField(blank=True, max_length=255)),
+                ("archivo", models.FileField(upload_to="ordenes_documentos/%Y/%m/")),
+                ("fecha", models.DateTimeField(auto_now_add=True)),
+                (
+                    "orden",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="documentos",
+                        to="accounts.orden",
+                    ),
+                ),
+                (
+                    "subido_por",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.PROTECT,
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Documento de Orden',
-                'verbose_name_plural': 'Documentos de Orden',
-                'ordering': ['-fecha'],
+                "verbose_name": "Documento de Orden",
+                "verbose_name_plural": "Documentos de Orden",
+                "ordering": ["-fecha"],
             },
         ),
         migrations.CreateModel(
-            name='OrdenHistorialEstado',
+            name="OrdenHistorialEstado",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('estado', models.CharField(max_length=50)),
-                ('fecha', models.DateTimeField(auto_now_add=True)),
-                ('motivo', models.CharField(blank=True, max_length=255, null=True)),
-                ('orden', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='historial_estados', to='accounts.orden')),
-                ('usuario', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, to=settings.AUTH_USER_MODEL)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("estado", models.CharField(max_length=50)),
+                ("fecha", models.DateTimeField(auto_now_add=True)),
+                ("motivo", models.CharField(blank=True, max_length=255, null=True)),
+                (
+                    "orden",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="historial_estados",
+                        to="accounts.orden",
+                    ),
+                ),
+                (
+                    "usuario",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.PROTECT,
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Historial de Estado de Orden',
-                'verbose_name_plural': 'Historiales de Estado de Orden',
-                'ordering': ['-fecha'],
+                "verbose_name": "Historial de Estado de Orden",
+                "verbose_name_plural": "Historiales de Estado de Orden",
+                "ordering": ["-fecha"],
             },
         ),
         migrations.CreateModel(
-            name='OrdenPausa',
+            name="OrdenPausa",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('creado_en', models.DateTimeField(auto_now_add=True)),
-                ('actualizado_en', models.DateTimeField(auto_now=True)),
-                ('inicio', models.DateTimeField(auto_now_add=True)),
-                ('fin', models.DateTimeField(blank=True, null=True)),
-                ('motivo', models.CharField(blank=True, max_length=255, null=True)),
-                ('orden', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='pausas', to='accounts.orden')),
-                ('usuario', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, to=settings.AUTH_USER_MODEL)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("creado_en", models.DateTimeField(auto_now_add=True)),
+                ("actualizado_en", models.DateTimeField(auto_now=True)),
+                ("inicio", models.DateTimeField(auto_now_add=True)),
+                ("fin", models.DateTimeField(blank=True, null=True)),
+                ("motivo", models.CharField(blank=True, max_length=255, null=True)),
+                (
+                    "orden",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="pausas",
+                        to="accounts.orden",
+                    ),
+                ),
+                (
+                    "usuario",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.PROTECT,
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Pausa de Orden',
-                'verbose_name_plural': 'Pausas de Orden',
-                'ordering': ['-inicio'],
+                "verbose_name": "Pausa de Orden",
+                "verbose_name_plural": "Pausas de Orden",
+                "ordering": ["-inicio"],
             },
         ),
         migrations.CreateModel(
-            name='OrdenItem',
+            name="OrdenItem",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('cantidad', models.DecimalField(decimal_places=2, default=1.0, max_digits=10)),
-                ('precio_unitario', models.DecimalField(decimal_places=2, max_digits=10)),
-                ('orden', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='items', to='accounts.orden')),
-                ('producto', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, to='accounts.producto')),
-                ('servicio', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, to='accounts.servicio')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "cantidad",
+                    models.DecimalField(decimal_places=2, default=1.0, max_digits=10),
+                ),
+                (
+                    "precio_unitario",
+                    models.DecimalField(decimal_places=2, max_digits=10),
+                ),
+                (
+                    "orden",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="items",
+                        to="accounts.orden",
+                    ),
+                ),
+                (
+                    "producto",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        to="accounts.producto",
+                    ),
+                ),
+                (
+                    "servicio",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        to="accounts.servicio",
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Ítem de Orden',
-                'verbose_name_plural': 'Ítems de Orden',
+                "verbose_name": "Ítem de Orden",
+                "verbose_name_plural": "Ítems de Orden",
             },
         ),
         migrations.CreateModel(
-            name='Vehiculo',
+            name="Vehiculo",
             fields=[
-                ('creado_en', models.DateTimeField(auto_now_add=True)),
-                ('actualizado_en', models.DateTimeField(auto_now=True)),
-                ('patente', models.CharField(db_index=True, max_length=10, primary_key=True, serialize=False)),
-                ('marca', models.CharField(max_length=50)),
-                ('modelo', models.CharField(max_length=50)),
-                ('anio', models.IntegerField(verbose_name='Año')),
-                ('color', models.CharField(blank=True, max_length=30, null=True)),
-                ('vin', models.CharField(blank=True, max_length=50, null=True, unique=True, verbose_name='VIN')),
-                ('kilometraje', models.IntegerField(blank=True, null=True)),
-                ('is_active', models.BooleanField(default=True)),
-                ('chofer', models.ForeignKey(blank=True, limit_choices_to={'groups__name': 'Chofer', 'is_active': True}, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='vehiculos', to=settings.AUTH_USER_MODEL)),
+                ("creado_en", models.DateTimeField(auto_now_add=True)),
+                ("actualizado_en", models.DateTimeField(auto_now=True)),
+                (
+                    "patente",
+                    models.CharField(
+                        db_index=True, max_length=10, primary_key=True, serialize=False
+                    ),
+                ),
+                ("marca", models.CharField(max_length=50)),
+                ("modelo", models.CharField(max_length=50)),
+                ("anio", models.IntegerField(verbose_name="Año")),
+                ("color", models.CharField(blank=True, max_length=30, null=True)),
+                (
+                    "vin",
+                    models.CharField(
+                        blank=True,
+                        max_length=50,
+                        null=True,
+                        unique=True,
+                        verbose_name="VIN",
+                    ),
+                ),
+                ("kilometraje", models.IntegerField(blank=True, null=True)),
+                ("is_active", models.BooleanField(default=True)),
+                (
+                    "chofer",
+                    models.ForeignKey(
+                        blank=True,
+                        limit_choices_to={"groups__name": "Chofer", "is_active": True},
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="vehiculos",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Vehículo',
-                'verbose_name_plural': 'Vehículos',
+                "verbose_name": "Vehículo",
+                "verbose_name_plural": "Vehículos",
             },
         ),
         migrations.AddField(
-            model_name='orden',
-            name='vehiculo',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, related_name='ordenes', to='accounts.vehiculo'),
+            model_name="orden",
+            name="vehiculo",
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.PROTECT,
+                related_name="ordenes",
+                to="accounts.vehiculo",
+            ),
         ),
         migrations.AddField(
-            model_name='agendamiento',
-            name='vehiculo',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, related_name='agendamientos', to='accounts.vehiculo'),
+            model_name="agendamiento",
+            name="vehiculo",
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.PROTECT,
+                related_name="agendamientos",
+                to="accounts.vehiculo",
+            ),
         ),
         migrations.AlterUniqueTogether(
-            name='agendamiento',
-            unique_together={('vehiculo', 'fecha_hora_programada')},
+            name="agendamiento",
+            unique_together={("vehiculo", "fecha_hora_programada")},
         ),
     ]

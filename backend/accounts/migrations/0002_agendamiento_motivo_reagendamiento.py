@@ -6,13 +6,18 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('accounts', '0001_initial'),
+        ("accounts", "0001_initial"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='agendamiento',
-            name='motivo_reagendamiento',
-            field=models.TextField(blank=True, help_text='El motivo por el cual el supervisor cambió la hora de la cita original.', null=True, verbose_name='Motivo de Reagendamiento'),
+            model_name="agendamiento",
+            name="motivo_reagendamiento",
+            field=models.TextField(
+                blank=True,
+                help_text="El motivo por el cual el Jefetaller cambió la hora de la cita original.",
+                null=True,
+                verbose_name="Motivo de Reagendamiento",
+            ),
         ),
     ]

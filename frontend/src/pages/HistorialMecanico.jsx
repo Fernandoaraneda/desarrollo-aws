@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import apiClient from '../api/axios.js';
-import styles from '../css/gestionagenda.module.css'; 
+import styles from '../css/gestionagenda.module.css';
 import searchStyles from '../css/gestionusuarios.module.css';
 import { useUserStore } from '../store/authStore.js';
-import ordenesStyles from '../css/gestionordenes.module.css'; 
-import { History, Eye, Search, Edit } from 'lucide-react'; 
+import ordenesStyles from '../css/gestionordenes.module.css';
+import { History, Eye, Search, Edit } from 'lucide-react';
 
 
 const ModalCambiarEstado = ({ orden, onClose, onSave }) => {
@@ -74,20 +74,20 @@ export default function HistorialMecanico() {
     const [searchTerm, setSearchTerm] = useState('');
     const { user } = useUserStore();
     const [ordenSeleccionada, setOrdenSeleccionada] = useState(null);
-    const tienePrivilegiosAdmin = (user.rol === 'Supervisor' || user.rol === 'Administrativo');
+    const tienePrivilegiosAdmin = (user.rol === 'Jefetaller' || user.rol === 'Supervisor');
     useEffect(() => {
-  
+
         const fetchHistorialMecanico = async () => {
             try {
-            
+
                 const response = await apiClient.get('/ordenes/');
                 const todasMisOrdenes = response.data.results || response.data || [];
                 const finalizadas = todasMisOrdenes.filter(o => o.estado === 'Finalizado');
-           
+
 
                 finalizadas.sort((a, b) => new Date(b.fecha_entrega_real) - new Date(a.fecha_entrega_real));
 
-                setOrdenes(finalizadas); 
+                setOrdenes(finalizadas);
             } catch (err) {
                 setError("No se pudo cargar tu historial de trabajos.");
             } finally {
@@ -96,9 +96,9 @@ export default function HistorialMecanico() {
         };
 
         fetchHistorialMecanico();
-    }, []); 
+    }, []);
 
- 
+
     const filteredOrdenes = useMemo(() => {
         return ordenes.filter(orden =>
 
@@ -107,11 +107,11 @@ export default function HistorialMecanico() {
         );
     }, [ordenes, searchTerm]);
     const handleEstadoActualizado = (ordenId, nuevoEstado) => {
-        
+
         if (nuevoEstado !== 'Finalizado') {
             setOrdenes(prevOrdenes => prevOrdenes.filter(o => o.id !== ordenId));
         } else {
-         
+
             setOrdenes(prevOrdenes =>
                 prevOrdenes.map(o =>
                     o.id === ordenId ? { ...o, estado: nuevoEstado } : o
@@ -120,7 +120,7 @@ export default function HistorialMecanico() {
         }
     };
 
-    if (isLoading) return <p>Cargando historial...</p>; 
+    if (isLoading) return <p>Cargando historial...</p>;
     if (error) return <p style={{ color: 'red' }}>{error}</p>;
 
 
@@ -132,7 +132,7 @@ export default function HistorialMecanico() {
                 <p>Aquí puedes ver todas las órdenes de servicio que has completado.</p>
             </header>
 
-         
+
             <div className={searchStyles.controls}>
                 <div className={searchStyles.searchBox}>
                     <Search size={20} className={searchStyles.searchIcon} />
@@ -158,7 +158,7 @@ export default function HistorialMecanico() {
                             </tr>
                         </thead>
                         <tbody>
-                       
+
                             {filteredOrdenes.length > 0 ? (
                                 filteredOrdenes.map(orden => (
                                     <tr key={orden.id}>
@@ -172,10 +172,10 @@ export default function HistorialMecanico() {
                                         </td>
                                         <td>{orden.descripcion_falla}</td>
 
-                
+
                                         <td className={ordenesStyles.actionsCell}>
                                             <button
-                                            
+
                                                 className={ordenesStyles.actionButton}
                                                 onClick={() => navigate(`/ordenes/${orden.id}`)}
                                                 title="Ver Detalle de la Orden"
@@ -198,7 +198,7 @@ export default function HistorialMecanico() {
                             ) : (
                                 <tr>
                                     <td colSpan="5" style={{ textAlign: 'center', padding: '1rem' }}>
-                                        
+
                                         {searchTerm
                                             ? 'No se encontraron órdenes finalizadas con esa patente.'
                                             : 'No tienes órdenes finalizadas en tu historial.'

@@ -1,8 +1,8 @@
 import React from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useUserStore } from "../store/authStore";
+import JefetallerWidgets from "../components/dashboard/JefetallerWidgets.jsx";
 import SupervisorWidgets from "../components/dashboard/SupervisorWidgets.jsx";
-import AdministrativoWidgets from "../components/dashboard/AdministrativoWidgets.jsx";
 import DashboardMecanico from "../components/dashboard/DashboardMecanico.jsx";
 import DashboardChofer from "../components/dashboard/DashboardChofer.jsx";
 import PanelIngresos from "../pages/PanelIngresos.jsx";
@@ -23,10 +23,10 @@ export default function Dashboard() {
     if (!user?.rol) return <p>Cargando información del rol...</p>;
 
     switch (user.rol) {
+      case 'Jefetaller':
+        return <JefetallerWidgets />
       case 'Supervisor':
         return <SupervisorWidgets />;
-      case 'Administrativo':
-        return <AdministrativoWidgets />;
       case 'Mecanico':
         return <DashboardMecanico />;
       case 'Chofer':

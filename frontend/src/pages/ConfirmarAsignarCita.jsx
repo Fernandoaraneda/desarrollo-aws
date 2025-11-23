@@ -109,7 +109,7 @@ export default function ConfirmarAsignarCita() {
             return;
         }
 
- 
+
         const fechaParaAPI = toLocalISOString(selectedDate);
 
         const fetchAgendaMecanico = async () => {
@@ -235,7 +235,7 @@ export default function ConfirmarAsignarCita() {
 
 
     const handleDoEnviarGrua = async () => {
-        setIsConfirmGruaOpen(false); 
+        setIsConfirmGruaOpen(false);
         try {
             const res = await apiClient.post(`/agendamientos/${id}/enviar-grua/`);
             setAgendamiento(res.data);
@@ -302,13 +302,13 @@ export default function ConfirmarAsignarCita() {
                         <h4>
                             <ImageIcon /> Imagen Adjunta
                         </h4>
-                      
+
                         <AuthenticatedImage
                             src={agendamiento.imagen_averia}
                             alt="Avería reportada"
                             className={styles.fullWidthImage}
                         />
-                  
+
                     </div>
                 )}
                 {agendamiento.es_mantenimiento && (
@@ -477,7 +477,7 @@ export default function ConfirmarAsignarCita() {
                                     : !selectedMecanicoId
                                         ? 'Seleccione un mecánico primero'
                                         : 'Seleccione una hora'}{' '}
-                                
+
                             </option>
 
                             {!isLoadingAgenda &&
@@ -524,7 +524,7 @@ export default function ConfirmarAsignarCita() {
                         <button
                             type="button"
                             className={styles.cancelButton}
-                            onClick={() => navigate('/panel-supervisor')}
+                            onClick={() => navigate('/panel-Jefetaller')}
                         >
                             Volver
                         </button>
@@ -551,7 +551,7 @@ export default function ConfirmarAsignarCita() {
                 onClose={() => {
                     setIsAlertOpen(false);
                     setError(null);
-                    if (successMessage) navigate('/panel-supervisor');
+                    if (successMessage) navigate('/panel-Jefetaller');
                     setSuccessMessage(null);
                 }}
                 title={error ? 'Error' : 'Éxito'}

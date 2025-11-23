@@ -6,13 +6,17 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('accounts', '0002_agendamiento_motivo_reagendamiento'),
+        ("accounts", "0002_agendamiento_motivo_reagendamiento"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='agendamiento',
-            name='fecha_hora_programada',
-            field=models.DateTimeField(blank=True, help_text='La fecha/hora asignada por el Supervisor. Puede estar vacía si es solo una solicitud.', null=True),
+            model_name="agendamiento",
+            name="fecha_hora_programada",
+            field=models.DateTimeField(
+                blank=True,
+                help_text="La fecha/hora asignada por el Jefetaller. Puede estar vacía si es solo una solicitud.",
+                null=True,
+            ),
         ),
     ]

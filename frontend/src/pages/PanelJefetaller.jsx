@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import apiClient from '/src/api/axios.js';
-import styles from '../css/gestionagenda.module.css'; 
-import { Check, Edit, CalendarCheck } from 'lucide-react'; 
+import styles from '../css/gestionagenda.module.css';
+import { Check, Edit, CalendarCheck } from 'lucide-react';
 
-export default function PanelSupervisor() {
+export default function PanelJefetaller() {
     const [agendamientos, setAgendamientos] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -13,7 +13,7 @@ export default function PanelSupervisor() {
     useEffect(() => {
         const loadAgendamientos = async () => {
             try {
-                
+
                 const res = await apiClient.get('/agendamientos/?estado__ne=Finalizado&estado__ne=Cancelado');
                 setAgendamientos(res.data.results || res.data || []);
             } catch (err) {
@@ -25,7 +25,7 @@ export default function PanelSupervisor() {
         loadAgendamientos();
     }, []);
 
- 
+
     const { citasPorConfirmar, citasConfirmadas } = useMemo(() => {
         const porConfirmar = agendamientos.filter(a => a.estado === 'Programado');
         const confirmadas = agendamientos.filter(a => a.estado === 'Confirmado');
@@ -33,7 +33,7 @@ export default function PanelSupervisor() {
     }, [agendamientos]);
 
     if (isLoading) return <p>Cargando...</p>;
-    if (error) return <p style={{color: 'red'}}>{error}</p>;
+    if (error) return <p style={{ color: 'red' }}>{error}</p>;
 
     return (
         <div className={styles.pageWrapper}>
@@ -59,8 +59,8 @@ export default function PanelSupervisor() {
                                 citasPorConfirmar.map(a => (
                                     <tr key={a.id}>
                                         <td>
-                                            {a.fecha_hora_programada 
-                                                ? new Date(a.fecha_hora_programada).toLocaleDateString('es-CL') 
+                                            {a.fecha_hora_programada
+                                                ? new Date(a.fecha_hora_programada).toLocaleDateString('es-CL')
                                                 : <span style={{ color: '#f97316', fontWeight: 'bold' }}>Sin Asignar Fecha</span>
                                             }
                                         </td>
@@ -68,7 +68,7 @@ export default function PanelSupervisor() {
                                         <td>{a.chofer_nombre}</td>
                                         <td>{a.motivo_ingreso}</td>
                                         <td>
-                                            <button 
+                                            <button
                                                 className={styles.actionButton}
                                                 onClick={() => navigate(`/agenda/confirmar/${a.id}`)}
                                             >
@@ -87,8 +87,8 @@ export default function PanelSupervisor() {
                 </div>
             </div>
 
-    
-            <div className={styles.tableCard} style={{marginTop: '2rem'}}>
+
+            <div className={styles.tableCard} style={{ marginTop: '2rem' }}>
                 <h2 className={styles.tableTitle}>Próximas Citas Confirmadas</h2>
                 <div className={styles.tableContainer}>
                     <table className={styles.table}>
@@ -110,9 +110,9 @@ export default function PanelSupervisor() {
                                         <td>{a.chofer_nombre}</td>
                                         <td>{a.mecanico_nombre}</td>
                                         <td>
-                                            
-                                            <button 
-                                                className={`${styles.actionButton} ${styles.editButton}`} 
+
+                                            <button
+                                                className={`${styles.actionButton} ${styles.editButton}`}
                                                 onClick={() => navigate(`/agenda/confirmar/${a.id}`)}
                                             >
                                                 <Edit size={16} /> Editar Cita

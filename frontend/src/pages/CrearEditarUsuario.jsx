@@ -16,7 +16,7 @@ const calcularDV = (rutCuerpo) => {
     multiplo = multiplo === 7 ? 2 : multiplo + 1;
   }
   const dvCalculado = 11 - (suma % 11);
-  
+
   if (dvCalculado === 11) return '0';
   if (dvCalculado === 10) return 'K';
   return `${dvCalculado}`;
@@ -26,12 +26,12 @@ const calcularDV = (rutCuerpo) => {
 const formatearRut = (rut) => {
   const rutLimpio = rut.replace(/[^0-9kK]/gi, '');
   if (rutLimpio.length < 2) return rutLimpio;
-  
+
   const cuerpo = rutLimpio.slice(0, -1);
   const dv = rutLimpio.slice(-1).toUpperCase();
-  
+
   const cuerpoFormateado = cuerpo.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-  
+
   return `${cuerpoFormateado}-${dv}`;
 };
 
@@ -39,10 +39,10 @@ const formatearRut = (rut) => {
 const validarRut = (rut) => {
   const rutLimpio = rut.replace(/[^0-9kK]/gi, '');
   if (rutLimpio.length < 2) return false;
-  
+
   const cuerpo = rutLimpio.slice(0, -1);
   const dv = rutLimpio.slice(-1).toUpperCase();
-  
+
   return calcularDV(cuerpo) === dv;
 };
 
@@ -74,21 +74,21 @@ export default function CrearEditarUsuario() {
     rut: '',
     telefono: '',
   });
-  
+
   const [isLoading, setIsLoading] = useState(isEditMode);
   const [error, setError] = useState(null);
-  const [rutError, setRutError] = useState(''); 
+  const [rutError, setRutError] = useState('');
 
   useEffect(() => {
     if (isEditMode) {
       apiClient.get(`/users/${id}/`)
         .then(response => {
           const { rol, ...data } = response.data;
-          setUserData(prev => ({ 
-            ...prev, 
-            ...data, 
+          setUserData(prev => ({
+            ...prev,
+            ...data,
             rol: rol || 'Chofer',
-            telefono: data.telefono || '' 
+            telefono: data.telefono || ''
           }));
           setIsLoading(false);
         })
@@ -102,16 +102,16 @@ export default function CrearEditarUsuario() {
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    
+
     let finalValue = type === 'checkbox' ? checked : value;
 
-    
-    switch(name) {
+
+    switch (name) {
       case 'rut':
-      
+
         finalValue = value.replace(/[^0-9kK]/gi, '').slice(0, 9);
-       
-        setRutError(''); 
+
+        setRutError('');
         break;
       case 'telefono':
         finalValue = formatTelefono(value);
@@ -128,26 +128,26 @@ export default function CrearEditarUsuario() {
     }));
   };
 
- 
+
   const handleRutBlur = (e) => {
     const rutLimpio = e.target.value;
-    
+
     if (rutLimpio.length < 2) {
-      
-      return; 
+
+      return;
     }
 
     if (validarRut(rutLimpio)) {
-      
+
       setRutError('');
       setUserData(prev => ({
         ...prev,
         rut: formatearRut(rutLimpio)
       }));
     } else {
-     
+
       setRutError('El RUT es inválido (Dígito Verificador no coincide).');
-  
+
     }
   };
 
@@ -155,13 +155,13 @@ export default function CrearEditarUsuario() {
     e.preventDefault();
     setError(null);
 
-   
+
     if (rutError) {
       setError("Por favor, corrige el RUT antes de guardar.");
       return;
     }
-    
-    
+
+
     let rutFinal = userData.rut;
     if (!userData.rut.includes('-')) {
       if (validarRut(userData.rut)) {
@@ -174,13 +174,13 @@ export default function CrearEditarUsuario() {
       }
     }
 
-   
+
     if (userData.telefono && userData.telefono.length !== 9) {
       setError("El teléfono debe tener 9 dígitos.");
       return;
     }
 
-    
+
     const dataParaEnviar = { ...userData, rut: rutFinal };
 
     try {
@@ -191,7 +191,7 @@ export default function CrearEditarUsuario() {
       }
       navigate('/usuarios');
     } catch (err) {
-      
+
       if (err.response && err.response.data) {
         const errorData = err.response.data;
         if (typeof errorData === 'object') {
@@ -209,7 +209,7 @@ export default function CrearEditarUsuario() {
       }
     }
   };
-  
+
   if (isLoading) return <div>Cargando...</div>;
 
   return (
@@ -231,63 +231,63 @@ export default function CrearEditarUsuario() {
               <input type="email" name="email" id="email" value={userData.email} onChange={handleChange} required />
             </div>
 
-            
+
             <div className={styles.formField}>
               <label htmlFor="first_name">Nombre</label>
-              <input 
-                type="text" 
-                name="first_name" 
-                id="first_name" 
-                value={userData.first_name} 
-                onChange={handleChange} 
+              <input
+                type="text"
+                name="first_name"
+                id="first_name"
+                value={userData.first_name}
+                onChange={handleChange}
                 maxLength={20}
               />
             </div>
             <div className={styles.formField}>
               <label htmlFor="last_name">Apellidos</label>
-              <input 
-                type="text" 
-                name="last_name" 
-                id="last_name" 
-                value={userData.last_name} 
-                onChange={handleChange} 
-                maxLength={20} 
+              <input
+                type="text"
+                name="last_name"
+                id="last_name"
+                value={userData.last_name}
+                onChange={handleChange}
+                maxLength={20}
               />
             </div>
 
-            
+
             <div className={styles.formField}>
               <label htmlFor="rut">RUT</label>
-              <input 
-                type="text" 
-                name="rut" 
-                id="rut" 
-                value={userData.rut} 
-                onChange={handleChange} 
-                onBlur={handleRutBlur}  
-                required 
+              <input
+                type="text"
+                name="rut"
+                id="rut"
+                value={userData.rut}
+                onChange={handleChange}
+                onBlur={handleRutBlur}
+                required
                 placeholder="Ej: 123456789 (sin puntos ni guion)"
-                maxLength={isEditMode || userData.rut.includes('-') ? 12 : 9} 
+                maxLength={isEditMode || userData.rut.includes('-') ? 12 : 9}
                 disabled={isEditMode}
               />
-              
+
               {rutError && <p className={styles.fieldError}>{rutError}</p>}
             </div>
-            
+
             <div className={styles.formField}>
               <label htmlFor="telefono">Teléfono</label>
-              <input 
-                type="tel" 
-                name="telefono" 
-                id="telefono" 
-                value={userData.telefono} 
-                onChange={handleChange} 
+              <input
+                type="tel"
+                name="telefono"
+                id="telefono"
+                value={userData.telefono}
+                onChange={handleChange}
                 placeholder="Ej: 912345678"
-                maxLength={9} 
+                maxLength={9}
               />
             </div>
-          
-            
+
+
             {!isEditMode && (
               <div className={`${styles.formField} ${styles.fullWidth}`}>
                 <label htmlFor="password">Contraseña</label>
@@ -300,22 +300,22 @@ export default function CrearEditarUsuario() {
                 <option>Chofer</option>
                 <option>Mecánico</option>
                 <option>Seguridad</option>
+                <option>Jefetaller</option>
                 <option>Supervisor</option>
-                <option>Administrativo</option>
                 <option>Control Llaves</option>
                 <option>Repuestos</option>
                 <option>Grua</option>
               </select>
             </div>
-             <div className={`${styles.formField} ${styles.checkboxField} ${styles.fullWidth}`}>
+            <div className={`${styles.formField} ${styles.checkboxField} ${styles.fullWidth}`}>
               <input type="checkbox" name="is_active" id="is_active" checked={userData.is_active} onChange={handleChange} />
               <label htmlFor="is_active">Usuario Activo</label>
             </div>
           </div>
-          
-         
+
+
           {error && <p style={{ color: 'red', marginTop: '1rem', fontWeight: 'bold' }}>{error}</p>}
-          
+
           <div className={styles.formActions}>
             <button type="button" className={styles.cancelButton} onClick={() => navigate('/usuarios')}>Cancelar</button>
             <button type="submit" className={styles.submitButton}>Guardar Cambios</button>

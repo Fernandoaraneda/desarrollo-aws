@@ -184,7 +184,7 @@ class Agendamiento(TimeStampedModel):
     fecha_hora_programada = models.DateTimeField(
         null=True,
         blank=True,
-        help_text="La fecha/hora asignada por el Supervisor. Puede estar vacía si es solo una solicitud.",
+        help_text="La fecha/hora asignada por el Jefetaller. Puede estar vacía si es solo una solicitud.",
     )
     duracion_estimada_minutos = models.PositiveIntegerField(default=60)
     fecha_hora_fin = models.DateTimeField(editable=False, null=True, blank=True)
@@ -206,7 +206,7 @@ class Agendamiento(TimeStampedModel):
         "Motivo de Reagendamiento",
         blank=True,
         null=True,
-        help_text="El motivo por el cual el supervisor cambió la hora de la cita original.",
+        help_text="El motivo por el cual el Jefetaller cambió la hora de la cita original.",
     )
 
     es_mantenimiento = models.BooleanField(
@@ -340,7 +340,7 @@ class Orden(TimeStampedModel):
         null=True,
         related_name="ordenes_asignadas",
         limit_choices_to={
-            "groups__name__in": ["Mecanico", "Supervisor"],
+            "groups__name__in": ["Mecanico", "Jefetaller"],
             "is_active": True,
         },
     )
@@ -687,41 +687,44 @@ class LlaveHistorialEstado(TimeStampedModel):
         verbose_name = "Historial de Estado de Llave"
         verbose_name_plural = "Historiales de Estados de Llave"
         ordering = ["-fecha"]
+
+
 # --------------------------------------------------------------------------
-# MÓDULO DE CHAT 
+# MÓDULO DE CHAT
 # --------------------------------------------------------------------------
+
 
 class ChatRoom(TimeStampedModel):
     """
     Representa una sala de chat entre dos o más usuarios.
     Hereda 'creado_en' y 'actualizado_en' de TimeStampedModel.
     """
+
     participantes = models.ManyToManyField(
-        Usuario, 
+        Usuario,
         related_name="chat_rooms",
         verbose_name="Participantes",
-        help_text="Usuarios que son parte de esta conversación."
+        help_text="Usuarios que son parte de esta conversación.",
     )
     oculto_para = models.ManyToManyField(
         Usuario,
         related_name="chat_rooms_ocultos",
         verbose_name="Oculto Para",
         blank=True,
-        help_text="Usuarios que han eliminado visualmente este chat."
+        help_text="Usuarios que han eliminado visualmente este chat.",
     )
-    
+
     nombre = models.CharField(
-        max_length=100, 
-        blank=True, 
-        null=True, 
-        help_text="Nombre opcional para chats grupales."
+        max_length=100,
+        blank=True,
+        null=True,
+        help_text="Nombre opcional para chats grupales.",
     )
 
     def __str__(self):
         if self.nombre:
             return self.nombre
-        
-      
+
         participantes_list = list(self.participantes.all()[:2])
         nombres = [u.get_full_name() or u.username for u in participantes_list]
         return f"Chat: {', '.join(nombres)}"
@@ -729,7 +732,7 @@ class ChatRoom(TimeStampedModel):
     class Meta:
         verbose_name = "Sala de Chat"
         verbose_name_plural = "Salas de Chat"
-        ordering = ['-actualizado_en'] 
+        ordering = ["-actualizado_en"]
 
 
 class ChatMessage(TimeStampedModel):
@@ -737,33 +740,24 @@ class ChatMessage(TimeStampedModel):
     Un mensaje individual dentro de una sala de chat.
     Hereda 'creado_en' y 'actualizado_en' de TimeStampedModel.
     """
+
     room = models.ForeignKey(
-        ChatRoom, 
-        on_delete=models.CASCADE, 
-        related_name="mensajes",
-        verbose_name="Sala"
+        ChatRoom, on_delete=models.CASCADE, related_name="mensajes", verbose_name="Sala"
     )
     autor = models.ForeignKey(
-        Usuario, 
+        Usuario,
         on_delete=models.SET_NULL,
         null=True,
         related_name="mensajes_enviados",
-        verbose_name="Autor"
+        verbose_name="Autor",
     )
     contenido = models.TextField("Contenido del Mensaje")
-    
 
     leido_por = models.ManyToManyField(
-        Usuario,
-        related_name="mensajes_leidos",
-        verbose_name="Leído por",
-        blank=True
+        Usuario, related_name="mensajes_leidos", verbose_name="Leído por", blank=True
     )
     archivo = models.FileField(
-        "Archivo Adjunto",
-        upload_to="chat_archivos/%Y/%m/",
-        blank=True,
-        null=True
+        "Archivo Adjunto", upload_to="chat_archivos/%Y/%m/", blank=True, null=True
     )
 
     def __str__(self):
@@ -773,4 +767,4 @@ class ChatMessage(TimeStampedModel):
     class Meta:
         verbose_name = "Mensaje de Chat"
         verbose_name_plural = "Mensajes de Chat"
-        ordering = ['creado_en'] # Mostrar los más antiguos primero (orden cronológico)
+        ordering = ["creado_en"]  # Mostrar los más antiguos primero (orden cronológico)

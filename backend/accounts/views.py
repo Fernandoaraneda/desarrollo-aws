@@ -41,7 +41,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from django.shortcuts import get_object_or_404
 from rest_framework.views import APIView
 import os
-from .permissions import IsAdministrativo
+from .permissions import IsSupervisor
 import threading
 import os
 import mimetypes
@@ -126,42 +126,44 @@ def enviar_correo_notificacion(usuario, subject, message_body):
 
     except Exception as e:
         print(f"ERROR al enviar correo a {recipient_email}: {e}")
+
+
+class IsJefetaller(permissions.BasePermission):
+    def has_permission(self, request, view):
+        return bool(
+            request.user
+            and request.user.is_authenticated
+            and request.user.groups.filter(
+                name__in=["Jefetaller", "Supervisor"]
+            ).exists()
+        )
+
+
+class IsJefetallerOrMecanico(permissions.BasePermission):
+    def has_permission(self, request, view):
+        return bool(
+            request.user
+            and request.user.is_authenticated
+            and request.user.groups.filter(
+                name__in=["Jefetaller", "Mecanico", "Supervisor"]
+            ).exists()
+        )
+
+
+class IsJefetallerOrSeguridad(permissions.BasePermission):
+    def has_permission(self, request, view):
+        return bool(
+            request.user
+            and request.user.is_authenticated
+            and request.user.groups.filter(
+                name__in=["Jefetaller", "Seguridad", "Supervisor"]
+            ).exists()
+        )
+
+
 class IsSupervisor(permissions.BasePermission):
-    def has_permission(self, request, view):
-        return bool(
-            request.user
-            and request.user.is_authenticated
-            and request.user.groups.filter(
-                name__in=["Supervisor", "Administrativo"]
-            ).exists()
-        )
-
-
-class IsSupervisorOrMecanico(permissions.BasePermission):
-    def has_permission(self, request, view):
-        return bool(
-            request.user
-            and request.user.is_authenticated
-            and request.user.groups.filter(
-                name__in=["Supervisor", "Mecanico", "Administrativo"]
-            ).exists()
-        )
-
-
-class IsSupervisorOrSeguridad(permissions.BasePermission):
-    def has_permission(self, request, view):
-        return bool(
-            request.user
-            and request.user.is_authenticated
-            and request.user.groups.filter(
-                name__in=["Supervisor", "Seguridad", "Administrativo"]
-            ).exists()
-        )
-
-
-class IsAdministrativo(permissions.BasePermission):
     """
-    Permiso específico para el rol Administrativo o Supervisor.
+    Permiso específico para el rol Supervisor o Jefetaller.
     """
 
     def has_permission(self, request, view):
@@ -169,14 +171,14 @@ class IsAdministrativo(permissions.BasePermission):
             request.user
             and request.user.is_authenticated
             and request.user.groups.filter(
-                name__in=["Administrativo", "Supervisor"]
+                name__in=["Supervisor", "Jefetaller"]
             ).exists()
         )
 
 
 class IsControlLlaves(permissions.BasePermission):
     """
-    Permiso para el Encargado de Llaves o Supervisor.
+    Permiso para el Encargado de Llaves o Jefetaller.
     """
 
     def has_permission(self, request, view):
@@ -184,14 +186,14 @@ class IsControlLlaves(permissions.BasePermission):
             request.user
             and request.user.is_authenticated
             and request.user.groups.filter(
-                name__in=["Control Llaves", "Supervisor", "Administrativo"]
+                name__in=["Control Llaves", "Jefetaller", "Supervisor"]
             ).exists()
         )
 
 
-class IsSupervisorOrControlLlaves(permissions.BasePermission):
+class IsJefetallerOrControlLlaves(permissions.BasePermission):
     """
-    Permiso para Supervisor O Encargado de Llaves (para ver listas de usuarios).
+    Permiso para Jefetaller O Encargado de Llaves (para ver listas de usuarios).
     """
 
     def has_permission(self, request, view):
@@ -199,14 +201,14 @@ class IsSupervisorOrControlLlaves(permissions.BasePermission):
             request.user
             and request.user.is_authenticated
             and request.user.groups.filter(
-                name__in=["Supervisor", "Control Llaves", "Administrativo"]
+                name__in=["Jefetaller", "Control Llaves", "Supervisor"]
             ).exists()
         )
 
 
 class IsRepuestos(permissions.BasePermission):
     """
-    Permiso para el rol de Repuestos o Supervisor.
+    Permiso para el rol de Repuestos o Jefetaller.
     """
 
     def has_permission(self, request, view):
@@ -214,9 +216,11 @@ class IsRepuestos(permissions.BasePermission):
             request.user
             and request.user.is_authenticated
             and request.user.groups.filter(
-                name__in=["Repuestos", "Supervisor", "Administrativo"]
+                name__in=["Repuestos", "Jefetaller", "Supervisor"]
             ).exists()
         )
+
+
 class LoginView(generics.GenericAPIView):
     serializer_class = LoginSerializer
     permission_classes = [AllowAny]
@@ -358,6 +362,8 @@ class ChangePasswordView(generics.GenericAPIView):
         return Response(
             {"message": "Contraseña cambiada con éxito."}, status=status.HTTP_200_OK
         )
+
+
 class UserListView(generics.ListAPIView):
     queryset = User.objects.prefetch_related("groups").all().order_by("first_name")
     serializer_class = UserSerializer
@@ -367,13 +373,13 @@ class UserListView(generics.ListAPIView):
 class UserCreateAPIView(generics.CreateAPIView):
     queryset = User.objects.all()
     serializer_class = UserCreateUpdateSerializer
-    permission_classes = [IsSupervisor]
+    permission_classes = [IsJefetaller]
 
 
 class UserRetrieveUpdateAPIView(generics.RetrieveUpdateAPIView):
     queryset = User.objects.all()
     serializer_class = UserCreateUpdateSerializer
-    permission_classes = [IsSupervisor]
+    permission_classes = [IsJefetaller]
     lookup_field = "id"
 
     def get_serializer_class(self):
@@ -384,7 +390,6 @@ class UserRetrieveUpdateAPIView(generics.RetrieveUpdateAPIView):
 
             return UserCreateUpdateSerializer
 
-
         return UserSerializer
 
 
@@ -394,12 +399,14 @@ class ChoferListView(generics.ListAPIView):
 
     def get_queryset(self):
         return User.activos.filter(groups__name="Chofer").order_by("first_name")
+
+
 dias_semana = {0: "Lun", 1: "Mar", 2: "Mié", 3: "Jue", 4: "Vie", 5: "Sáb", 6: "Dom"}
 
 
 @api_view(["GET"])
-@permission_classes([IsSupervisor])
-def supervisor_dashboard_stats(request):
+@permission_classes([IsJefetaller])
+def Jefetaller_dashboard_stats(request):
     today = now().date()
     start_of_month_dt = timezone.make_aware(
         datetime.combine(today.replace(day=1), datetime.min.time())
@@ -426,12 +433,12 @@ def supervisor_dashboard_stats(request):
     start_today = timezone.make_aware(datetime.combine(today, datetime.min.time()))
     end_today = start_today + timedelta(days=1)
     agendamientos_hoy = Agendamiento.objects.filter(
-        estado=Agendamiento.Estado.CONFIRMADO,  
+        estado=Agendamiento.Estado.CONFIRMADO,
         fecha_hora_programada__gte=start_today,
         fecha_hora_programada__lt=end_today,
     ).count()
     ordenes_finalizadas_mes = Orden.objects.filter(
-        estado=Orden.Estado.FINALIZADO,  
+        estado=Orden.Estado.FINALIZADO,
         fecha_entrega_real__gte=start_of_month_dt,
     ).count()
     ordenes_completadas = Orden.objects.filter(
@@ -521,6 +528,8 @@ def supervisor_dashboard_stats(request):
         "ordenesRecientes": ordenes_recientes_data,
     }
     return Response(response_data, status=status.HTTP_200_OK)
+
+
 class VehiculoViewSet(viewsets.ModelViewSet):
     serializer_class = VehiculoSerializer
     permission_classes = [IsAuthenticated]
@@ -588,7 +597,7 @@ class VehiculoViewSet(viewsets.ModelViewSet):
         detail=True,
         methods=["post"],
         url_path="reactivar",
-        permission_classes=[IsSupervisor],
+        permission_classes=[IsJefetaller],
     )
     def reactivar(self, request, pk=None):
         vehiculo = self.get_object()
@@ -604,7 +613,7 @@ class AgendamientoViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         user = self.request.user
         if user.groups.filter(
-            name__in=["Supervisor", "Mecanico", "Seguridad", "Administrativo"]
+            name__in=["Jefetaller", "Mecanico", "Seguridad", "Supervisor"]
         ).exists():
             return (
                 Agendamiento.objects.select_related("vehiculo", "mecanico_asignado")
@@ -621,8 +630,8 @@ class AgendamientoViewSet(viewsets.ModelViewSet):
         user = self.request.user
         agendamiento = serializer.save(creado_por=user, chofer_asociado=user)
         try:
-            supervisores = User.objects.filter(
-                groups__name__in=["Supervisor", "Administrativo"], is_active=True
+            Jefetalleres = User.objects.filter(
+                groups__name__in=["Jefetaller", "Supervisor"], is_active=True
             )
             chofer = agendamiento.creado_por
             chofer_nombre = (
@@ -632,26 +641,26 @@ class AgendamientoViewSet(viewsets.ModelViewSet):
 
             subject = f"Nueva Solicitud de Cita: {patente}"
             mensaje = f"El chofer {chofer_nombre} ha solicitado un ingreso para el vehículo {patente}. Motivo: {agendamiento.motivo_ingreso}"
-            link_supervisor = "/panel-supervisor"  
-            for supervisor in supervisores:
+            link_Jefetaller = "/panel-Jefetaller"
+            for Jefetaller in Jefetalleres:
                 Notificacion.objects.create(
-                    usuario=supervisor, mensaje=mensaje, link=link_supervisor
+                    usuario=Jefetaller, mensaje=mensaje, link=link_Jefetaller
                 )
                 thread = threading.Thread(
                     target=enviar_correo_notificacion,
-                    args=(supervisor, subject, mensaje),
+                    args=(Jefetaller, subject, mensaje),
                 )
                 thread.start()
 
         except Exception as e:
 
-            print(f"ERROR al notificar al supervisor sobre nueva cita: {e}")
+            print(f"ERROR al notificar al Jefetaller sobre nueva cita: {e}")
 
     @action(
         detail=True,
         methods=["get"],
         url_path="verificar-stock-mantenimiento",
-        permission_classes=[IsSupervisor],  
+        permission_classes=[IsJefetaller],
     )
     def verificar_stock_mantenimiento(self, request, pk=None):
         agendamiento = self.get_object()
@@ -662,7 +671,7 @@ class AgendamientoViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST,
             )
         REPUESTOS_MANTENIMIENTO = {
-            "ACE-10W40": 1,  
+            "ACE-10W40": 1,
             "FIL-AIRE-01": 1,
             "FRE-LIQ-01": 1,
         }
@@ -710,9 +719,9 @@ class AgendamientoViewSet(viewsets.ModelViewSet):
         detail=True,
         methods=["post"],
         url_path="confirmar-y-asignar",
-        permission_classes=[IsSupervisor],
+        permission_classes=[IsJefetaller],
     )
-    @transaction.atomic  
+    @transaction.atomic
     def confirmar_y_asignar(self, request, pk=None):
         agendamiento = self.get_object()
         mecanico_id_raw = request.data.get("mecanico_id")
@@ -723,7 +732,7 @@ class AgendamientoViewSet(viewsets.ModelViewSet):
             REPUESTOS_MANTENIMIENTO = {
                 "ACE-10W40": 1,
                 "FIL-AIRE-01": 1,
-                "FRE-LIQ-01": 1,  
+                "FRE-LIQ-01": 1,
             }
         try:
             mecanico_id = int(mecanico_id_raw)
@@ -818,7 +827,7 @@ class AgendamientoViewSet(viewsets.ModelViewSet):
             try:
                 if agendamiento.chofer_asociado:
                     taller_direccion = (
-                        "Taller no especificado. Consulte con su supervisor."
+                        "Taller no especificado. Consulte con su Jefetaller."
                     )
                     if agendamiento.vehiculo and agendamiento.vehiculo.taller:
                         taller_direccion = agendamiento.vehiculo.taller.direccion
@@ -889,7 +898,7 @@ class AgendamientoViewSet(viewsets.ModelViewSet):
         detail=True,
         methods=["post"],
         url_path="registrar-ingreso",
-        permission_classes=[IsSupervisorOrSeguridad],
+        permission_classes=[IsJefetallerOrSeguridad],
     )
     @transaction.atomic
     def registrar_ingreso(self, request, pk=None):
@@ -945,8 +954,8 @@ class AgendamientoViewSet(viewsets.ModelViewSet):
                         producto=producto,
                         cantidad=cantidad_necesaria,
                         precio_unitario=producto.precio_venta,
-                        solicitado_por=agendamiento.mecanico_asignado,  
-                        gestionado_por=request.user,  
+                        solicitado_por=agendamiento.mecanico_asignado,
+                        gestionado_por=request.user,
                         fecha_gestion=timezone.now(),
                         estado_repuesto=OrdenItem.EstadoRepuesto.APROBADO,
                     )
@@ -955,7 +964,7 @@ class AgendamientoViewSet(viewsets.ModelViewSet):
                 Notificacion.objects.create(
                     usuario=agendamiento.mecanico_asignado,
                     mensaje=mensaje,
-                    link=f"/ordenes/{nueva_orden.id}", 
+                    link=f"/ordenes/{nueva_orden.id}",
                 )
                 subject_mecanico = f"Nueva Orden Asignada: #{nueva_orden.id}"
                 thread = threading.Thread(
@@ -990,7 +999,7 @@ class AgendamientoViewSet(viewsets.ModelViewSet):
         detail=True,
         methods=["post"],
         url_path="cancelar",
-        permission_classes=[IsSupervisor],
+        permission_classes=[IsJefetaller],
     )
     def cancelar(self, request, pk=None):
         agendamiento = self.get_object()
@@ -1001,7 +1010,7 @@ class AgendamientoViewSet(viewsets.ModelViewSet):
             agendamiento=agendamiento,
             estado=agendamiento.estado,
             usuario=request.user,
-            comentario="Cita cancelada por el supervisor.",
+            comentario="Cita cancelada por el Jefetaller.",
         )
         return Response(
             self.get_serializer(agendamiento).data, status=status.HTTP_200_OK
@@ -1011,7 +1020,7 @@ class AgendamientoViewSet(viewsets.ModelViewSet):
         detail=True,
         methods=["post"],
         url_path="enviar-grua",
-        permission_classes=[IsSupervisor],
+        permission_classes=[IsJefetaller],
     )
     def enviar_grua(self, request, pk=None):
         agendamiento = self.get_object()
@@ -1083,7 +1092,7 @@ class OrdenViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        if user.groups.filter(name__in=["Supervisor", "Administrativo"]).exists():
+        if user.groups.filter(name__in=["Jefetaller", "Supervisor"]).exists():
             return (
                 Orden.objects.select_related("vehiculo", "usuario_asignado")
                 .all()
@@ -1105,7 +1114,7 @@ class OrdenViewSet(viewsets.ModelViewSet):
 
     def get_permissions(self):
         if self.action in ["cambiar_estado"]:
-            self.permission_classes = [IsSupervisorOrMecanico]
+            self.permission_classes = [IsJefetallerOrMecanico]
         return super().get_permissions()
 
     @action(detail=True, methods=["post"], url_path="cambiar-estado")
@@ -1161,7 +1170,7 @@ class OrdenViewSet(viewsets.ModelViewSet):
                         Notificacion.objects.create(
                             usuario=chofer_a_notificar,
                             mensaje=f"Actualización: Su vehículo {orden.vehiculo.patente} {mensaje_chofer}",
-                            link="/dashboard", 
+                            link="/dashboard",
                         )
                         subject_chofer_estado = (
                             f"Actualización Orden #{orden.id}: {orden.vehiculo.patente}"
@@ -1260,7 +1269,7 @@ class MecanicoListView(generics.ListAPIView):
 
 class SeguridadAgendaView(generics.ListAPIView):
     serializer_class = AgendamientoSerializer
-    permission_classes = [IsSupervisorOrSeguridad]
+    permission_classes = [IsJefetallerOrSeguridad]
 
     def get_queryset(self):
         today = timezone.now().date()
@@ -1371,10 +1380,9 @@ class RegistrarSalidaView(APIView):
 
     def post(self, request, pk, *args, **kwargs):
         try:
-     
+
             orden = get_object_or_404(Orden, pk=pk)
 
-         
             if orden.fecha_entrega_real:
                 return Response(
                     {"error": "Esta salida ya fue registrada."},
@@ -1414,7 +1422,7 @@ class RegistrarSalidaView(APIView):
 
 class MecanicoAgendaView(generics.ListAPIView):
     serializer_class = AgendamientoSerializer
-    permission_classes = [IsSupervisor]
+    permission_classes = [IsJefetaller]
 
     def get_queryset(self):
         mecanico_id = self.kwargs.get("mecanico_id")
@@ -1474,12 +1482,12 @@ class NotificacionViewSet(viewsets.ModelViewSet):
 class TallerViewSet(viewsets.ModelViewSet):
     """
     API para gestionar los Talleres.
-    Solo Supervisores/Admin pueden crear o editar talleres.
+    Solo Jefetalleres/Admin pueden crear o editar talleres.
     """
 
     queryset = Taller.objects.all()
     serializer_class = TallerSerializer
-    permission_classes = [IsSupervisor]
+    permission_classes = [IsJefetaller]
 
     def get_permissions(self):
         if self.action in ["list", "retrieve"]:
@@ -1553,7 +1561,7 @@ class OrdenItemViewSet(viewsets.ModelViewSet):
         """
         user = self.request.user
         if user.groups.filter(
-            name__in=["Supervisor", "Administrativo", "Repuestos"]
+            name__in=["Jefetaller", "Supervisor", "Repuestos"]
         ).exists():
             return OrdenItem.objects.all()
         if user.groups.filter(name="Mecanico").exists():
@@ -1565,7 +1573,7 @@ class OrdenItemViewSet(viewsets.ModelViewSet):
         if self.action in ["aprobar_repuesto", "rechazar_repuesto", "list_pendientes"]:
             self.permission_classes = [IsRepuestos]
         elif self.action in ["create", "list", "retrieve"]:
-            self.permission_classes = [IsSupervisorOrMecanico]
+            self.permission_classes = [IsJefetallerOrMecanico]
         return super().get_permissions()
 
     def perform_create(self, serializer):
@@ -1576,7 +1584,7 @@ class OrdenItemViewSet(viewsets.ModelViewSet):
         if item.producto:
             try:
                 usuarios_repuestos = User.objects.filter(
-                    groups__name__in=["Repuestos", "Supervisor"], is_active=True
+                    groups__name__in=["Repuestos", "Jefetaller"], is_active=True
                 )
                 mecanico_nombre = (
                     self.request.user.first_name or self.request.user.username
@@ -1590,7 +1598,7 @@ class OrdenItemViewSet(viewsets.ModelViewSet):
                 for user_rep in usuarios_repuestos:
                     Notificacion.objects.create(
                         usuario=user_rep, mensaje=mensaje, link="/panel-repuestos"
-                    )  
+                    )
                     thread = threading.Thread(
                         target=enviar_correo_notificacion,
                         args=(user_rep, subject, mensaje),
@@ -1935,7 +1943,7 @@ class HistorialSeguridadViewSet(viewsets.ReadOnlyModelViewSet):
     """
 
     serializer_class = HistorialSeguridadSerializer
-    permission_classes = [IsSupervisorOrSeguridad]
+    permission_classes = [IsJefetallerOrSeguridad]
 
     filter_backends = [filters.SearchFilter]
 
@@ -1958,7 +1966,7 @@ class HistorialSeguridadViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 @api_view(["GET"])
-@permission_classes([IsAdministrativo])
+@permission_classes([IsSupervisor])
 def exportar_bitacora_seguridad(request):
     """
     Genera un reporte Excel de la bitácora de Ingresos y Salidas.
@@ -1989,7 +1997,6 @@ def exportar_bitacora_seguridad(request):
     ws = wb.active
     ws.title = "Bitácora de Movimientos"
 
-
     columnas = [
         "ID Orden",
         "Patente",
@@ -2000,10 +2007,8 @@ def exportar_bitacora_seguridad(request):
     ]
     ws.append(columnas)
 
-
     for cell in ws[1]:
         cell.font = openpyxl.styles.Font(bold=True)
-
 
     for orden in queryset:
 
@@ -2013,7 +2018,6 @@ def exportar_bitacora_seguridad(request):
         elif orden.vehiculo and orden.vehiculo.chofer:
             chofer_nombre = orden.vehiculo.chofer.get_full_name()
 
-   
         fecha_ingreso_excel = (
             orden.fecha_ingreso.replace(tzinfo=None) if orden.fecha_ingreso else None
         )
@@ -2033,7 +2037,6 @@ def exportar_bitacora_seguridad(request):
         ]
         ws.append(fila)
 
-
         if fecha_ingreso_excel:
             ws.cell(row=ws.max_row, column=4).number_format = "DD/MM/YYYY HH:MM"
         if isinstance(fecha_salida_excel, datetime):
@@ -2042,11 +2045,10 @@ def exportar_bitacora_seguridad(request):
     response = HttpResponse(
         content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     )
- 
+
     response["Content-Disposition"] = (
         f'attachment; filename="Reporte_Seguridad_{datetime.now().strftime("%Y%m%d")}.xlsx"'
     )
-
 
     wb.save(response)
 
@@ -2054,7 +2056,7 @@ def exportar_bitacora_seguridad(request):
 
 
 @api_view(["GET"])
-@permission_classes([IsAdministrativo]) 
+@permission_classes([IsSupervisor])
 def exportar_snapshot_taller_pdf(request):
     """
     Genera un reporte PDF (Snapshot) de los vehículos
@@ -2073,7 +2075,6 @@ def exportar_snapshot_taller_pdf(request):
 
     styles = getSampleStyleSheet()
 
-
     fecha_actual = timezone.now().strftime("%d/%m/%Y %H:%M:%S")
     elements.append(Paragraph("Reporte de Vehículos en Taller", styles["h1"]))
     elements.append(Paragraph(f"Generado el: {fecha_actual}", styles["Normal"]))
@@ -2081,7 +2082,6 @@ def exportar_snapshot_taller_pdf(request):
         Paragraph(f"Total Vehículos: {ordenes_activas.count()}", styles["Normal"])
     )
     elements.append(Paragraph(" ", styles["Normal"]))
-
 
     data = [["Patente", "Chofer", "Fecha Ingreso", "Estado Actual"]]
 
@@ -2108,7 +2108,6 @@ def exportar_snapshot_taller_pdf(request):
             ]
         )
 
-
     table = Table(data)
     style = TableStyle(
         [
@@ -2117,12 +2116,12 @@ def exportar_snapshot_taller_pdf(request):
                 (0, 0),
                 (-1, 0),
                 colors.HexColor("#2d3748"),
-            ),  
+            ),
             ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),
             ("ALIGN", (0, 0), (-1, -1), "CENTER"),
             ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
             ("BOTTOMPADDING", (0, 0), (-1, 0), 12),
-            ("BACKGROUND", (0, 1), (-1, -1), colors.HexColor("#4a5568")),  
+            ("BACKGROUND", (0, 1), (-1, -1), colors.HexColor("#4a5568")),
             ("TEXTCOLOR", (0, 1), (-1, -1), colors.whitesmoke),
             ("GRID", (0, 0), (-1, -1), 1, colors.black),
         ]
@@ -2130,9 +2129,7 @@ def exportar_snapshot_taller_pdf(request):
     table.setStyle(style)
     elements.append(table)
 
-
     doc.build(elements)
-
 
     buffer.seek(0)
     response = HttpResponse(buffer, content_type="application/pdf")
@@ -2142,33 +2139,29 @@ def exportar_snapshot_taller_pdf(request):
 
 
 @api_view(["GET"])
-@permission_classes([IsAdministrativo])  
+@permission_classes([IsSupervisor])
 def exportar_consumo_repuestos(request):
     """
     Genera un reporte Excel del consumo de repuestos aprobados.
     Acepta filtros de fecha: ?fecha_inicio=YYYY-MM-DD&fecha_fin=YYYY-MM-DD
     """
 
-    
     fecha_inicio_str = request.query_params.get("fecha_inicio")
     fecha_fin_str = request.query_params.get("fecha_fin")
 
     queryset = (
         OrdenItem.objects.filter(estado_repuesto=OrdenItem.EstadoRepuesto.APROBADO)
-        .select_related(
-            "orden", "producto", "solicitado_por"  
-        )
+        .select_related("orden", "producto", "solicitado_por")
         .order_by("fecha_gestion")
-    )  
+    )
 
-   
     if fecha_inicio_str and fecha_fin_str:
         try:
             fecha_inicio = datetime.strptime(fecha_inicio_str, "%Y-%m-%d").date()
             fecha_fin = datetime.combine(
                 datetime.strptime(fecha_fin_str, "%Y-%m-%d").date(), time.max
             )
-            
+
             queryset = queryset.filter(fecha_gestion__range=[fecha_inicio, fecha_fin])
         except ValueError:
             return Response(
@@ -2176,11 +2169,9 @@ def exportar_consumo_repuestos(request):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-
     wb = openpyxl.Workbook()
     ws = wb.active
     ws.title = "Consumo Repuestos"
-
 
     columnas = [
         "Fecha Aprobado",
@@ -2197,11 +2188,9 @@ def exportar_consumo_repuestos(request):
     for cell in ws[1]:
         cell.font = openpyxl.styles.Font(bold=True)
 
- 
     total_general = 0
     for item in queryset:
 
- 
         costo_total = item.cantidad * item.precio_unitario
         total_general += costo_total
 
@@ -2221,18 +2210,15 @@ def exportar_consumo_repuestos(request):
         ]
         ws.append(fila)
 
-  
         ws.cell(row=ws.max_row, column=1).number_format = "DD/MM/YYYY HH:MM"
         ws.cell(row=ws.max_row, column=7).number_format = "$ #,##0"
         ws.cell(row=ws.max_row, column=8).number_format = "$ #,##0"
 
-
-    ws.append([])  
+    ws.append([])
     ws.append([None, None, None, None, None, None, "Total General:", total_general])
     ws.cell(row=ws.max_row, column=7).font = openpyxl.styles.Font(bold=True)
     ws.cell(row=ws.max_row, column=8).font = openpyxl.styles.Font(bold=True)
     ws.cell(row=ws.max_row, column=8).number_format = "$ #,##0"
-
 
     response = HttpResponse(
         content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
@@ -2246,21 +2232,18 @@ def exportar_consumo_repuestos(request):
 
 
 @api_view(["GET"])
-@permission_classes([IsAuthenticated, IsAdministrativo])
+@permission_classes([IsAuthenticated, IsSupervisor])
 def exportar_inventario_valorizado(request):
     """
     Exporta un snapshot del inventario actual y su valor.
     No requiere filtros de fecha.
     """
 
-
     productos = Producto.objects.all().order_by("nombre")
 
- 
     wb = openpyxl.Workbook()
     ws = wb.active
     ws.title = "Inventario Valorizado"
-
 
     headers = [
         "SKU",
@@ -2272,7 +2255,6 @@ def exportar_inventario_valorizado(request):
     ]
     ws.append(headers)
 
- 
     for producto in productos:
         valor_total = producto.stock * producto.precio_venta
 
@@ -2297,15 +2279,13 @@ def exportar_inventario_valorizado(request):
     return response
 
 
-
 @api_view(["GET"])
-@permission_classes([IsAuthenticated, IsAdministrativo])
+@permission_classes([IsAuthenticated, IsSupervisor])
 def exportar_quiebres_stock(request):
     """
     Exporta un reporte de todos los repuestos solicitados que fueron RECHAZADOS.
     Utiliza los filtros de fecha (fecha_inicio, fecha_fin) sobre 'fecha_gestion'.
     """
-
 
     fecha_inicio_str = request.query_params.get("fecha_inicio", None)
     fecha_fin_str = request.query_params.get("fecha_fin", None)
@@ -2313,11 +2293,9 @@ def exportar_quiebres_stock(request):
     if not fecha_inicio_str or not fecha_fin_str:
         return HttpResponse("Error: Faltan filtros de fecha.", status=400)
 
-
     fecha_inicio_dt = datetime.strptime(fecha_inicio_str, "%Y-%m-%d").date()
     fecha_fin_dt = datetime.strptime(fecha_fin_str, "%Y-%m-%d").date()
 
-  
     items_rechazados = (
         OrdenItem.objects.filter(
             estado_repuesto=OrdenItem.EstadoRepuesto.RECHAZADO,
@@ -2327,11 +2305,9 @@ def exportar_quiebres_stock(request):
         .order_by("-fecha_gestion")
     )
 
-
     wb = openpyxl.Workbook()
     ws = wb.active
     ws.title = "Quiebres de Stock"
-
 
     headers = [
         "Fecha Rechazo",
@@ -2344,7 +2320,6 @@ def exportar_quiebres_stock(request):
     ]
     ws.append(headers)
 
-   
     for item in items_rechazados:
         mecanico_nombre = (
             item.solicitado_por.get_full_name() if item.solicitado_por else "N/A"
@@ -2372,7 +2347,7 @@ def exportar_quiebres_stock(request):
 
 
 @api_view(["GET"])
-@permission_classes([IsAuthenticated, IsAdministrativo])
+@permission_classes([IsAuthenticated, IsSupervisor])
 def exportar_productividad_mecanicos(request):
     """
     Exporta un reporte de productividad (Órdenes Finalizadas)
@@ -2429,9 +2404,8 @@ def exportar_productividad_mecanicos(request):
     return response
 
 
-
 @api_view(["GET"])
-@permission_classes([IsAuthenticated, IsAdministrativo])
+@permission_classes([IsAuthenticated, IsSupervisor])
 def exportar_tiempos_taller(request):
     """
     Exporta un reporte detallado de los tiempos por Orden.
@@ -2527,7 +2501,7 @@ def exportar_tiempos_taller(request):
 
 
 @api_view(["GET"])
-@permission_classes([IsAuthenticated, IsAdministrativo])
+@permission_classes([IsAuthenticated, IsSupervisor])
 def exportar_solicitudes_grua(request):
     """
     Exporta un reporte de todas las solicitudes de grúa
@@ -2597,7 +2571,7 @@ def exportar_solicitudes_grua(request):
 
 
 @api_view(["GET"])
-@permission_classes([IsAuthenticated, IsAdministrativo])
+@permission_classes([IsAuthenticated, IsSupervisor])
 def exportar_historial_prestamos(request):
     """
     Exporta un historial de todos los préstamos de llaves (retiros y devoluciones)
@@ -2662,9 +2636,8 @@ def exportar_historial_prestamos(request):
     return response
 
 
-
 @api_view(["GET"])
-@permission_classes([IsAuthenticated, IsAdministrativo])
+@permission_classes([IsAuthenticated, IsSupervisor])
 def exportar_inventario_llaves_pdf(request):
     """
     Genera un reporte PDF (Snapshot) del estado actual de
@@ -2717,7 +2690,7 @@ def exportar_inventario_llaves_pdf(request):
             ("ALIGN", (0, 0), (-1, -1), "CENTER"),
             ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
             ("BOTTOMPADDING", (0, 0), (-1, 0), 12),
-            ("BACKGROUND", (0, 1), (-1, -1), colors.HexColor("#4a5568")),  
+            ("BACKGROUND", (0, 1), (-1, -1), colors.HexColor("#4a5568")),
             ("TEXTCOLOR", (0, 1), (-1, -1), colors.whitesmoke),
             ("GRID", (0, 0), (-1, -1), 1, colors.black),
         ]
@@ -2732,15 +2705,13 @@ def exportar_inventario_llaves_pdf(request):
     return response
 
 
-
 @api_view(["GET"])
-@permission_classes([IsAuthenticated, IsAdministrativo])
+@permission_classes([IsAuthenticated, IsSupervisor])
 def exportar_frecuencia_fallas(request):
     """
     Exporta un ranking de los vehículos que más han ingresado al taller,
     filtrado por fecha de INGRESO.
     """
-
 
     fecha_inicio_str = request.query_params.get("fecha_inicio", None)
     fecha_fin_str = request.query_params.get("fecha_fin", None)
@@ -2767,14 +2738,12 @@ def exportar_frecuencia_fallas(request):
         .order_by("-numero_de_ingresos")
     )
 
-
     wb = openpyxl.Workbook()
     ws = wb.active
     ws.title = "Frecuencia de Fallas"
 
     headers = ["Patente", "Chofer Asignado", "Número de Ingresos al Taller"]
     ws.append(headers)
-
 
     for item in frecuencia:
         chofer_nombre = f"{item['vehiculo__chofer__first_name'] or ''} {item['vehiculo__chofer__last_name'] or ''}".strip()
@@ -2787,7 +2756,6 @@ def exportar_frecuencia_fallas(request):
             ]
         )
 
-
     response = HttpResponse(
         content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     )
@@ -2798,9 +2766,8 @@ def exportar_frecuencia_fallas(request):
     return response
 
 
-
 @api_view(["GET"])
-@permission_classes([IsAuthenticated, IsAdministrativo])
+@permission_classes([IsAuthenticated, IsSupervisor])
 def exportar_hoja_vida_vehiculo_pdf(request):
     """
     Genera un reporte PDF con el historial completo (Hoja de Vida)
@@ -2812,7 +2779,7 @@ def exportar_hoja_vida_vehiculo_pdf(request):
     vehiculo = get_object_or_404(Vehiculo, patente=patente)
     ordenes = (
         Orden.objects.filter(vehiculo=vehiculo)
-        .prefetch_related("items__producto", "items__servicio")  
+        .prefetch_related("items__producto", "items__servicio")
         .order_by("-fecha_ingreso")
     )
     buffer = BytesIO()
@@ -2827,7 +2794,7 @@ def exportar_hoja_vida_vehiculo_pdf(request):
     elements = []
 
     styles = getSampleStyleSheet()
-    styles["h1"].alignment = 1  
+    styles["h1"].alignment = 1
     styles["h2"].fontSize = 14
     styles["h2"].spaceAfter = 10
     fecha_actual = timezone.now().strftime("%d/%m/%Y")
@@ -2917,7 +2884,7 @@ def exportar_hoja_vida_vehiculo_pdf(request):
             )
         )
         elements.append(table_items)
-        elements.append(Spacer(1, 24))  
+        elements.append(Spacer(1, 24))
     doc.build(elements)
     buffer.seek(0)
     response = HttpResponse(buffer, content_type="application/pdf")
@@ -2974,7 +2941,7 @@ class ChatRoomListView(generics.ListCreateAPIView):
         return ChatRoomSerializer
 
     def get_queryset(self):
-  
+
         return self.request.user.chat_rooms.exclude(
             oculto_para=self.request.user
         ).order_by("-actualizado_en")
@@ -2989,7 +2956,7 @@ class ChatRoomListView(generics.ListCreateAPIView):
         current_user = request.user
 
         if other_user_id == current_user.id:
-      
+
             raise serializers.ValidationError("No puedes crear un chat contigo mismo.")
 
         try:
@@ -2997,7 +2964,6 @@ class ChatRoomListView(generics.ListCreateAPIView):
         except User.DoesNotExist:
             raise serializers.ValidationError("El usuario no existe.")
 
-  
         existing_room = (
             ChatRoom.objects.annotate(num_p=Count("participantes"))
             .filter(num_p=2, participantes=current_user)
@@ -3006,7 +2972,7 @@ class ChatRoomListView(generics.ListCreateAPIView):
         )
 
         if existing_room:
-      
+
             if current_user in existing_room.oculto_para.all():
                 existing_room.oculto_para.remove(current_user)
 
@@ -3035,7 +3001,6 @@ class ChatMessageListView(generics.ListCreateAPIView):
     serializer_class = ChatMessageSerializer
     permission_classes = [IsAuthenticated]
 
-
     parser_classes = [MultiPartParser, FormParser]
 
     def get_queryset(self):
@@ -3046,30 +3011,26 @@ class ChatMessageListView(generics.ListCreateAPIView):
         room_id = self.kwargs.get("room_id")
         user = self.request.user
 
-
         if not user.chat_rooms.filter(id=room_id).exists():
             raise serializers.ValidationError("No tienes permiso para ver esta sala.")
 
-
         queryset = ChatMessage.objects.filter(room_id=room_id)
-
 
         since_timestamp = self.request.query_params.get("since")
         if since_timestamp:
             try:
-   
+
                 queryset = queryset.filter(creado_en__gt=since_timestamp)
             except (ValueError, TypeError):
-                pass 
+                pass
 
- 
         mensajes_no_leidos = queryset.exclude(leido_por=user).values_list(
             "id", flat=True
         )
         if mensajes_no_leidos:
             user.mensajes_leidos.add(*mensajes_no_leidos)
 
-        return queryset.order_by("creado_en")  
+        return queryset.order_by("creado_en")
 
     def perform_create(self, serializer):
         """
@@ -3087,19 +3048,17 @@ class ChatMessageListView(generics.ListCreateAPIView):
         if user not in room.participantes.all():
             raise serializers.ValidationError("No puedes enviar mensajes a esta sala.")
 
- 
         mensaje = serializer.save(autor=user, room=room)
 
-        room.save()  
+        room.save()
         mensaje.leido_por.add(user)
         room.oculto_para.clear()
-  
+
         try:
             destinatarios = room.participantes.exclude(id=user.id)
 
             subject = f"Nuevo mensaje en el chat de {user.first_name}"
 
-   
             if mensaje.archivo and not mensaje.contenido:
                 message_body = (
                     f"{user.first_name} {user.last_name} te ha enviado un archivo."
@@ -3140,11 +3099,10 @@ def unread_chat_count(request):
     """
     user = request.user
 
-
     count = (
-        ChatMessage.objects.filter(room__participantes=user)  
-        .exclude(autor=user) 
-        .exclude(leido_por=user)  
+        ChatMessage.objects.filter(room__participantes=user)
+        .exclude(autor=user)
+        .exclude(leido_por=user)
         .count()
     )
 
@@ -3170,7 +3128,7 @@ class ChatRoomDetailView(generics.DestroyAPIView):
                 status=status.HTTP_403_FORBIDDEN,
             )
         room.oculto_para.add(user)
-        #if room.participantes.count() == 0:#
+        # if room.participantes.count() == 0:#
         #    room.delete()#
 
         return Response(status=status.HTTP_204_NO_CONTENT)

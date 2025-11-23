@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import apiClient from '/src/api/axios.js';
 import styles from '../css/gestionagenda.module.css';
-import { Calendar as CalendarIcon, User, Paperclip, Truck } from 'lucide-react'; 
+import { Calendar as CalendarIcon, User, Paperclip, Truck } from 'lucide-react';
 import { useUserStore } from '/src/store/authStore.js';
 import AlertModal from '/src/components/modals/AlertModal.jsx';
 
@@ -9,7 +9,7 @@ export default function GestionAgenda() {
     const { user } = useUserStore();
     const [vehiculos, setVehiculos] = useState([]);
 
-    
+
     const [formData, setFormData] = useState({
         vehiculo: '',
         motivo_ingreso: '',
@@ -55,7 +55,7 @@ export default function GestionAgenda() {
             return;
         }
 
-        
+
         if (!formData.es_mantenimiento && !formData.motivo_ingreso) {
             setError("Por favor, complete el motivo del ingreso (o marque 'Es Mantenimiento').");
             setIsAlertOpen(true);
@@ -68,7 +68,7 @@ export default function GestionAgenda() {
         dataParaEnviar.append('solicita_grua', formData.solicita_grua || false);
         dataParaEnviar.append('duracion_estimada_minutos', 60);
         dataParaEnviar.append('es_mantenimiento', formData.es_mantenimiento || false);
-        
+
         if (formData.solicita_grua) {
             dataParaEnviar.append('direccion_grua', formData.direccion_grua);
         }
@@ -82,11 +82,11 @@ export default function GestionAgenda() {
                 headers: { 'Content-Type': 'multipart/form-data' },
             });
 
-            
+
             setFormData({ vehiculo: '', motivo_ingreso: '', solicita_grua: false, direccion_grua: '', es_mantenimiento: false });
             setImagenFile(null);
             if (e.target) e.target.reset();
-            setSuccessMessage("¡Solicitud de cita enviada! El supervisor la revisará y le asignará una hora a la brevedad.");
+            setSuccessMessage("¡Solicitud de cita enviada! El Jefetaller la revisará y le asignará una hora a la brevedad.");
             setIsAlertOpen(true);
 
         } catch (err) {
@@ -104,7 +104,7 @@ export default function GestionAgenda() {
 
     const vehiculosDelUsuario = useMemo(() => {
         if (!user || !vehiculos.length) return [];
-        if (user.rol === 'Supervisor' || user.rol === 'Administrativo') {
+        if (user.rol === 'Jefetaller' || user.rol === 'Supervisor') {
             return vehiculos;
         }
         return vehiculos.filter(v => v.chofer === user.id);
@@ -115,13 +115,13 @@ export default function GestionAgenda() {
         setFormData(prev => {
             const newState = { ...prev, [name]: type === 'checkbox' ? checked : value };
 
-            
+
             if (name === 'es_mantenimiento') {
                 if (checked) {
-                    
+
                     newState.motivo_ingreso = 'Mantenimiento General';
                 } else {
-                    
+
                     newState.motivo_ingreso = '';
                 }
             }
@@ -176,8 +176,8 @@ export default function GestionAgenda() {
                                 onChange={handleChange}
 
 
-                                required={!formData.es_mantenimiento} 
-                                readOnly={formData.es_mantenimiento} 
+                                required={!formData.es_mantenimiento}
+                                readOnly={formData.es_mantenimiento}
                                 style={formData.es_mantenimiento ? { backgroundColor: '#f3f4f6', color: '#6b7280' } : {}}
                             ></textarea>
 
@@ -193,7 +193,7 @@ export default function GestionAgenda() {
                             </div>
                         </div>
 
-                        
+
                         {formData.solicita_grua && (
                             <div className={styles.formField}>
                                 <label htmlFor="direccion_grua" style={{ color: '#b91c1c', fontWeight: 'bold' }}>Dirección de Retiro (Grúa)</label>
@@ -228,7 +228,7 @@ export default function GestionAgenda() {
                 <div className={styles.infoCard}>
                     <h3><User size={20} /> Proceso de Solicitud</h3>
                     <p>1. Envíe su solicitud (vehículo y motivo).</p>
-                    <p>2. Un supervisor revisará la solicitud y asignará una fecha, hora y mecánico.</p>
+                    <p>2. Un Jefetaller revisará la solicitud y asignará una fecha, hora y mecánico.</p>
                     <p>3. Recibirá una notificación (y/o correo) con los detalles de su cita.</p>
                 </div>
             </div>

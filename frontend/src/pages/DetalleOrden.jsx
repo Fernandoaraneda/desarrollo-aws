@@ -16,31 +16,31 @@ const DocumentGroup = ({ state, docs }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [downloadingId, setDownloadingId] = useState(null);
     const handleDownload = async (doc) => {
-        if (downloadingId === doc.id) return; 
+        if (downloadingId === doc.id) return;
 
         setDownloadingId(doc.id);
 
         try {
-            
+
             const response = await apiClient.get(doc.archivo_url, {
                 responseType: 'blob',
             });
 
-         
+
             const url = window.URL.createObjectURL(new Blob([response.data]));
 
-           
+
             const link = document.createElement('a');
             link.href = url;
 
-    
+
             const fileName = doc.archivo_url.split('/').pop();
             link.setAttribute('download', fileName || doc.descripcion || 'archivo');
 
             document.body.appendChild(link);
             link.click();
 
-         
+
             document.body.removeChild(link);
             window.URL.revokeObjectURL(url);
 
@@ -65,7 +65,7 @@ const DocumentGroup = ({ state, docs }) => {
                     className={styles.imagePreview}
                 />
             );
-      
+
         }
         const isDownloadingThis = downloadingId === doc.id;
 
@@ -73,7 +73,7 @@ const DocumentGroup = ({ state, docs }) => {
             <button
                 onClick={() => handleDownload(doc)}
                 disabled={isDownloadingThis}
-                className={styles.downloadLink} 
+                className={styles.downloadLink}
             >
                 <Download size={18} />
                 {isDownloadingThis ? 'Descargando...' : (doc.descripcion || 'Descargar Archivo')}
@@ -367,7 +367,7 @@ export default function DetalleOrden() {
         }
 
         try {
-  
+
             const response = await apiClient.post(`/ordenes/${id}/cambiar-estado/`, {
                 estado: nuevoEstado,
                 motivo: motivo
@@ -376,7 +376,7 @@ export default function DetalleOrden() {
             setAlertModal({ isOpen: true, title: 'Éxito', message: `Estado cambiado a "${nuevoEstado}".`, intent: 'success' });
         } catch (error) {
             setAlertModal({ isOpen: true, title: 'Error', message: 'Error al cambiar el estado.', intent: 'danger' });
-           
+
         }
     };
 
@@ -388,13 +388,13 @@ export default function DetalleOrden() {
         if (nuevoEstado === estadoActual) return;
 
         if (nuevoEstado === 'Pausado') {
-       
+
             handlePausar();
         } else if (nuevoEstado === 'En Proceso' && estadoActual === 'Pausado') {
-           
+
             handleReanudar();
         } else {
-          
+
             llamarCambiarEstado(nuevoEstado);
         }
     };
@@ -408,7 +408,7 @@ export default function DetalleOrden() {
     if (error && !orden) return <p className={styles.error}>{error}</p>;
 
     const isFinalizada = orden?.estado === 'Finalizado';
-    const tienePrivilegiosAdmin = (user.rol === 'Supervisor' || user.rol === 'Administrativo');
+    const tienePrivilegiosAdmin = (user.rol === 'Jefetaller' || user.rol === 'Supervisor');
     const puedeModificar = (tienePrivilegiosAdmin || user.rol === 'Mecanico') && !isFinalizada;
 
     const esMecanicoAsignado = (user.rol === 'Mecanico' && orden?.usuario_asignado === user.id);
@@ -432,7 +432,7 @@ export default function DetalleOrden() {
                                 alt="Avería reportada"
                                 className={styles.averiaImage}
                             />
-                        
+
                         </div>
                     )}
 
@@ -544,11 +544,11 @@ export default function DetalleOrden() {
                             value={orden?.estado || ''}
                             onChange={handleChangeEstado}
                             disabled={!puedeModificar}
-                     
+
                             className={styles.mecanicoSelect}
                             style={{ marginBottom: '1rem' }}
                         >
-                           
+
                             <option value="Ingresado">Ingresado</option>
                             <option value="En Diagnostico">En Diagnóstico</option>
                             <option value="En Proceso">En Proceso</option>
