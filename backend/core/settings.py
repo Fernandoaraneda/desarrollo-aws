@@ -92,16 +92,12 @@ TEMPLATES = [
 
 DATABASES = {
     'default': dj_database_url.config(
-
-         default=config('DATABASE_URL'),
-         conn_max_age=600
-      
+        default=config('DATABASE_URL'),
+        conn_max_age=600
     )
 }
 
-
-
-if not DEBUG:
+if not DEBUG and 'mysql' not in DATABASES['default']['ENGINE']:
     DATABASES['default']['OPTIONS'] = {'sslmode': 'require'}
 # -----------------------------
 # PASSWORD VALIDATION
