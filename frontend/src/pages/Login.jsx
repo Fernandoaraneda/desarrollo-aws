@@ -73,7 +73,7 @@ export default function LoginPage() {
       ></video>
       {!showLogin ? (
         <div className={`${styles.containerForm} ${styles.welcomeCard}`}>
-          <h2 className={styles.welcomeTitle}>Bienvenido a PepsicoTaller</h2>
+          <h2 className={styles.welcomeTitle}>Bienvenido aSistema de Flota</h2>
           <p className={styles.welcomeSubtitle}>
             Presiona el botón para continuar
           </p>

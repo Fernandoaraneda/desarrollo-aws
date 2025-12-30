@@ -175,7 +175,7 @@ const Sidebar = ({ isOpen, toggleSidebar, unreadChatCount, onDownloadManual }) =
     <aside className={`${styles.sidebar} ${isOpen ? styles.isOpen : ''}`}>
       <NavLink to="/dashboard" className={styles.sidebarBrand} onClick={handleLinkClick}>
         <i className="fas fa-truck"></i>
-        <span>PepsiCo Taller</span>
+        <span>Sistema de Flota Taller</span>
       </NavLink>
 
       <nav className={styles.sidebarNav}>
