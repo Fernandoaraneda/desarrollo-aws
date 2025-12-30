@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useMemo } from 'react'; 
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import apiClient from '../api/axios.js';
+import { useUserStore } from '../store/authStore';
 import styles from '../css/gestionordenes.module.css';
 import searchStyles from '../css/gestionusuarios.module.css';
 import { Wrench, Eye, Edit, Search } from 'lucide-react';
@@ -70,12 +71,14 @@ export default function GestionOrdenes() {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
     const [ordenSeleccionada, setOrdenSeleccionada] = useState(null);
+    const { user } = useUserStore();
     const navigate = useNavigate();
- 
+    const isReadOnly = user?.rol === 'Invitado';
+
     const [searchTerm, setSearchTerm] = useState('');
 
     useEffect(() => {
-      
+
         const fetchOrdenes = async () => {
             try {
                 const response = await apiClient.get('/ordenes/');
@@ -93,15 +96,15 @@ export default function GestionOrdenes() {
         fetchOrdenes();
     }, []);
 
-   
+
     const filteredOrdenes = useMemo(() => {
         return ordenes.filter(orden =>
-            
+
             (orden.vehiculo_info?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
-           
+
             (orden.id.toString() || '').includes(searchTerm.toLowerCase())
         );
-    }, [ordenes, searchTerm]); 
+    }, [ordenes, searchTerm]);
 
 
     const handleEstadoActualizado = (ordenId, nuevoEstado) => {
@@ -127,7 +130,7 @@ export default function GestionOrdenes() {
                 <p>Aquí puedes ver y gestionar las órdenes de trabajo asignadas.</p>
             </header>
 
-            
+
             <div className={searchStyles.controls}>
                 <div className={searchStyles.searchBox}>
                     <Search size={20} className={searchStyles.searchIcon} />
@@ -153,7 +156,7 @@ export default function GestionOrdenes() {
                             </tr>
                         </thead>
                         <tbody>
-                        
+
                             {filteredOrdenes.length > 0 ? (
                                 filteredOrdenes.map(orden => (
                                     < tr key={orden.id} >
@@ -169,9 +172,11 @@ export default function GestionOrdenes() {
                                             <button onClick={() => navigate(`/ordenes/${orden.id}`)} className={styles.actionButton} title="Ver Detalle">
                                                 <Eye size={16} /> Ver Detalle
                                             </button>
-                                            <button onClick={() => setOrdenSeleccionada(orden)} className={`${styles.actionButton} ${styles.editButton}`} title="Cambiar Estado">
-                                                <Edit size={16} /> Cambiar Estado
-                                            </button>
+                                            {!isReadOnly && (
+                                                <button onClick={() => setOrdenSeleccionada(orden)} className={`${styles.actionButton} ${styles.editButton}`} title="Cambiar Estado">
+                                                    <Edit size={16} /> Cambiar Estado
+                                                </button>
+                                            )}
                                         </td>
                                     </tr>
                                 ))

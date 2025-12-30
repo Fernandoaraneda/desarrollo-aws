@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import apiClient from '../api/axios.js';
+import { useUserStore } from '../store/authStore';
 import styles from '../css/gestionusuarios.module.css';
 import { UserPlus, Edit, Trash2, CheckCircle, Search } from 'lucide-react';
 import ConfirmModal from '../components/modals/ConfirmModal.jsx';
@@ -11,7 +12,9 @@ export default function GestionUsuarios() {
   const [users, setUsers] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const { user } = useUserStore();
   const navigate = useNavigate();
+  const isReadOnly = user?.rol === 'Invitado';
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalProps, setModalProps] = useState({});
@@ -92,10 +95,12 @@ export default function GestionUsuarios() {
       <div className={styles.pageWrapper}>
         <header className={styles.header}>
           <h1>Gestión de Usuarios</h1>
-          <button className={styles.addButton} onClick={() => navigate('/usuarios/crear')}>
-            <UserPlus size={20} />
-            Añadir Usuario
-          </button>
+          {!isReadOnly && (
+            <button className={styles.addButton} onClick={() => navigate('/usuarios/crear')}>
+              <UserPlus size={20} />
+              Añadir Usuario
+            </button>
+          )}
         </header>
 
 
@@ -127,28 +132,32 @@ export default function GestionUsuarios() {
                 </div>
                 <p>{user.email}</p>
                 <div className={styles.userActions}>
-                  <button className={styles.actionButton} onClick={() => navigate(`/usuarios/editar/${user.id}`)}>
-                    <Edit size={16} />
-                    Editar
-                  </button>
-                  {user.is_active ? (
-                    <button
-                      className={styles.actionButton}
-                      style={{ color: '#b91c1c' }}
-                      onClick={() => openConfirmModal(user)}
-                    >
-                      <Trash2 size={16} />
-                      Desactivar
-                    </button>
-                  ) : (
-                    <button
-                      className={styles.actionButton}
-                      style={{ color: '#16a34a' }}
-                      onClick={() => openConfirmModal(user)}
-                    >
-                      <CheckCircle size={16} />
-                      Activar
-                    </button>
+                  {!isReadOnly && (
+                    <>
+                      <button className={styles.actionButton} onClick={() => navigate(`/usuarios/editar/${user.id}`)}>
+                        <Edit size={16} />
+                        Editar
+                      </button>
+                      {user.is_active ? (
+                        <button
+                          className={styles.actionButton}
+                          style={{ color: '#b91c1c' }}
+                          onClick={() => openConfirmModal(user)}
+                        >
+                          <Trash2 size={16} />
+                          Desactivar
+                        </button>
+                      ) : (
+                        <button
+                          className={styles.actionButton}
+                          style={{ color: '#16a34a' }}
+                          onClick={() => openConfirmModal(user)}
+                        >
+                          <CheckCircle size={16} />
+                          Activar
+                        </button>
+                      )}
+                    </>
                   )}
                 </div>
               </div>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import apiClient from '/src/api/axios.js';
+import { useUserStore } from '/src/store/authStore.js';
 import styles from '../css/gestionagenda.module.css';
 import { Check, Edit, CalendarCheck } from 'lucide-react';
 
@@ -9,6 +10,8 @@ export default function PanelJefetaller() {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
     const navigate = useNavigate();
+    const { user } = useUserStore();
+    const isReadOnly = user?.rol === 'Invitado';
 
     useEffect(() => {
         const loadAgendamientos = async () => {
@@ -68,12 +71,14 @@ export default function PanelJefetaller() {
                                         <td>{a.chofer_nombre}</td>
                                         <td>{a.motivo_ingreso}</td>
                                         <td>
-                                            <button
-                                                className={styles.actionButton}
-                                                onClick={() => navigate(`/agenda/confirmar/${a.id}`)}
-                                            >
-                                                <Check size={16} /> Asignar Cupo
-                                            </button>
+                                            {!isReadOnly && (
+                                                <button
+                                                    className={styles.actionButton}
+                                                    onClick={() => navigate(`/agenda/confirmar/${a.id}`)}
+                                                >
+                                                    <Check size={16} /> Asignar Cupo
+                                                </button>
+                                            )}
                                         </td>
                                     </tr>
                                 ))
@@ -111,12 +116,14 @@ export default function PanelJefetaller() {
                                         <td>{a.mecanico_nombre}</td>
                                         <td>
 
-                                            <button
-                                                className={`${styles.actionButton} ${styles.editButton}`}
-                                                onClick={() => navigate(`/agenda/confirmar/${a.id}`)}
-                                            >
-                                                <Edit size={16} /> Editar Cita
-                                            </button>
+                                            {!isReadOnly && (
+                                                <button
+                                                    className={`${styles.actionButton} ${styles.editButton}`}
+                                                    onClick={() => navigate(`/agenda/confirmar/${a.id}`)}
+                                                >
+                                                    <Edit size={16} /> Editar Cita
+                                                </button>
+                                            )}
                                         </td>
                                     </tr>
                                 ))

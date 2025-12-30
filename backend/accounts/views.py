@@ -221,6 +221,20 @@ class IsRepuestos(permissions.BasePermission):
         )
 
 
+class IsInvitado(permissions.BasePermission):
+    """
+    Permiso para el rol 'Invitado' (Solo Lectura).
+    """
+
+    def has_permission(self, request, view):
+        return bool(
+            request.user
+            and request.user.is_authenticated
+            and request.user.groups.filter(name="Invitado").exists()
+            and request.method in permissions.SAFE_METHODS
+        )
+
+
 class LoginView(generics.GenericAPIView):
     serializer_class = LoginSerializer
     permission_classes = [AllowAny]
@@ -405,7 +419,7 @@ dias_semana = {0: "Lun", 1: "Mar", 2: "Mié", 3: "Jue", 4: "Vie", 5: "Sáb", 6: 
 
 
 @api_view(["GET"])
-@permission_classes([IsJefetaller])
+@permission_classes([IsJefetaller | IsInvitado])
 def Jefetaller_dashboard_stats(request):
     today = now().date()
     start_of_month_dt = timezone.make_aware(
@@ -613,7 +627,7 @@ class AgendamientoViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         user = self.request.user
         if user.groups.filter(
-            name__in=["Jefetaller", "Mecanico", "Seguridad", "Supervisor"]
+            name__in=["Jefetaller", "Mecanico", "Seguridad", "Supervisor", "Invitado"]
         ).exists():
             return (
                 Agendamiento.objects.select_related("vehiculo", "mecanico_asignado")
@@ -1092,7 +1106,7 @@ class OrdenViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        if user.groups.filter(name__in=["Jefetaller", "Supervisor"]).exists():
+        if user.groups.filter(name__in=["Jefetaller", "Supervisor", "Invitado"]).exists():
             return (
                 Orden.objects.select_related("vehiculo", "usuario_asignado")
                 .all()
@@ -1269,7 +1283,7 @@ class MecanicoListView(generics.ListAPIView):
 
 class SeguridadAgendaView(generics.ListAPIView):
     serializer_class = AgendamientoSerializer
-    permission_classes = [IsJefetallerOrSeguridad]
+    permission_classes = [IsJefetallerOrSeguridad | IsInvitado]
 
     def get_queryset(self):
         today = timezone.now().date()
@@ -1422,7 +1436,7 @@ class RegistrarSalidaView(APIView):
 
 class MecanicoAgendaView(generics.ListAPIView):
     serializer_class = AgendamientoSerializer
-    permission_classes = [IsJefetaller]
+    permission_classes = [IsJefetaller | IsInvitado]
 
     def get_queryset(self):
         mecanico_id = self.kwargs.get("mecanico_id")
@@ -1561,7 +1575,7 @@ class OrdenItemViewSet(viewsets.ModelViewSet):
         """
         user = self.request.user
         if user.groups.filter(
-            name__in=["Jefetaller", "Supervisor", "Repuestos"]
+            name__in=["Jefetaller", "Supervisor", "Repuestos", "Invitado"]
         ).exists():
             return OrdenItem.objects.all()
         if user.groups.filter(name="Mecanico").exists():
@@ -1571,9 +1585,9 @@ class OrdenItemViewSet(viewsets.ModelViewSet):
     def get_permissions(self):
         """Permisos por acción"""
         if self.action in ["aprobar_repuesto", "rechazar_repuesto", "list_pendientes"]:
-            self.permission_classes = [IsRepuestos]
+            self.permission_classes = [IsRepuestos | IsInvitado]
         elif self.action in ["create", "list", "retrieve"]:
-            self.permission_classes = [IsJefetallerOrMecanico]
+            self.permission_classes = [IsJefetallerOrMecanico | IsInvitado]
         return super().get_permissions()
 
     def perform_create(self, serializer):
@@ -1703,7 +1717,7 @@ class LlaveVehiculoViewSet(viewsets.ModelViewSet):
 
     queryset = LlaveVehiculo.objects.all().select_related("vehiculo", "poseedor_actual")
     serializer_class = LlaveVehiculoSerializer
-    permission_classes = [IsControlLlaves]
+    permission_classes = [IsControlLlaves | IsInvitado]
 
     @action(detail=True, methods=["post"], url_path="registrar-devolucion")
     @transaction.atomic
@@ -1875,7 +1889,7 @@ class PrestamoLlaveViewSet(viewsets.ReadOnlyModelViewSet):
         "llave__vehiculo", "usuario_retira"
     )
     serializer_class = PrestamoLlaveSerializer
-    permission_classes = [IsControlLlaves]
+    permission_classes = [IsControlLlaves | IsInvitado]
 
     filter_backends = [filters.SearchFilter]
     search_fields = [
@@ -1925,7 +1939,7 @@ class LlaveHistorialEstadoViewSet(viewsets.ReadOnlyModelViewSet):
         "llave__vehiculo", "usuario_reporta"
     )
     serializer_class = LlaveHistorialEstadoSerializer
-    permission_classes = [IsControlLlaves]
+    permission_classes = [IsControlLlaves | IsInvitado]
 
     filter_backends = [filters.SearchFilter]
 
@@ -1943,7 +1957,7 @@ class HistorialSeguridadViewSet(viewsets.ReadOnlyModelViewSet):
     """
 
     serializer_class = HistorialSeguridadSerializer
-    permission_classes = [IsJefetallerOrSeguridad]
+    permission_classes = [IsJefetallerOrSeguridad | IsInvitado]
 
     filter_backends = [filters.SearchFilter]
 
@@ -1966,7 +1980,7 @@ class HistorialSeguridadViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 @api_view(["GET"])
-@permission_classes([IsSupervisor])
+@permission_classes([IsSupervisor | IsInvitado])
 def exportar_bitacora_seguridad(request):
     """
     Genera un reporte Excel de la bitácora de Ingresos y Salidas.
@@ -2056,7 +2070,7 @@ def exportar_bitacora_seguridad(request):
 
 
 @api_view(["GET"])
-@permission_classes([IsSupervisor])
+@permission_classes([IsSupervisor | IsInvitado])
 def exportar_snapshot_taller_pdf(request):
     """
     Genera un reporte PDF (Snapshot) de los vehículos
@@ -2139,7 +2153,7 @@ def exportar_snapshot_taller_pdf(request):
 
 
 @api_view(["GET"])
-@permission_classes([IsSupervisor])
+@permission_classes([IsSupervisor | IsInvitado])
 def exportar_consumo_repuestos(request):
     """
     Genera un reporte Excel del consumo de repuestos aprobados.
@@ -2232,7 +2246,7 @@ def exportar_consumo_repuestos(request):
 
 
 @api_view(["GET"])
-@permission_classes([IsAuthenticated, IsSupervisor])
+@permission_classes([IsSupervisor | IsInvitado])
 def exportar_inventario_valorizado(request):
     """
     Exporta un snapshot del inventario actual y su valor.
@@ -2280,7 +2294,7 @@ def exportar_inventario_valorizado(request):
 
 
 @api_view(["GET"])
-@permission_classes([IsAuthenticated, IsSupervisor])
+@permission_classes([IsSupervisor | IsInvitado])
 def exportar_quiebres_stock(request):
     """
     Exporta un reporte de todos los repuestos solicitados que fueron RECHAZADOS.
@@ -2347,7 +2361,7 @@ def exportar_quiebres_stock(request):
 
 
 @api_view(["GET"])
-@permission_classes([IsAuthenticated, IsSupervisor])
+@permission_classes([IsSupervisor | IsInvitado])
 def exportar_productividad_mecanicos(request):
     """
     Exporta un reporte de productividad (Órdenes Finalizadas)
@@ -2405,7 +2419,7 @@ def exportar_productividad_mecanicos(request):
 
 
 @api_view(["GET"])
-@permission_classes([IsAuthenticated, IsSupervisor])
+@permission_classes([IsSupervisor | IsInvitado])
 def exportar_tiempos_taller(request):
     """
     Exporta un reporte detallado de los tiempos por Orden.
@@ -2501,7 +2515,7 @@ def exportar_tiempos_taller(request):
 
 
 @api_view(["GET"])
-@permission_classes([IsAuthenticated, IsSupervisor])
+@permission_classes([IsSupervisor | IsInvitado])
 def exportar_solicitudes_grua(request):
     """
     Exporta un reporte de todas las solicitudes de grúa
@@ -2571,7 +2585,7 @@ def exportar_solicitudes_grua(request):
 
 
 @api_view(["GET"])
-@permission_classes([IsAuthenticated, IsSupervisor])
+@permission_classes([IsSupervisor | IsInvitado])
 def exportar_historial_prestamos(request):
     """
     Exporta un historial de todos los préstamos de llaves (retiros y devoluciones)
@@ -2637,7 +2651,7 @@ def exportar_historial_prestamos(request):
 
 
 @api_view(["GET"])
-@permission_classes([IsAuthenticated, IsSupervisor])
+@permission_classes([IsSupervisor | IsInvitado])
 def exportar_inventario_llaves_pdf(request):
     """
     Genera un reporte PDF (Snapshot) del estado actual de
@@ -2706,7 +2720,7 @@ def exportar_inventario_llaves_pdf(request):
 
 
 @api_view(["GET"])
-@permission_classes([IsAuthenticated, IsSupervisor])
+@permission_classes([IsSupervisor | IsInvitado])
 def exportar_frecuencia_fallas(request):
     """
     Exporta un ranking de los vehículos que más han ingresado al taller,
@@ -2767,7 +2781,7 @@ def exportar_frecuencia_fallas(request):
 
 
 @api_view(["GET"])
-@permission_classes([IsAuthenticated, IsSupervisor])
+@permission_classes([IsSupervisor | IsInvitado])
 def exportar_hoja_vida_vehiculo_pdf(request):
     """
     Genera un reporte PDF con el historial completo (Hoja de Vida)

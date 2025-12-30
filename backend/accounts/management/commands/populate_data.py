@@ -85,6 +85,7 @@ class Command(BaseCommand):
             "Control Llaves",
             "Repuestos",
             "Grua",
+            "Invitado",
         ]
         grupos = {}
         try:
@@ -169,6 +170,9 @@ class Command(BaseCommand):
         )
         crear_o_actualizar_usuario(
             "grua1", "grua@taller.cl", "Pedro", "Grúas", grupos["Grua"]
+        )
+        crear_o_actualizar_usuario(
+            "invitado", "invitado@taller.cl", "Invitado", "Visita", grupos["Invitado"]
         )
 
         chofer1 = crear_o_actualizar_usuario(

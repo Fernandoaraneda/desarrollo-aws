@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import apiClient from '/src/api/axios.js';
+import { useUserStore } from '/src/store/authStore.js';
 import styles from '../css/Panelsalida.module.css';
 import { LogOut, Search } from 'lucide-react';
 import ConfirmModal from '/src/components/modals/ConfirmModal.jsx';
@@ -10,6 +11,8 @@ export default function PanelSalida() {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
+    const { user } = useUserStore();
+    const isReadOnly = user?.rol === 'Invitado';
 
 
     const [isConfirmOpen, setIsConfirmOpen] = useState(false);
@@ -122,13 +125,14 @@ export default function PanelSalida() {
                                             <td>{o.diagnostico_tecnico || o.descripcion_falla}</td>
                                             <td><span className={styles.estadoFinalizado}>{o.estado}</span></td>
                                             <td>
-                                                <button
-                                                    className={`${styles.actionButton} ${styles.salidaButton}`}
-
-                                                    onClick={() => handleRegistrarSalida(o.id)}
-                                                >
-                                                    <LogOut size={16} /> Registrar Salida
-                                                </button>
+                                                {!isReadOnly && (
+                                                    <button
+                                                        className={`${styles.actionButton} ${styles.salidaButton}`}
+                                                        onClick={() => handleRegistrarSalida(o.id)}
+                                                    >
+                                                        <LogOut size={16} /> Registrar Salida
+                                                    </button>
+                                                )}
                                             </td>
                                         </tr>
                                     ))

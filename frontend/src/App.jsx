@@ -68,7 +68,7 @@ function App() {
           <Route
             path="/stock-repuestos"
             element={
-              <ProtectedRoute roles={['Repuestos', 'Jefetaller', 'Supervisor']}>
+              <ProtectedRoute roles={['Repuestos', 'Jefetaller', 'Supervisor', 'Invitado']}>
                 <GestionStock />
               </ProtectedRoute>
             }
@@ -96,75 +96,75 @@ function App() {
 
 
           <Route path="/usuarios" element={
-            <ProtectedRoute roles={['Jefetaller', 'Supervisor']}>
+            <ProtectedRoute roles={['Jefetaller', 'Supervisor', 'Invitado']}>
               <GestionUsuarios />
             </ProtectedRoute>
           } />
           <Route path="/usuarios/crear" element={
-            <ProtectedRoute roles={['Jefetaller', 'Supervisor']}>
+            <ProtectedRoute roles={['Jefetaller', 'Supervisor', 'Invitado']}>
               <CrearEditarUsuario />
             </ProtectedRoute>
           } />
           <Route path="/usuarios/editar/:id" element={
-            <ProtectedRoute roles={['Jefetaller', 'Supervisor']}>
+            <ProtectedRoute roles={['Jefetaller', 'Supervisor', 'Invitado']}>
               <CrearEditarUsuario />
             </ProtectedRoute>
           } />
 
 
           <Route path="/vehiculos" element={
-            <ProtectedRoute roles={['Jefetaller', 'Supervisor']}>
+            <ProtectedRoute roles={['Jefetaller', 'Supervisor', 'Invitado']}>
               <GestionVehiculos />
             </ProtectedRoute>
           } />
           <Route path="/vehiculos/crear" element={
-            <ProtectedRoute roles={['Jefetaller', 'Supervisor']}>
+            <ProtectedRoute roles={['Jefetaller', 'Supervisor', 'Invitado']}>
               <CrearEditarVehiculo />
             </ProtectedRoute>
           } />
           <Route path="/vehiculos/editar/:patente" element={
-            <ProtectedRoute roles={['Jefetaller', 'Supervisor']}>
+            <ProtectedRoute roles={['Jefetaller', 'Supervisor', 'Invitado']}>
               <CrearEditarVehiculo />
             </ProtectedRoute>
           } />
 
 
           <Route path="/agenda" element={
-            <ProtectedRoute roles={['Jefetaller', 'Chofer', 'Supervisor']}>
+            <ProtectedRoute roles={['Jefetaller', 'Chofer', 'Supervisor', 'Invitado']}>
               <GestionAgenda />
             </ProtectedRoute>
           } />
           <Route path="/panel-Jefetaller" element={
-            <ProtectedRoute roles={['Jefetaller', 'Supervisor']}>
+            <ProtectedRoute roles={['Jefetaller', 'Supervisor', 'Invitado']}>
               <PanelJefetaller />
             </ProtectedRoute>
           } />
           <Route path="/agenda/confirmar/:id" element={
-            <ProtectedRoute roles={['Jefetaller', 'Supervisor']}>
+            <ProtectedRoute roles={['Jefetaller', 'Supervisor', 'Invitado']}>
               <ConfirmarAsignarCita />
             </ProtectedRoute>
           } />
           <Route path="/panel-ingresos" element={
-            <ProtectedRoute roles={['Jefetaller', 'Seguridad', 'Supervisor']}>
+            <ProtectedRoute roles={['Jefetaller', 'Seguridad', 'Supervisor', 'Invitado']}>
               <PanelIngresos />
             </ProtectedRoute>
           } />
 
 
           <Route path="/panel-salidas" element={
-            <ProtectedRoute roles={['Jefetaller', 'Seguridad', 'Supervisor']}>
+            <ProtectedRoute roles={['Jefetaller', 'Seguridad', 'Supervisor', 'Invitado']}>
               <PanelSalida />
             </ProtectedRoute>
           } />
 
 
           <Route path="/ordenes" element={
-            <ProtectedRoute roles={['Jefetaller', 'Mecanico', 'Supervisor']}>
+            <ProtectedRoute roles={['Jefetaller', 'Mecanico', 'Supervisor', 'Invitado']}>
               <GestionOrdenes />
             </ProtectedRoute>
           } />
           <Route path="/ordenes/:id" element={
-            <ProtectedRoute roles={['Jefetaller', 'Mecanico', 'Chofer', 'Supervisor']}>
+            <ProtectedRoute roles={['Jefetaller', 'Mecanico', 'Chofer', 'Supervisor', 'Invitado']}>
               <DetalleOrden />
             </ProtectedRoute>
           } />
@@ -173,7 +173,7 @@ function App() {
           <Route
             path="/proximas-citas"
             element={
-              <ProtectedRoute roles={['Mecanico', 'Jefetaller', 'Supervisor']}>
+              <ProtectedRoute roles={['Mecanico', 'Jefetaller', 'Supervisor', 'Invitado']}>
                 <ProximasCitas />
               </ProtectedRoute>
             }
@@ -183,7 +183,7 @@ function App() {
           <Route
             path="/gestion-llaves"
             element={
-              <ProtectedRoute roles={['Control Llaves', 'Jefetaller', 'Supervisor']}>
+              <ProtectedRoute roles={['Control Llaves', 'Jefetaller', 'Supervisor', 'Invitado']}>
                 <GestionLlaves />
               </ProtectedRoute>
             }
@@ -192,7 +192,7 @@ function App() {
           <Route
             path="/gestion-llaves/historial"
             element={
-              <ProtectedRoute roles={['Control Llaves', 'Jefetaller', 'Supervisor']}>
+              <ProtectedRoute roles={['Control Llaves', 'Jefetaller', 'Supervisor', 'Invitado']}>
                 <GestionLlavesHistorial />
               </ProtectedRoute>
             }
@@ -201,7 +201,7 @@ function App() {
           <Route
             path="/historial-mecanico"
             element={
-              <ProtectedRoute roles={['Mecanico', 'Jefetaller', 'Supervisor']}>
+              <ProtectedRoute roles={['Mecanico', 'Jefetaller', 'Supervisor', 'Invitado']}>
                 <HistorialMecanico />
               </ProtectedRoute>
             }
@@ -209,7 +209,7 @@ function App() {
           <Route
             path="/historial-seguridad"
             element={
-              <ProtectedRoute roles={['Seguridad', 'Jefetaller', 'Supervisor']}>
+              <ProtectedRoute roles={['Seguridad', 'Jefetaller', 'Supervisor', 'Invitado']}>
                 <HistorialSeguridad />
               </ProtectedRoute>
             }
@@ -219,7 +219,7 @@ function App() {
           <Route
             path="/panel-repuestos"
             element={
-              <ProtectedRoute roles={['Repuestos', 'Jefetaller', 'Supervisor']}>
+              <ProtectedRoute roles={['Repuestos', 'Jefetaller', 'Supervisor', 'Invitado']}>
                 <PanelRepuestos />
               </ProtectedRoute>
             }
@@ -227,7 +227,7 @@ function App() {
           <Route
             path="/stock-repuestos"
             element={
-              <ProtectedRoute roles={['Repuestos', 'Jefetaller', 'Supervisor']}>
+              <ProtectedRoute roles={['Repuestos', 'Jefetaller', 'Supervisor', 'Invitado']}>
                 <GestionStock />
               </ProtectedRoute>
             }

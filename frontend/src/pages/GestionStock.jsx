@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import apiClient from '/src/api/axios.js';
+import { useUserStore } from '/src/store/authStore.js';
 import styles from '../css/gestionstock.module.css';
 import AlertModal from '/src/components/modals/AlertModal.jsx';
 import { Package, Plus, Edit, Search, Save, XCircle, Hash, Bookmark, DollarSign, Boxes, Trash2 } from 'lucide-react';
@@ -52,7 +53,7 @@ const RepuestoModal = ({ isOpen, onClose, onSave, producto, onAlert }) => {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-      
+
         if (!formData.nombre) {
             onAlert("El Nombre es obligatorio.");
             return;
@@ -64,17 +65,17 @@ const RepuestoModal = ({ isOpen, onClose, onSave, producto, onAlert }) => {
             stock: parseInt(formData.stock, 10) || 0,
         };
 
-        
+
         if (!isEditMode) {
             delete dataToSave.sku;
         }
 
         try {
             if (isEditMode) {
-                
+
                 await apiClient.patch(`/productos/${formData.sku}/`, dataToSave);
             } else {
-           
+
                 await apiClient.post('/productos/', dataToSave);
             }
             onSave();
@@ -94,7 +95,7 @@ const RepuestoModal = ({ isOpen, onClose, onSave, producto, onAlert }) => {
                 <form onSubmit={handleSubmit}>
                     <div className={styles.formGrid}>
 
-                      
+
                         {isEditMode && (
                             <div className={`${styles.formField} ${styles.spanFull}`}>
                                 <label><Hash size={16} /> SKU (Código Único)</label>
@@ -108,7 +109,7 @@ const RepuestoModal = ({ isOpen, onClose, onSave, producto, onAlert }) => {
                             </div>
                         )}
 
-             
+
                         <div className={`${styles.formField} ${styles.spanFull}`}>
                             <label><Package size={16} /> Nombre del Repuesto</label>
                             <input
@@ -134,7 +135,7 @@ const RepuestoModal = ({ isOpen, onClose, onSave, producto, onAlert }) => {
                             />
                         </div>
 
-                  
+
                         <div className={styles.formField}>
                             <label><DollarSign size={16} /> Precio de Venta</label>
                             <input
@@ -148,7 +149,7 @@ const RepuestoModal = ({ isOpen, onClose, onSave, producto, onAlert }) => {
                             />
                         </div>
 
-                   
+
                         <div className={styles.formField}>
                             <label><Boxes size={16} /> Stock Actual</label>
                             <input
@@ -185,6 +186,8 @@ export default function GestionStock() {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
+    const { user } = useUserStore();
+    const isReadOnly = user?.rol === 'Invitado';
 
 
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -250,18 +253,18 @@ export default function GestionStock() {
         setIsConfirmOpen(true);
     };
 
- 
+
     const handleCloseConfirm = () => {
         setIsConfirmOpen(false);
         setProductoParaEliminar(null);
     };
 
- 
+
     const handleConfirmDelete = async () => {
         if (!productoParaEliminar) return;
 
         try {
-     
+
             await apiClient.delete(`/productos/${productoParaEliminar.sku}/`);
 
             handleCloseConfirm();
@@ -269,7 +272,7 @@ export default function GestionStock() {
             showAlert(`Producto "${productoParaEliminar.nombre}" eliminado con éxito.`, "success");
 
         } catch (err) {
-           
+
             handleCloseConfirm();
             const errorMsg = err.response?.data?.detail || err.response?.data?.error || "Error al eliminar el producto. Es probable que esté siendo usado en una orden de servicio.";
             showAlert(errorMsg, 'danger');
@@ -284,9 +287,11 @@ export default function GestionStock() {
             <div className={styles.pageWrapper}>
                 <header className={styles.header}>
                     <h1><Package size={32} /> Gestión de Stock (Repuestos)</h1>
-                    <button className={styles.addButton} onClick={() => handleOpenModal(null)}>
-                        <Plus size={20} /> Añadir Repuesto
-                    </button>
+                    {!isReadOnly && (
+                        <button className={styles.addButton} onClick={() => handleOpenModal(null)}>
+                            <Plus size={20} /> Añadir Repuesto
+                        </button>
+                    )}
                 </header>
 
                 <div className={styles.tableCard}>
@@ -327,19 +332,20 @@ export default function GestionStock() {
                                             </span>
                                         </td>
                                         <td>
-                                            <div className={styles.actionButtons}>
-                                                <button onClick={() => handleOpenModal(prod)} title="Editar Stock/Precio">
-                                                    <Edit size={16} /> Editar
+                                            {!isReadOnly && (
+                                                <div className={styles.actionButtons}>
+                                                    <button onClick={() => handleOpenModal(prod)} title="Editar Stock/Precio">
+                                                        <Edit size={16} /> Editar
 
-                                                </button>
-                                                <button
-                                                    className={styles.deleteButton}
-                                                    onClick={() => handleDeleteClick(prod)}
-                                                    title="Eliminar Repuesto">
-                                                    <Trash2 size={16} /> Eliminar
-                                                </button>
-                                            </div>
-
+                                                    </button>
+                                                    <button
+                                                        className={styles.deleteButton}
+                                                        onClick={() => handleDeleteClick(prod)}
+                                                        title="Eliminar Repuesto">
+                                                        <Trash2 size={16} /> Eliminar
+                                                    </button>
+                                                </div>
+                                            )}
                                         </td>
                                     </tr>
                                 )) : (

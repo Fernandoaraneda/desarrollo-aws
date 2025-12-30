@@ -408,8 +408,9 @@ export default function DetalleOrden() {
     if (error && !orden) return <p className={styles.error}>{error}</p>;
 
     const isFinalizada = orden?.estado === 'Finalizado';
+    const isGuest = user?.rol === 'Invitado';
     const tienePrivilegiosAdmin = (user.rol === 'Jefetaller' || user.rol === 'Supervisor');
-    const puedeModificar = (tienePrivilegiosAdmin || user.rol === 'Mecanico') && !isFinalizada;
+    const puedeModificar = (tienePrivilegiosAdmin || user.rol === 'Mecanico') && !isFinalizada && !isGuest;
 
     const esMecanicoAsignado = (user.rol === 'Mecanico' && orden?.usuario_asignado === user.id);
 

@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import apiClient from '/src/api/axios.js';
+import { useUserStore } from '/src/store/authStore.js';
 import styles from '../css/gestionvehiculos.module.css';
 import { Car, Plus, Edit, Trash2, Search, CheckCircle } from 'lucide-react';
 import ConfirmModal from '/src/components/modals/ConfirmModal.jsx';
@@ -17,6 +18,8 @@ export default function GestionVehiculos() {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
     const navigate = useNavigate();
+    const { user } = useUserStore();
+    const isReadOnly = user?.rol === 'Invitado';
     const [searchTerm, setSearchTerm] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 10;
@@ -91,9 +94,11 @@ export default function GestionVehiculos() {
             <div className={styles.pageWrapper}>
                 <header className={styles.header}>
                     <h1><Car size={32} /> Gestión de Flota</h1>
-                    <button className={styles.addButton} onClick={() => navigate('/vehiculos/crear')}>
-                        <Plus size={20} /> Añadir Vehículo
-                    </button>
+                    {!isReadOnly && (
+                        <button className={styles.addButton} onClick={() => navigate('/vehiculos/crear')}>
+                            <Plus size={20} /> Añadir Vehículo
+                        </button>
+                    )}
                 </header>
 
 
@@ -147,16 +152,18 @@ export default function GestionVehiculos() {
                                         <td>{vehiculo.anio}</td>
                                         <td>{vehiculo.chofer_nombre}</td>
                                         <td>
-                                            <div className={styles.actionButtons}>
-                                                {view === 'activos' ? (
-                                                    <>
-                                                        <button onClick={() => navigate(`/vehiculos/editar/${vehiculo.patente}`)} title="Editar"><Edit size={16} /></button>
-                                                        <button onClick={() => openModal(vehiculo, 'deactivate')} title="Desactivar"><Trash2 size={16} /></button>
-                                                    </>
-                                                ) : (
-                                                    <button onClick={() => openModal(vehiculo, 'reactivate')} title="Reactivar"><CheckCircle size={16} /></button>
-                                                )}
-                                            </div>
+                                            {!isReadOnly && (
+                                                <div className={styles.actionButtons}>
+                                                    {view === 'activos' ? (
+                                                        <>
+                                                            <button onClick={() => navigate(`/vehiculos/editar/${vehiculo.patente}`)} title="Editar"><Edit size={16} /></button>
+                                                            <button onClick={() => openModal(vehiculo, 'deactivate')} title="Desactivar"><Trash2 size={16} /></button>
+                                                        </>
+                                                    ) : (
+                                                        <button onClick={() => openModal(vehiculo, 'reactivate')} title="Reactivar"><CheckCircle size={16} /></button>
+                                                    )}
+                                                </div>
+                                            )}
                                         </td>
                                     </tr>
                                 )) : (

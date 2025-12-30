@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import apiClient from '/src/api/axios.js';
+import { useUserStore } from '/src/store/authStore.js';
 import styles from '../css/panelingreso.module.css';
 import { LogIn, CalendarClock, Search } from 'lucide-react';
 import ConfirmModal from '/src/components/modals/ConfirmModal.jsx';
@@ -12,6 +13,8 @@ export default function PanelIngresos() {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
+    const { user } = useUserStore();
+    const isReadOnly = user?.rol === 'Invitado';
 
 
     const [isConfirmOpen, setIsConfirmOpen] = useState(false);
@@ -29,12 +32,12 @@ export default function PanelIngresos() {
         );
     }, [agendamientos, searchTerm]);
 
- 
+
     const fetchCitasPorIngresar = async () => {
         setIsLoading(true);
         setError(null);
         try {
-            
+
             const response = await apiClient.get('/agenda/seguridad/');
             setAgendamientos(response.data.results || response.data || []);
         } catch (err) {
@@ -51,7 +54,7 @@ export default function PanelIngresos() {
 
 
     const handleRegistrarIngreso = (id) => {
-        setAgendamientoToProcess(id); 
+        setAgendamientoToProcess(id);
         setIsConfirmOpen(true);
     };
 
@@ -59,23 +62,23 @@ export default function PanelIngresos() {
     const handleConfirmIngreso = async () => {
         if (!agendamientoToProcess) return;
 
-        setIsConfirmOpen(false); 
+        setIsConfirmOpen(false);
 
         try {
             await apiClient.post(`/agendamientos/${agendamientoToProcess}/registrar-ingreso/`);
 
-         
+
             setModalMessage("✅ Ingreso registrado con éxito. Se ha creado la orden de trabajo.");
             setModalIntent("success");
             setIsAlertOpen(true);
 
-            
+
             setAgendamientos(prev => prev.filter(a => a.id !== agendamientoToProcess));
 
         } catch (err) {
             const errorMsg = err.response?.data?.error || "Error al registrar el ingreso.";
 
-        
+
             setModalMessage(errorMsg);
             setModalIntent("danger");
             setIsAlertOpen(true);
@@ -91,89 +94,91 @@ export default function PanelIngresos() {
 
     return (
         <>
-        <div className={styles.pageWrapper}>
-            <header className={styles.header}>
-           
-                <h1><LogIn size={32} /> Panel de Ingresos</h1>
-                <p>Vehículos con cita confirmada para hoy esperando ingreso.</p>
-            </header>
+            <div className={styles.pageWrapper}>
+                <header className={styles.header}>
 
-            <div className={styles.tableCard}>
-                <div className={styles.tableControls}>
-                    <div className={styles.searchBox}>
-                        <Search size={20} className={styles.searchIcon} />
-                        <input
-                            type="text"
-                            placeholder="Buscar por patente o chofer..."
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                        />
+                    <h1><LogIn size={32} /> Panel de Ingresos</h1>
+                    <p>Vehículos con cita confirmada para hoy esperando ingreso.</p>
+                </header>
+
+                <div className={styles.tableCard}>
+                    <div className={styles.tableControls}>
+                        <div className={styles.searchBox}>
+                            <Search size={20} className={styles.searchIcon} />
+                            <input
+                                type="text"
+                                placeholder="Buscar por patente o chofer..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                            />
+                        </div>
                     </div>
-                </div>
 
-                <div className={styles.tableContainer}>
-                    <table className={styles.table}>
-                        <thead>
-                            <tr>
-                                <th>Fecha y Hora Programada</th>
-                                <th>Patente</th>
-                                <th>Chofer</th>
-                                <th>Mecánico Asignado</th>
-                                <th>Motivo</th>
-                                <th>Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {filteredAgendamientos.length > 0 ? (
-                                filteredAgendamientos.map(a => (
-                                    <tr key={a.id}>
-                                        <td>{new Date(a.fecha_hora_programada).toLocaleString('es-CL')}</td>
-                                        <td>{a.vehiculo_patente}</td>
-                                        <td>{a.chofer_nombre}</td>
-                                        <td>{a.mecanico_nombre}</td>
-                                        <td>{a.motivo_ingreso}</td>
-                                        <td>
-                                           
-                                            <button
-                                                className={`${styles.actionButton} ${styles.ingresoButton}`}
-                                                onClick={() => handleRegistrarIngreso(a.id)}
-                                            >
-                                                <LogIn size={16} /> Ingreso
-                                            </button>
-                                      
+                    <div className={styles.tableContainer}>
+                        <table className={styles.table}>
+                            <thead>
+                                <tr>
+                                    <th>Fecha y Hora Programada</th>
+                                    <th>Patente</th>
+                                    <th>Chofer</th>
+                                    <th>Mecánico Asignado</th>
+                                    <th>Motivo</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {filteredAgendamientos.length > 0 ? (
+                                    filteredAgendamientos.map(a => (
+                                        <tr key={a.id}>
+                                            <td>{new Date(a.fecha_hora_programada).toLocaleString('es-CL')}</td>
+                                            <td>{a.vehiculo_patente}</td>
+                                            <td>{a.chofer_nombre}</td>
+                                            <td>{a.mecanico_nombre}</td>
+                                            <td>{a.motivo_ingreso}</td>
+                                            <td>
+
+                                                {!isReadOnly && (
+                                                    <button
+                                                        className={`${styles.actionButton} ${styles.ingresoButton}`}
+                                                        onClick={() => handleRegistrarIngreso(a.id)}
+                                                    >
+                                                        <LogIn size={16} /> Ingreso
+                                                    </button>
+                                                )}
+
+                                            </td>
+                                        </tr>
+                                    ))
+                                ) : (
+                                    <tr>
+                                        <td colSpan="6" style={{ textAlign: 'center', padding: '1rem' }}>
+                                            No hay citas pendientes de ingreso para hoy.
                                         </td>
                                     </tr>
-                                ))
-                            ) : (
-                                <tr>
-                                    <td colSpan="6" style={{ textAlign: 'center', padding: '1rem' }}>
-                                        No hay citas pendientes de ingreso para hoy.
-                                    </td>
-                                </tr>
-                            )}
-                        </tbody>
-                    </table>
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
-        </div>
             <ConfirmModal
-                    isOpen={isConfirmOpen}
-                    onClose={() => setIsConfirmOpen(false)}
-                    onConfirm={handleConfirmIngreso}
-                    title="Confirmar Ingreso"
-                    message="¿Está seguro de que desea registrar el ingreso de este vehículo? Esta acción creará una nueva orden de trabajo."
-                    confirmButtonText="Sí, Registrar Ingreso"
-                    intent="success" 
-                />
-                
-                <AlertModal
-                    isOpen={isAlertOpen}
-                    onClose={() => setIsAlertOpen(false)}
-                    title={modalIntent === 'success' ? 'Éxito' : 'Error'}
-                    message={modalMessage}
-                    intent={modalIntent}
-                />
-                
+                isOpen={isConfirmOpen}
+                onClose={() => setIsConfirmOpen(false)}
+                onConfirm={handleConfirmIngreso}
+                title="Confirmar Ingreso"
+                message="¿Está seguro de que desea registrar el ingreso de este vehículo? Esta acción creará una nueva orden de trabajo."
+                confirmButtonText="Sí, Registrar Ingreso"
+                intent="success"
+            />
+
+            <AlertModal
+                isOpen={isAlertOpen}
+                onClose={() => setIsAlertOpen(false)}
+                title={modalIntent === 'success' ? 'Éxito' : 'Error'}
+                message={modalMessage}
+                intent={modalIntent}
+            />
+
         </>
     );
 }
